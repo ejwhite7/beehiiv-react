@@ -22,6 +22,8 @@ export type {
   BeehiivContextValue,
   UseSubscribeOptions,
   UseSubscribeReturn,
+  SubscribeData,
+  UseSubscriptionOptions,
   UseSubscriptionReturn,
   UseCustomFieldsReturn,
 } from './hooks/index.js';
@@ -29,6 +31,7 @@ export type {
 // --- Components ---
 export {
   BeehiivProvider,
+  BeehiivContext,
   SubscriptionForm,
 } from './components/index.js';
 

@@ -1,15 +1,6 @@
 # beehiiv-react
 
-Connect a [beehiiv](https://www.beehiiv.com/) newsletter to your React / Next.js project -- typed API client, React hooks, subscription form component, and CLI scaffolding tool.
-
-## Features
-
-- **Typed API Client** -- full-coverage TypeScript client for the beehiiv API v2
-- **React Hooks** -- `useSubscribe`, `useSubscription`, `useCustomFields` for client-side state
-- **Drop-in Components** -- `<SubscriptionForm />` with built-in validation and loading states
-- **CLI Scaffolding** -- `npx beehiiv-react init` generates config, types, and API routes
-- **Custom Field Codegen** -- `npx beehiiv-react sync` generates strongly-typed custom fields from your publication
-- **Rate Limiting** -- built-in client-side rate limiter (180 req/min default)
+A typed React SDK and CLI for integrating [beehiiv](https://www.beehiiv.com/) newsletters into Next.js applications. Scaffolds configuration, generates TypeScript types from your publication's custom fields, and provides React hooks and components for subscription management.
 
 ## Installation
 
@@ -19,229 +10,209 @@ npm install beehiiv-react
 
 ## Quick Start
 
-### 1. Initialize your project
+Initialize beehiiv-react in your Next.js project:
 
 ```bash
 npx beehiiv-react init
 ```
 
-This will:
-- Prompt for your beehiiv API key (or use `--oauth` for OAuth2)
-- Let you select a publication
-- Generate `beehiiv.config.ts` with your publication ID
-- Generate typed custom fields from your publication
-- Scaffold a Next.js API route at `app/api/beehiiv/subscribe/route.ts`
+This interactive wizard will:
 
-### 2. Set your environment variable
+1. Prompt for your beehiiv API key
+2. Let you select a publication
+3. Fetch custom fields and generate TypeScript types
+4. Scaffold a `beehiiv.config.ts`, API routes, and server actions
 
-Add your API key to `.env.local`:
+## BeehiivProvider Setup
 
-```bash
-BEEHIIV_API_KEY=your_api_key_here
-```
-
-### 3. Add the subscription form
+Wrap your application with the `BeehiivProvider` to make beehiiv context available to all hooks and components. In a Next.js App Router project, add it to your root layout:
 
 ```tsx
-import { SubscriptionForm } from 'beehiiv-react';
+// app/layout.tsx
+import { BeehiivProvider } from 'beehiiv-react';
 
-export default function Newsletter() {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SubscriptionForm
-      endpoint="/api/beehiiv/subscribe"
-      buttonText="Join Newsletter"
-      utmSource="website"
-      onSuccess={() => console.log('Subscribed!')}
-    />
+    <html lang="en">
+      <body>
+        <BeehiivProvider
+          publicationId={process.env.NEXT_PUBLIC_BEEHIIV_PUBLICATION_ID!}
+          apiUrl="/api/beehiiv"
+        >
+          {children}
+        </BeehiivProvider>
+      </body>
+    </html>
   );
 }
 ```
 
-## Authentication
+## useSubscribe Hook
 
-### API Key (default)
+Subscribe new emails with fully typed custom fields:
 
-Provide your beehiiv API key in one of these ways:
+```tsx
+'use client';
 
-1. **Environment variable** (recommended): `BEEHIIV_API_KEY` in `.env.local`
-2. **CLI flag**: `npx beehiiv-react init --api-key YOUR_KEY`
-3. **Interactive prompt**: run `npx beehiiv-react init` and paste when prompted
+import { useSubscribe } from 'beehiiv-react';
+import type { BeehiivCustomFields } from '@/types/beehiiv.generated';
 
-### OAuth2
+export function NewsletterSignup() {
+  const { subscribe, isLoading, isSuccess, error } = useSubscribe<BeehiivCustomFields>({
+    onSuccess: (subscription) => {
+      console.log('Subscribed:', subscription.email);
+    },
+    onError: (err) => {
+      console.error('Failed:', err.message);
+    },
+  });
 
-Use the `--oauth` flag for browser-based authorization:
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
 
-```bash
-npx beehiiv-react init --oauth
+    subscribe({
+      email: formData.get('email') as string,
+      customFields: {
+        firstName: formData.get('firstName') as string,
+      },
+      utmSource: 'website',
+    });
+  };
+
+  if (isSuccess) return <p>Thanks for subscribing!</p>;
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input name="email" type="email" placeholder="you@example.com" required />
+      <input name="firstName" type="text" placeholder="First name" />
+      <button type="submit" disabled={isLoading}>
+        {isLoading ? 'Subscribing...' : 'Subscribe'}
+      </button>
+      {error && <p>{error.message}</p>}
+    </form>
+  );
+}
 ```
 
-This opens your browser to authorize the app and stores tokens in `.env.local`.
+## SubscriptionForm Component
 
-## Generated Files
+A pre-built, drop-in subscription form:
 
-After running `npx beehiiv-react init`, these files are created in your project:
+```tsx
+import { SubscriptionForm } from 'beehiiv-react';
 
-| File | Purpose |
-|---|---|
-| `beehiiv.config.ts` | Publication ID, name, and SDK config |
-| `types/beehiiv.generated.ts` | Strongly-typed custom field names and values |
-| `app/api/beehiiv/subscribe/route.ts` | Next.js API route for subscription management |
-
-## Syncing Custom Fields
-
-When you add or modify custom fields in beehiiv, re-run:
-
-```bash
-npx beehiiv-react sync
+// Default mode
+<SubscriptionForm
+  submitLabel="Join Newsletter"
+  emailPlaceholder="Enter your email"
+  successMessage="Welcome aboard!"
+  utmSource="homepage"
+/>
 ```
 
-This regenerates `types/beehiiv.generated.ts` with updated field names and types.
+### Headless Mode
 
-## API Client
+For full control over rendering, use the `renderForm` prop:
 
-The `BeehiivClient` is a server-side API client for direct beehiiv API access:
+```tsx
+<SubscriptionForm
+  renderForm={({ email, setEmail, handleSubmit, isLoading, isSuccess, error }) => (
+    <form onSubmit={handleSubmit}>
+      <input
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+      />
+      <button type="submit" disabled={isLoading}>
+        {isLoading ? 'Loading...' : 'Subscribe'}
+      </button>
+      {error && <span>{error.message}</span>}
+      {isSuccess && <span>Subscribed!</span>}
+    </form>
+  )}
+/>
+```
+
+## BeehiivClient (Server-Side)
+
+Use the `BeehiivClient` directly in server-side code (API routes, server actions, scripts):
 
 ```ts
 import { BeehiivClient } from 'beehiiv-react';
 
 const client = new BeehiivClient({
   apiKey: process.env.BEEHIIV_API_KEY!,
-  publicationId: 'pub_xxxxx',
+  publicationId: process.env.BEEHIIV_PUBLICATION_ID!,
 });
 
 // Create a subscription
-const sub = await client.subscriptions.create({
-  email: 'user@example.com',
-  utm_source: 'api',
-  send_welcome_email: true,
-  custom_fields: [
-    { name: 'Company', value: 'Acme Inc.' },
-  ],
+const subscription = await client.subscriptions.create({
+  email: 'reader@example.com',
+  customFields: [{ name: 'First Name', value: 'Jane' }],
+  utmSource: 'api',
 });
 
-// List subscriptions
-const list = await client.subscriptions.list({ limit: 10 });
+// List subscribers
+const { data: subscribers } = await client.subscriptions.list({ limit: 10 });
 
-// Get publication info
-const pub = await client.publications.get();
+// Get custom field definitions
+const { data: fields } = await client.customFields.list();
 ```
 
-### Available Endpoints
+The client includes built-in rate limiting (180 requests/minute) matching beehiiv's API limits.
 
-| Endpoint | Methods |
-|---|---|
-| `client.subscriptions` | `create`, `list`, `getByEmail`, `getById`, `updateById`, `updateByEmail`, `delete` |
-| `client.customFields` | `list`, `get`, `create`, `update`, `delete` |
-| `client.publications` | `list`, `get` |
-| `client.posts` | `list`, `get`, `create`, `update`, `delete` |
+## Syncing Custom Fields
 
-## React Hooks
+After adding or modifying custom fields in the beehiiv dashboard, regenerate your TypeScript types:
 
-### `useSubscribe`
-
-Manages email subscription state and submission:
-
-```tsx
-import { useSubscribe } from 'beehiiv-react';
-
-function NewsletterForm() {
-  const { subscribe, isLoading, isSuccess, error } = useSubscribe({
-    endpoint: '/api/beehiiv/subscribe',
-    utmSource: 'website',
-    onSuccess: (data) => console.log('Subscribed!', data),
-  });
-
-  return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      const email = new FormData(e.currentTarget).get('email') as string;
-      subscribe(email);
-    }}>
-      <input name="email" type="email" required />
-      <button disabled={isLoading}>
-        {isLoading ? 'Subscribing...' : 'Subscribe'}
-      </button>
-      {isSuccess && <p>Thanks for subscribing!</p>}
-      {error && <p>Error: {error.message}</p>}
-    </form>
-  );
-}
+```bash
+npx beehiiv-react sync
 ```
 
-### `useSubscription`
+This re-fetches the custom field definitions from the beehiiv API and updates `types/beehiiv.generated.ts` with the latest fields and types.
 
-Fetch subscription data by email or ID:
+## OAuth2 Support
 
-```tsx
-import { useSubscription } from 'beehiiv-react';
+For OAuth2 PKCE-based authentication (instead of API keys):
 
-function SubscriberInfo({ email }: { email: string }) {
-  const { subscription, isLoading, error } = useSubscription(email);
-
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
-  if (!subscription) return <p>Not found</p>;
-
-  return <p>Status: {subscription.status}, Tier: {subscription.tier}</p>;
-}
+```bash
+npx beehiiv-react init --oauth
 ```
 
-### `useCustomFields`
+This starts a local callback server and opens the beehiiv authorization page in your browser. OAuth2 requires a registered client ID with beehiiv. Contact beehiiv to register your application for OAuth2 access.
 
-Fetch custom field definitions:
+## API Reference
 
-```tsx
-import { useCustomFields } from 'beehiiv-react';
+### Hooks
 
-function FieldList() {
-  const { customFields, isLoading } = useCustomFields();
+| Hook | Description |
+|------|-------------|
+| `useBeehiiv()` | Access the beehiiv context (publication ID, API URL) |
+| `useSubscribe()` | Subscribe an email with custom fields and UTM tracking |
+| `useSubscription()` | Fetch and manage an existing subscription |
+| `useCustomFields()` | Retrieve custom field definitions |
 
-  if (isLoading) return <p>Loading...</p>;
+### Components
 
-  return (
-    <ul>
-      {customFields.map((field) => (
-        <li key={field.id}>{field.display} ({field.kind})</li>
-      ))}
-    </ul>
-  );
-}
-```
+| Component | Description |
+|-----------|-------------|
+| `<BeehiivProvider>` | Context provider for beehiiv configuration |
+| `<SubscriptionForm>` | Pre-built subscription form with headless mode |
 
-### `BeehiivProvider`
+### Types
 
-Wrap your app to provide context to hooks:
-
-```tsx
-import { BeehiivProvider } from 'beehiiv-react';
-
-export default function App({ children }: { children: React.ReactNode }) {
-  return (
-    <BeehiivProvider publicationId="pub_xxxxx" apiBaseUrl="/api/beehiiv">
-      {children}
-    </BeehiivProvider>
-  );
-}
-```
-
-## Environment Variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `BEEHIIV_API_KEY` | Yes | Your beehiiv API key (server-side only) |
-
-## TypeScript
-
-All types are exported from the main package entry:
+All types are exported from the package root:
 
 ```ts
 import type {
   SubscriptionInfo,
-  CreateSubscriptionRequest,
+  PublicationInfo,
   CustomFieldInfo,
   PostInfo,
-  WebhookPayload,
+  WebhookInfo,
   BeehiivApiConfig,
+  BeehiivConfig,
 } from 'beehiiv-react';
 ```
 

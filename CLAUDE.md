@@ -223,3 +223,60 @@ The GitHub Actions CI workflow (`.github/workflows/ci.yml`) runs on every push a
 5. `npm run build` - tsup build
 
 All steps must pass for the CI to be green. The `prepublishOnly` script also runs build, typecheck, and test before any `npm publish`.
+
+---
+
+## Stage 3 Completion Notes
+
+### Branch Merge Summary
+
+All four feature branches were successfully merged into the `release/v0.1.0` branch:
+
+1. `feature/hooks` (PR #1) -- BeehiivProvider, React hooks (useBeehiiv, useSubscribe, useSubscription, useCustomFields)
+2. `feature/api-client` (PR #2) -- BeehiivClient, endpoint classes (subscriptions, custom-fields, publications, posts), rate limiter
+3. `feature/components` (PR #3) -- SubscriptionForm with headless mode, Handlebars templates
+4. `feature/cli` (PR #4) -- CLI init/sync commands, OAuth2 PKCE flow, API key auth, code generators
+
+### Integration Issues Resolved
+
+- **SubscriptionForm / useSubscribe mismatch**: The `SubscriptionForm` component was passing UTM parameters (`utmSource`, `utmMedium`, `utmCampaign`) in the `useSubscribe` options and calling `subscribe(email)` as a plain string. Fixed to pass UTM params via the `SubscribeData` object and call `subscribe({ email, customFields, utmSource, ... })` instead.
+- **Template / generator field name mismatch**: The Handlebars templates from `feature/components` used `{{camelCaseKey}}` but the CLI generator from `feature/cli` only passed `camelCaseDisplay`. Added `camelCaseKey` to the generator's field template data.
+- **Missing `generatedAt` template variable**: The custom-fields Handlebars template referenced `{{generatedAt}}` but the generator did not pass it. Added `generatedAt: new Date().toISOString()` to the template data.
+- **ESLint `prefer-const` false positive**: The OAuth2 module declared `let timeoutHandle` which was flagged by ESLint's `prefer-const` rule, but `let` is required because the variable is assigned after declaration. Added an ESLint disable comment.
+- **Unused import**: `waitFor` was imported but never used in `useSubscribe.test.tsx`. Removed the unused import.
+
+### Final Test Count
+
+**126 tests passing** across 14 test files:
+
+- `src/client/__tests__/client.test.ts` -- 18 tests
+- `src/client/__tests__/endpoints/custom-fields.test.ts` -- 9 tests
+- `src/client/__tests__/endpoints/subscriptions.test.ts` -- 14 tests
+- `src/client/__tests__/rate-limiter.test.ts` -- 8 tests
+- `src/hooks/__tests__/BeehiivProvider.test.tsx` -- 4 tests
+- `src/hooks/__tests__/useBeehiiv.test.tsx` -- 3 tests
+- `src/hooks/__tests__/useCustomFields.test.tsx` -- 4 tests
+- `src/hooks/__tests__/useSubscribe.test.tsx` -- 6 tests
+- `src/hooks/__tests__/useSubscription.test.tsx` -- 5 tests
+- `src/components/__tests__/SubscriptionForm.test.tsx` -- 29 tests
+- `src/components/__tests__/templates.test.ts` -- 9 tests
+- `src/cli/__tests__/auth/api-key.test.ts` -- 5 tests
+- `src/cli/__tests__/generators/config.test.ts` -- 3 tests
+- `src/cli/__tests__/generators/custom-fields.test.ts` -- 9 tests
+
+### Build Output Verified
+
+```
+dist/
+  index.js        (CJS, 33.66 KB)
+  index.mjs       (ESM, 33.16 KB)
+  index.d.ts      (DTS, 48.45 KB)
+  index.d.mts     (DTS, 48.45 KB)
+  index.js.map
+  index.mjs.map
+  cli/
+    index.js      (CJS, 29.24 KB)
+    index.js.map
+```
+
+CLI help output confirmed working: `node dist/cli/index.js --help` prints Commander.js help with `init` and `sync` commands.

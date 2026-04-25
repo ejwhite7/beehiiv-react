@@ -11,7 +11,7 @@ export type BeehiivCustomFieldName = {{#each fields}}'{{display}}'{{#unless @las
 export interface BeehiivCustomFields {
   {{#each fields}}
   /** {{display}} ({{kind}}) */
-  {{camelCase display}}?: {{tsType}};
+  {{camelCase display}}?: {{{tsType}}};
   {{/each}}
 }
 

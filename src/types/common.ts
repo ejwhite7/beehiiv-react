@@ -64,7 +64,7 @@ export interface BeehiivApiConfig {
   /** Your beehiiv API key (v2). Keep this server-side only. */
   apiKey: string;
   /** The publication ID to target (starts with "pub_") */
-  publicationId: string;
+  publicationId?: string;
   /** Override the base URL for the beehiiv API (default: "https://api.beehiiv.com/v2") */
   baseUrl?: string;
   /** Request timeout in milliseconds (default: 30000) */

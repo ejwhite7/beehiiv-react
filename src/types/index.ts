@@ -11,6 +11,7 @@ export type {
   PaginatedResponse,
   RequestDirection,
   BeehiivApiConfig,
+  BeehiivConfig,
 } from './common.js';
 
 export type {

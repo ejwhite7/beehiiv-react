@@ -35,6 +35,8 @@ export {
 export type {
   BeehiivProviderProps,
   SubscriptionFormProps,
+  CustomFieldConfig,
+  RenderFormProps,
 } from './components/index.js';
 
 // --- Types ---
@@ -46,6 +48,7 @@ export type {
   PaginatedResponse,
   RequestDirection,
   BeehiivApiConfig,
+  BeehiivConfig,
   CustomFieldKind,
   CustomFieldInfo,
   CustomFieldResponse,

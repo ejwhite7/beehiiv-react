@@ -46,6 +46,10 @@ export type {
 export type {
   PostStatus,
   PostAudience,
+  PostContentFormat,
+  PostContentHtml,
+  PostContentJson,
+  PostContent,
   PostStats,
   PostInfo,
   CreatePostRequest,
@@ -63,3 +67,10 @@ export type {
   WebhookResponse,
   WebhookListResponse,
 } from './webhook.js';
+
+export type {
+  AccessResult,
+  UseSubscriberAccessOptions,
+  UsePostAccessOptions,
+  UsePostAccessReturn,
+} from './access.js';

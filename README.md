@@ -182,6 +182,86 @@ npx beehiiv-react init --oauth
 
 This starts a local callback server and opens the beehiiv authorization page in your browser. OAuth2 requires a registered client ID with beehiiv. Contact beehiiv to register your application for OAuth2 access.
 
+## Posts & Content Visibility
+
+### Fetching Posts
+
+```tsx
+import { usePosts, usePost } from 'beehiiv-react';
+
+// List posts — filter by audience and status
+const { posts, isLoading, hasMore, loadMore } = usePosts({
+  audience: 'free',   // 'free' | 'premium' | 'all'
+  status: 'confirmed',
+});
+
+// Single post
+const { post, isLoading } = usePost({ id: 'post_abc123' });
+```
+
+### Rendering Posts
+
+```tsx
+import { PostList, PostCard, PostContentRenderer } from 'beehiiv-react';
+
+// Full list with pagination
+<PostList
+  posts={posts}
+  hasMore={hasMore}
+  onLoadMore={loadMore}
+  isLoading={isLoading}
+/>
+
+// Single card
+<PostCard post={post} showAudienceBadge showPublishDate />
+
+// Post body (provide your own sanitizer)
+import DOMPurify from 'dompurify';
+<PostContentRenderer
+  content={post.content}
+  sanitizeHtml={(html) => DOMPurify.sanitize(html)}
+/>
+```
+
+### Content Gating
+
+```tsx
+import { GatedContent, PremiumContent, useSubscriberAccess } from 'beehiiv-react';
+
+// Declarative gating
+<GatedContent
+  audience="premium"
+  subscriberEmail={userEmail}
+  fallback={<p>Upgrade to read this.</p>}
+>
+  <ArticleBody />
+</GatedContent>
+
+// Opinionated premium wrapper with upgrade prompt
+<PremiumContent
+  subscriberEmail={userEmail}
+  upgradePrompt={(tier, status) => (
+    <UpgradeBanner currentTier={tier} />
+  )}
+>
+  <ExclusiveContent />
+</PremiumContent>
+
+// Programmatic access check
+const { canView, tier, isActive, isLoading } = useSubscriberAccess({
+  email: userEmail,
+  audience: 'premium',
+});
+```
+
+### Access Logic
+
+The `canViewContent(tier, status, audience)` utility resolves subscriber access:
+
+- `'all'` audience: always accessible
+- `'free'` audience: requires active subscription (any tier)
+- `'premium'` audience: requires active premium subscription
+
 ## API Reference
 
 ### Hooks
@@ -192,6 +272,10 @@ This starts a local callback server and opens the beehiiv authorization page in 
 | `useSubscribe()` | Subscribe an email with custom fields and UTM tracking |
 | `useSubscription()` | Fetch and manage an existing subscription |
 | `useCustomFields()` | Retrieve custom field definitions |
+| `usePosts()` | Paginated post list with audience/status filters |
+| `usePost()` | Fetch a single post by ID |
+| `useSubscriberAccess()` | Resolve subscriber tier + status into an access result |
+| `usePostAccess()` | Fetch post + subscriber, returns combined `{ post, canView }` |
 
 ### Components
 
@@ -199,6 +283,11 @@ This starts a local callback server and opens the beehiiv authorization page in 
 |-----------|-------------|
 | `<BeehiivProvider>` | Context provider for beehiiv configuration |
 | `<SubscriptionForm>` | Pre-built subscription form with headless mode |
+| `<PostCard>` | Displays a single post with thumbnail, badge, title, subtitle, date |
+| `<PostList>` | Paginated list of posts with load-more, skeleton loading, empty state |
+| `<PostContentRenderer>` | Renders HTML or JSON post content with sanitizer hook |
+| `<GatedContent>` | Declarative wrapper for subscriber-gated content |
+| `<PremiumContent>` | Opinionated premium gate with `upgradePrompt` render prop |
 
 ### Types
 
@@ -210,6 +299,9 @@ import type {
   PublicationInfo,
   CustomFieldInfo,
   PostInfo,
+  PostContent,
+  PostAudience,
+  AccessResult,
   WebhookInfo,
   BeehiivApiConfig,
   BeehiivConfig,

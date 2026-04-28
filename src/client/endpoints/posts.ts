@@ -7,6 +7,7 @@
 
 import type {
   PostStatus,
+  PostAudience,
   PostListResponse,
   PostResponse,
   CreatePostRequest,
@@ -22,6 +23,12 @@ export interface ListPostsOptions {
   cursor?: string;
   /** Filter posts by their publication status */
   status?: PostStatus;
+  /** Filter posts by their intended audience */
+  audience?: PostAudience;
+  /** Field to order results by */
+  orderBy?: 'publish_date' | 'created_at';
+  /** Sort direction for the ordered results */
+  direction?: 'asc' | 'desc';
 }
 
 /**
@@ -52,7 +59,7 @@ export class PostsEndpoint {
    * List posts for a publication with cursor-based pagination.
    *
    * Calls `GET /v2/publications/{publicationId}/posts` with optional
-   * filtering by status and cursor-based pagination.
+   * filtering by status, audience, and cursor-based pagination.
    *
    * @param publicationId - The publication ID (starts with "pub_")
    * @param options - Optional filtering and pagination parameters
@@ -72,6 +79,15 @@ export class PostsEndpoint {
     }
     if (options?.status) {
       params.set('status', options.status);
+    }
+    if (options?.audience) {
+      params.set('audience', options.audience);
+    }
+    if (options?.orderBy) {
+      params.set('order_by', options.orderBy);
+    }
+    if (options?.direction) {
+      params.set('direction', options.direction);
     }
 
     const query = params.toString();

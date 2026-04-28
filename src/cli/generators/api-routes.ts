@@ -29,7 +29,7 @@ const SUBSCRIPTION_ID_ROUTE_TEMPLATE = `/**
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { BeehiivClient } from 'beehiiv-react';
-import { beehiivConfig } from '@/beehiiv.config';
+import beehiivConfig from '@/beehiiv.config';
 
 /**
  * Initialize the beehiiv client using the server-side API key.

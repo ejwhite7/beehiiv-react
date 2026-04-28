@@ -101,7 +101,6 @@ export async function generateApiRoutes(
     __dirname,
     '..',
     '..',
-    '..',
     'templates',
     'api-route.ts.hbs',
   );

@@ -152,7 +152,6 @@ export async function generateCustomFieldTypes(
     __dirname,
     '..',
     '..',
-    '..',
     'templates',
     'custom-fields.ts.hbs',
   );

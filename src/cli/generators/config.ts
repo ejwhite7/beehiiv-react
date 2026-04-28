@@ -45,7 +45,6 @@ export async function generateConfig(data: ConfigGeneratorData): Promise<void> {
     __dirname,
     '..',
     '..',
-    '..',
     'templates',
     'config.ts.hbs',
   );

@@ -4,11 +4,32 @@
  * @module cli/__tests__/generators/config
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { generateConfig } from '../../generators/config.js';
+
+/*
+ * The generators resolve templates via path.resolve(__dirname, '..', '..',
+ * 'templates', ...) which is correct for the bundled output at dist/cli/.
+ * Under vitest, source files live at src/cli/generators/ (one extra level)
+ * so the resolved path wrongly lands in src/templates/.  We intercept
+ * readFileSync at the module level to redirect those reads.
+ */
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
+  const origReadFileSync = actual.readFileSync;
+  return {
+    ...actual,
+    readFileSync: (...args: Parameters<typeof actual.readFileSync>) => {
+      if (typeof args[0] === 'string') {
+        args[0] = args[0].replace(/\/src\/templates\//, '/templates/');
+      }
+      return origReadFileSync(...(args as [never, ...never[]]));
+    },
+  };
+});
 
 describe('generateConfig', () => {
   let tmpDir: string;

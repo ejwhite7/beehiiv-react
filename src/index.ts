@@ -33,6 +33,9 @@ export {
   BeehiivProvider,
   BeehiivContext,
   SubscriptionForm,
+  PostCard,
+  PostList,
+  PostContent,
 } from './components/index.js';
 
 export type {
@@ -40,6 +43,11 @@ export type {
   SubscriptionFormProps,
   CustomFieldConfig,
   RenderFormProps,
+  PostCardProps,
+  RenderPostCardProps,
+  PostListProps,
+  PostContentProps,
+  PostContentData,
 } from './components/index.js';
 
 // --- Types ---

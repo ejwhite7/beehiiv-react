@@ -7,8 +7,8 @@
 `beehiiv-react` is a hybrid npm package that provides:
 
 1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only)
-2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`) for client-side state management
-3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`, `PostCard`, `PostList`, `PostContentRenderer`, `GatedContent`, `PremiumContent`) for common UI patterns
+2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`, `useSubscriberProfile`, `useSubscriberTier`) for client-side state management
+3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`, `PostCard`, `PostList`, `PostContentRenderer`, `GatedContent`, `PremiumContent`, `SubscriberBadge`) for common UI patterns
 4. **Utility functions** (`canViewContent`, `getAudienceLabel`, `getTierLabel`) for subscriber access resolution
 5. **A CLI tool** (`npx beehiiv-react init/sync`) that scaffolds config, types, and API routes into a Next.js project
 
@@ -48,7 +48,9 @@ beehiiv-react/
 │   │   ├── usePosts.ts             # Paginated post list with filters
 │   │   ├── usePost.ts              # Single post by ID
 │   │   ├── useSubscriberAccess.ts  # Subscriber tier/status -> access result
-│   │   └── usePostAccess.ts        # Combined post + subscriber access check
+│   │   ├── usePostAccess.ts        # Combined post + subscriber access check
+│   │   ├── useSubscriberProfile.ts # Full subscriber profile with isPremium/isActive flags (composes useSubscription)
+│   │   └── useSubscriberTier.ts    # Lightweight tier-only hook (strips subscription record from useSubscriberProfile)
 │   ├── components/                  # React components
 │   │   ├── index.ts                 # Re-exports all components
 │   │   ├── BeehiivProvider.tsx      # React context provider
@@ -57,7 +59,8 @@ beehiiv-react/
 │   │   ├── PostList.tsx             # Paginated post list with load-more
 │   │   ├── PostContentRenderer.tsx  # HTML/JSON content renderer (renamed from PostContent to avoid type collision)
 │   │   ├── GatedContent.tsx         # Declarative subscriber-gated content wrapper
-│   │   └── PremiumContent.tsx       # Premium content gate with upgrade prompt
+│   │   ├── PremiumContent.tsx       # Premium content gate with upgrade prompt
+│   │   └── SubscriberBadge.tsx     # Subscriber tier badge with headless renderBadge prop
 │   ├── utils/                       # Pure utility functions
 │   │   ├── index.ts                 # Re-exports all utilities
 │   │   └── access.ts               # canViewContent, getAudienceLabel, getTierLabel
@@ -187,6 +190,18 @@ Both hooks use `useBeehiiv()` for the API base URL and follow the same loading/e
 - **`PremiumContent`** -- Opinionated wrapper around `GatedContent` with `audience="premium"` and an `upgradePrompt` render prop.
 
 ---
+
+
+## Subscriber Profiles (v0.2.1)
+
+### Hooks
+
+- **`useSubscriberProfile({ email?, id?, enabled? })`** -- Resolves a subscriber's full profile from their email or subscription ID. Returns the raw `SubscriptionInfo` record alongside pre-computed `isPremium`, `isActive`, and `tier` flags. Composes on top of `useSubscription` and is the canonical way to resolve subscriber identity without a content context.
+- **`useSubscriberTier({ email?, id?, enabled? })`** -- Lightweight alias over `useSubscriberProfile` that strips the `subscription` record and returns only tier/status/flags. Use this when you don't need the raw subscription data.
+
+### Component
+
+- **`SubscriberBadge`** -- Drop-in badge component that renders "Premium" or "Free" based on a subscriber's resolved tier. Supports a headless `renderBadge` render prop for fully custom rendering. Includes `data-tier`, `data-subscriber-badge`, and `aria-label` attributes.
 
 ## How to Add a New Endpoint
 

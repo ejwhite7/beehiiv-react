@@ -262,6 +262,66 @@ The `canViewContent(tier, status, audience)` utility resolves subscriber access:
 - `'free'` audience: requires active subscription (any tier)
 - `'premium'` audience: requires active premium subscription
 
+## Subscriber Profiles
+
+Resolve a subscriber's identity, tier, and access flags independently of any content or post.
+Use these hooks to decorate user profiles, gate non-beehiiv features, or render subscriber badges.
+
+### Hooks
+
+#### `useSubscriberProfile`
+
+Returns the full subscription record alongside pre-computed `isPremium` and `isActive` flags.
+
+```tsx
+import { useSubscriberProfile } from 'beehiiv-react';
+
+const { isPremium, tier, isActive, subscription, isLoading } = useSubscriberProfile({
+  email: user.email, // or id: 'sub_abc123'
+});
+
+// Decorate a profile
+return (
+  <UserProfile>
+    {isPremium && <PremiumBadge />}
+  </UserProfile>
+);
+```
+
+#### `useSubscriberTier`
+
+Lightweight alternative when you only need the tier flags — no full subscription record returned.
+
+```tsx
+import { useSubscriberTier } from 'beehiiv-react';
+
+const { isPremium, isActive, isLoading } = useSubscriberTier({ email: user.email });
+
+if (isPremium) enablePremiumFeature();
+```
+
+### Component
+
+#### `SubscriberBadge`
+
+Renders a "Premium" or "Free" badge based on the subscriber's resolved tier.
+Supports headless mode via `renderBadge` for fully custom rendering.
+
+```tsx
+import { SubscriberBadge } from 'beehiiv-react';
+
+// Default badge UI
+<SubscriberBadge subscriberEmail={user.email} />
+
+// Headless — bring your own UI
+<SubscriberBadge
+  subscriberEmail={user.email}
+  renderBadge={({ isPremium, tier }) => (
+    <MyCustomBadge premium={isPremium} label={tier ?? 'Free'} />
+  )}
+/>
+```
+
 ## API Reference
 
 ### Hooks

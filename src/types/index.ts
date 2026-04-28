@@ -73,4 +73,8 @@ export type {
   UseSubscriberAccessOptions,
   UsePostAccessOptions,
   UsePostAccessReturn,
+  UseSubscriberProfileOptions,
+  SubscriberProfile,
+  SubscriberTierResult,
+  SubscriberBadgeProps,
 } from './access.js';

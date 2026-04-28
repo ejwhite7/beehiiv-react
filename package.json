@@ -1,6 +1,6 @@
 {
   "name": "beehiiv-react",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Connect a beehiiv account to your React/Next.js project \u2014 typed API client, React hooks, subscription form component, and CLI scaffolding tool.",
   "keywords": [
     "beehiiv",

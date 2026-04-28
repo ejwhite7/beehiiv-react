@@ -8,7 +8,8 @@
  * @module types/access
  */
 
-import type { SubscriptionTier, SubscriptionStatus, PostAudience, BeehiivApiError } from './index.js';
+import type { SubscriptionTier, SubscriptionStatus, SubscriptionInfo, PostAudience, BeehiivApiError } from './index.js';
+import type React from 'react';
 import type { PostInfo } from './post.js';
 
 /**
@@ -94,4 +95,90 @@ export interface UsePostAccessReturn {
   error: BeehiivApiError | null;
   /** Manually re-trigger both the post and subscription fetches. */
   refetch: () => Promise<void>;
+}
+
+/**
+ * Options for the useSubscriberProfile hook.
+ */
+export interface UseSubscriberProfileOptions {
+  /** Look up subscriber by email address. */
+  email?: string;
+  /** Look up subscriber by subscription ID. */
+  id?: string;
+  /**
+   * If false, the hook will not fetch automatically.
+   * Useful when email/id may not be available yet. Default: true
+   */
+  enabled?: boolean;
+}
+
+/**
+ * The resolved subscriber profile, combining the raw subscription record
+ * with pre-computed identity flags.
+ */
+export interface SubscriberProfile {
+  /** The full subscription record, or null if not found / not yet loaded. */
+  subscription: SubscriptionInfo | null;
+  /** The subscriber's current tier, or null if not subscribed. */
+  tier: SubscriptionTier | null;
+  /** The subscriber's current status, or null if not subscribed. */
+  status: SubscriptionStatus | null;
+  /** True if the subscriber has an active premium subscription. */
+  isPremium: boolean;
+  /** True if the subscriber has any active subscription (free or premium). */
+  isActive: boolean;
+  /** Whether data is still being fetched. */
+  isLoading: boolean;
+  /** Error from the subscription lookup, if any. */
+  error: Error | null;
+  /** Manually re-trigger the subscriber lookup. */
+  refetch: () => Promise<void>;
+}
+
+/**
+ * Return value of useSubscriberTier — a lightweight subset of SubscriberProfile
+ * for callers that only need tier and access flags, not the full subscription record.
+ */
+export interface SubscriberTierResult {
+  /** The subscriber's current tier, or null if not subscribed. */
+  tier: SubscriptionTier | null;
+  /** The subscriber's current status, or null if not subscribed. */
+  status: SubscriptionStatus | null;
+  /** True if the subscriber has an active premium subscription. */
+  isPremium: boolean;
+  /** True if the subscriber has any active subscription (free or premium). */
+  isActive: boolean;
+  /** Whether data is still being fetched. */
+  isLoading: boolean;
+  /** Error from the subscription lookup, if any. */
+  error: Error | null;
+  /** Manually re-trigger the lookup. */
+  refetch: () => Promise<void>;
+}
+
+/**
+ * Props for the SubscriberBadge component.
+ */
+export interface SubscriberBadgeProps {
+  /** Look up subscriber by email. */
+  subscriberEmail?: string;
+  /** Look up subscriber by subscription ID. */
+  subscriberId?: string;
+  /** className applied to the badge wrapper element. */
+  className?: string;
+  /**
+   * Headless render prop. When provided, the component renders no default UI —
+   * it only resolves the subscriber profile and passes the result to this function.
+   */
+  renderBadge?: (profile: SubscriberProfile) => React.ReactNode;
+  /**
+   * Content to render while the subscriber profile is loading.
+   * Defaults to null.
+   */
+  loadingFallback?: React.ReactNode;
+  /**
+   * Content to render when the subscriber is not found or has no active subscription.
+   * Defaults to a "Free" badge.
+   */
+  fallback?: React.ReactNode;
 }

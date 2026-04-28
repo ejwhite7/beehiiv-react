@@ -36,3 +36,6 @@ export type { GatedContentProps } from './GatedContent.js';
 
 export { PremiumContent } from './PremiumContent.js';
 export type { PremiumContentProps } from './PremiumContent.js';
+
+export { SubscriberBadge } from './SubscriberBadge.js';
+export type { SubscriberBadgeProps } from './SubscriberBadge.js';

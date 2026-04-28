@@ -41,3 +41,7 @@ export type {
 export { useSubscriberAccess } from './useSubscriberAccess.js';
 
 export { usePostAccess } from './usePostAccess.js';
+
+export { useSubscriberProfile } from './useSubscriberProfile.js';
+
+export { useSubscriberTier } from './useSubscriberTier.js';

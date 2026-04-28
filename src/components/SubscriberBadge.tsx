@@ -12,6 +12,7 @@ import React from 'react';
 
 import { useSubscriberProfile } from '../hooks/useSubscriberProfile.js';
 import type { SubscriberBadgeProps } from '../types/access.js';
+export type { SubscriberBadgeProps } from '../types/access.js';
 
 /**
  * Displays a subscriber tier badge or delegates rendering via `renderBadge`.

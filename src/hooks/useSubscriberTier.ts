@@ -28,6 +28,7 @@ import type { UseSubscriberProfileOptions, SubscriberTierResult } from '../types
  * ```
  */
 export function useSubscriberTier(options: UseSubscriberProfileOptions): SubscriberTierResult {
-  const { subscription: _subscription, ...rest } = useSubscriberProfile(options);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { subscription, ...rest } = useSubscriberProfile(options);
   return rest;
 }

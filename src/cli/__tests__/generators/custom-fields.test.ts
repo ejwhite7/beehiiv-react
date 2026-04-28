@@ -5,7 +5,7 @@
  * @module cli/__tests__/generators/custom-fields
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
@@ -72,10 +72,13 @@ describe('generateCustomFieldTypes', () => {
     tmpDir = fs.mkdtempSync(
       path.join(os.tmpdir(), 'beehiiv-custom-fields-test-'),
     );
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
   });
 
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
+    vi.useRealTimers();
   });
 
   it('should generate types for all field kinds matching the snapshot', async () => {

@@ -1,23 +1,45 @@
 /**
  * Core beehiiv context hook.
- * Provides access to the beehiiv configuration from the BeehiivProvider.
+ *
+ * Provides type-safe access to the beehiiv configuration values
+ * set by the nearest {@link BeehiivProvider}.
+ *
  * @module hooks/useBeehiiv
  */
 
-/** The value provided by the BeehiivProvider context */
-export interface BeehiivContextValue {
-  /** The API base URL for proxy requests */
-  apiBaseUrl: string;
-  /** The publication ID */
-  publicationId: string;
-}
+import { useContext } from 'react';
+
+import {
+  BeehiivContext,
+  type BeehiivContextValue,
+} from '../components/BeehiivProvider.js';
+
+// Re-export so consumers can import the type from the hooks barrel.
+export type { BeehiivContextValue } from '../components/BeehiivProvider.js';
 
 /**
- * Hook to access the beehiiv context from within a BeehiivProvider.
- * @returns The current beehiiv context value
- * @throws If used outside of a BeehiivProvider
+ * Hook to access the beehiiv context from within a `<BeehiivProvider>`.
+ *
+ * @returns The current {@link BeehiivContextValue}
+ * @throws {Error} If called outside of a `<BeehiivProvider>`
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { apiUrl, publicationId } = useBeehiiv();
+ *   // ...
+ * }
+ * ```
  */
 export function useBeehiiv(): BeehiivContextValue {
-  // TODO: Implement React context consumption in Stage 2
-  throw new Error('useBeehiiv must be used within a BeehiivProvider');
+  const context = useContext(BeehiivContext);
+
+  if (context === null) {
+    throw new Error(
+      'useBeehiiv must be used within a <BeehiivProvider>. ' +
+        'Wrap your component tree with <BeehiivProvider publicationId="...">.',
+    );
+  }
+
+  return context;
 }

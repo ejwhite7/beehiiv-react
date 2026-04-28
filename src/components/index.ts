@@ -3,8 +3,15 @@
  * @module components
  */
 
-export { BeehiivProvider } from './BeehiivProvider.js';
-export type { BeehiivProviderProps } from './BeehiivProvider.js';
+export { BeehiivProvider, BeehiivContext } from './BeehiivProvider.js';
+export type {
+  BeehiivProviderProps,
+  BeehiivContextValue,
+} from './BeehiivProvider.js';
 
 export { SubscriptionForm } from './SubscriptionForm.js';
-export type { SubscriptionFormProps } from './SubscriptionForm.js';
+export type {
+  SubscriptionFormProps,
+  CustomFieldConfig,
+  RenderFormProps,
+} from './SubscriptionForm.js';

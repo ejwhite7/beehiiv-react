@@ -7,9 +7,10 @@
 `beehiiv-react` is a hybrid npm package that provides:
 
 1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only)
-2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`) for client-side state management
-3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`) for common UI patterns
-4. **A CLI tool** (`npx beehiiv-react init/sync`) that scaffolds config, types, and API routes into a Next.js project
+2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`) for client-side state management
+3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`, `PostCard`, `PostList`, `PostContentRenderer`, `GatedContent`, `PremiumContent`) for common UI patterns
+4. **Utility functions** (`canViewContent`, `getAudienceLabel`, `getTierLabel`) for subscriber access resolution
+5. **A CLI tool** (`npx beehiiv-react init/sync`) that scaffolds config, types, and API routes into a Next.js project
 
 The package targets React 18+ and Next.js 13+ (App Router) projects using TypeScript.
 
@@ -26,8 +27,9 @@ beehiiv-react/
 │   │   ├── custom-field.ts          # Custom field definitions and values
 │   │   ├── subscription.ts          # Subscription CRUD types
 │   │   ├── publication.ts           # Publication types
-│   │   ├── post.ts                  # Post/newsletter types
+│   │   ├── post.ts                  # Post/newsletter types (PostContent discriminated union, PostAudience, etc.)
 │   │   ├── webhook.ts               # Webhook event types
+│   │   ├── access.ts                # AccessResult, UseSubscriberAccessOptions, UsePostAccessOptions
 │   │   └── index.ts                 # Re-exports all types
 │   ├── client/                      # Server-side API client
 │   │   ├── index.ts                 # BeehiivClient class (main entry)
@@ -42,11 +44,23 @@ beehiiv-react/
 │   │   ├── useBeehiiv.ts            # Context access hook
 │   │   ├── useSubscribe.ts          # Email subscription hook
 │   │   ├── useSubscription.ts       # Subscription data fetching hook
-│   │   └── useCustomFields.ts       # Custom fields fetching hook
+│   │   ├── useCustomFields.ts       # Custom fields fetching hook
+│   │   ├── usePosts.ts             # Paginated post list with filters
+│   │   ├── usePost.ts              # Single post by ID
+│   │   ├── useSubscriberAccess.ts  # Subscriber tier/status -> access result
+│   │   └── usePostAccess.ts        # Combined post + subscriber access check
 │   ├── components/                  # React components
 │   │   ├── index.ts                 # Re-exports all components
 │   │   ├── BeehiivProvider.tsx      # React context provider
-│   │   └── SubscriptionForm.tsx     # Drop-in subscription form
+│   │   ├── SubscriptionForm.tsx     # Drop-in subscription form
+│   │   ├── PostCard.tsx             # Single post card display
+│   │   ├── PostList.tsx             # Paginated post list with load-more
+│   │   ├── PostContentRenderer.tsx  # HTML/JSON content renderer (renamed from PostContent to avoid type collision)
+│   │   ├── GatedContent.tsx         # Declarative subscriber-gated content wrapper
+│   │   └── PremiumContent.tsx       # Premium content gate with upgrade prompt
+│   ├── utils/                       # Pure utility functions
+│   │   ├── index.ts                 # Re-exports all utilities
+│   │   └── access.ts               # canViewContent, getAudienceLabel, getTierLabel
 │   └── cli/                         # CLI tool (Node.js)
 │       ├── index.ts                 # Commander.js program setup
 │       ├── auth/
@@ -149,6 +163,31 @@ React and react-dom are externalized from the library build but bundled in the C
 
 ---
 
+## Posts & Content Visibility (v0.2.0)
+
+### Post Hooks
+
+- **`usePosts(options)`** -- Paginated post list with `audience`, `status`, `orderBy`, `direction` filters. Returns `{ posts, isLoading, error, hasMore, loadMore }` with cursor-based pagination.
+- **`usePost({ id })`** -- Fetches a single post by ID. Returns `{ post, isLoading, error }`.
+
+Both hooks use `useBeehiiv()` for the API base URL and follow the same loading/error state pattern as existing hooks.
+
+### Post Components
+
+- **`PostCard`** -- Renders a single post with thumbnail, audience badge, title, subtitle, and publish date. Supports headless mode via `renderCard` prop.
+- **`PostList`** -- Renders a paginated list of `PostCard` items with load-more button, skeleton loading states, and empty state.
+- **`PostContentRenderer`** -- Renders the body of a post. Supports HTML (via `dangerouslySetInnerHTML` with optional `sanitizeHtml` callback) and JSON (via `renderJsonContent` callback or `<pre>` fallback). Named `PostContentRenderer` (not `PostContent`) to avoid collision with the `PostContent` type from `src/types/post.ts`.
+
+### Access & Content Gating
+
+- **`canViewContent(tier, status, audience)`** -- Pure utility function that resolves whether a subscriber can view content for a given audience. Lives in `src/utils/access.ts`.
+- **`useSubscriberAccess({ email, audience })`** -- Hook that fetches subscriber info and resolves access via `canViewContent`. Returns `AccessResult` with `canView`, `tier`, `isActive`, `isLoading`.
+- **`usePostAccess({ postId, email })`** -- Combines `usePost` and `useSubscriberAccess` to return `{ post, canView, isLoading }`.
+- **`GatedContent`** -- Declarative component wrapping children behind an audience check. Renders `fallback` for unauthorized users and `loading` during resolution.
+- **`PremiumContent`** -- Opinionated wrapper around `GatedContent` with `audience="premium"` and an `upgradePrompt` render prop.
+
+---
+
 ## How to Add a New Endpoint
 
 1. Create types in `src/types/` (e.g., `src/types/automation.ts`)
@@ -176,6 +215,14 @@ React and react-dom are externalized from the library build but bundled in the C
    - Manage loading/error/data state internally
    - Return a typed result interface
    - Accept configuration options
+
+## How to Add a New Utility
+
+1. Create the utility function in `src/utils/` (e.g., `src/utils/formatting.ts`)
+2. Export from `src/utils/index.ts`
+3. Re-export from `src/index.ts`
+4. Add tests in `src/__tests__/utils/`
+5. Utilities should be pure functions with no React dependencies -- they are usable on both client and server
 
 ---
 
@@ -226,7 +273,7 @@ All steps must pass for the CI to be green. The `prepublishOnly` script also run
 
 ---
 
-## Stage 3 Completion Notes
+## Stage 3 Completion Notes (v0.1.0)
 
 ### Branch Merge Summary
 
@@ -245,9 +292,9 @@ All four feature branches were successfully merged into the `release/v0.1.0` bra
 - **ESLint `prefer-const` false positive**: The OAuth2 module declared `let timeoutHandle` which was flagged by ESLint's `prefer-const` rule, but `let` is required because the variable is assigned after declaration. Added an ESLint disable comment.
 - **Unused import**: `waitFor` was imported but never used in `useSubscribe.test.tsx`. Removed the unused import.
 
-### Final Test Count
+### Final Test Count (v0.2.0)
 
-**126 tests passing** across 14 test files:
+**234 tests passing** across 23 test files:
 
 - `src/client/__tests__/client.test.ts` -- 18 tests
 - `src/client/__tests__/endpoints/custom-fields.test.ts` -- 9 tests
@@ -258,20 +305,29 @@ All four feature branches were successfully merged into the `release/v0.1.0` bra
 - `src/hooks/__tests__/useCustomFields.test.tsx` -- 4 tests
 - `src/hooks/__tests__/useSubscribe.test.tsx` -- 6 tests
 - `src/hooks/__tests__/useSubscription.test.tsx` -- 5 tests
+- `src/hooks/__tests__/usePosts.test.tsx` -- 6 tests
+- `src/hooks/__tests__/usePost.test.tsx` -- 4 tests
+- `src/__tests__/hooks/useSubscriberAccess.test.tsx` -- 8 tests
 - `src/components/__tests__/SubscriptionForm.test.tsx` -- 29 tests
 - `src/components/__tests__/templates.test.ts` -- 9 tests
+- `src/components/__tests__/PostCard.test.tsx` -- 19 tests
+- `src/components/__tests__/PostList.test.tsx` -- 15 tests
+- `src/components/__tests__/PostContentRenderer.test.tsx` -- 9 tests
+- `src/__tests__/components/GatedContent.test.tsx` -- 11 tests
+- `src/__tests__/components/PremiumContent.test.tsx` -- 10 tests
+- `src/__tests__/utils/access.test.ts` -- 26 tests
 - `src/cli/__tests__/auth/api-key.test.ts` -- 5 tests
 - `src/cli/__tests__/generators/config.test.ts` -- 3 tests
 - `src/cli/__tests__/generators/custom-fields.test.ts` -- 9 tests
 
-### Build Output Verified
+### Build Output Verified (v0.2.0)
 
 ```
 dist/
-  index.js        (CJS, 33.66 KB)
-  index.mjs       (ESM, 33.16 KB)
-  index.d.ts      (DTS, 48.45 KB)
-  index.d.mts     (DTS, 48.45 KB)
+  index.js        (CJS, 50.58 KB)
+  index.mjs       (ESM, 49.24 KB)
+  index.d.ts      (DTS, 74.70 KB)
+  index.d.mts     (DTS, 74.70 KB)
   index.js.map
   index.mjs.map
   cli/
@@ -280,3 +336,23 @@ dist/
 ```
 
 CLI help output confirmed working: `node dist/cli/index.js --help` prints Commander.js help with `init` and `sync` commands.
+
+
+---
+
+## Stage 4 Completion Notes (v0.2.0)
+
+### Branch Merge Summary
+
+Three feature branches were merged into the `feature/posts-visibility-v0.2.0` integration branch:
+
+1. `feature/post-hooks` -- usePosts/usePost hooks, PostContent type (discriminated union), expanded ListPostsOptions, UTM field fixes
+2. `feature/post-components` -- PostCard, PostList, PostContent (later renamed PostContentRenderer) components
+3. `feature/content-gating` -- canViewContent utility, useSubscriberAccess/usePostAccess hooks, GatedContent/PremiumContent components
+
+### Integration Issues Resolved
+
+- **PostContent naming collision**: Agent B created a `PostContent` React component, but Agent A had already introduced a `PostContent` type (discriminated union for html/json content). The component was renamed to `PostContentRenderer` to avoid the collision, and all exports, imports, and tests were updated accordingly.
+- **Merge conflicts**: The `feature/content-gating` branch conflicted with the merged `feature/post-hooks` + `feature/post-components` code in `src/index.ts`, `src/hooks/index.ts`, and `src/components/index.ts`. All three conflicts were resolved by combining both sets of exports.
+- **Unused imports (lint errors)**: `SubscriptionTier` and `SubscriptionStatus` were imported but unused in `GatedContent.tsx` and `access.test.ts`. `waitFor` was unused in `GatedContent.test.tsx`. `PostAudience` was unused in `PostCard.test.tsx`. All removed.
+- **New `src/utils/` directory**: Added by the content-gating branch for pure utility functions. tsup picks it up automatically since it bundles from the `src/index.ts` entry point which re-exports from `utils/index.ts`.

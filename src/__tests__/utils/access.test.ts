@@ -12,7 +12,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { canViewContent, getAudienceLabel, getTierLabel } from '../../utils/access.js';
-import type { SubscriptionTier, SubscriptionStatus, PostAudience } from '../../types/index.js';
 
 describe('canViewContent', () => {
   describe('audience = "all"', () => {

@@ -11,7 +11,7 @@
 
 import React, { useEffect, useRef } from 'react';
 
-import type { PostAudience, SubscriptionTier, SubscriptionStatus } from '../types/index.js';
+import type { PostAudience } from '../types/index.js';
 import type { AccessResult } from '../types/access.js';
 import { useSubscriberAccess } from '../hooks/useSubscriberAccess.js';
 

@@ -11,6 +11,15 @@ export default defineConfig([
     external: ['react', 'react-dom'],
     treeshake: true,
   },
+  // Server utilities (CJS + ESM) — RSC-compatible sub-path export
+  {
+    entry: { 'server/index': 'src/server/index.ts' },
+    format: ['cjs', 'esm'],
+    dts: true,
+    sourcemap: true,
+    external: ['react', 'react-dom'],
+    treeshake: true,
+  },
   // CLI (CJS, executable)
   {
     entry: { 'cli/index': 'src/cli/index.ts' },

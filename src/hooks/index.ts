@@ -37,3 +37,7 @@ export type {
   UsePostOptions,
   UsePostReturn,
 } from './usePost.js';
+
+export { useSubscriberAccess } from './useSubscriberAccess.js';
+
+export { usePostAccess } from './usePostAccess.js';

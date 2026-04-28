@@ -25,8 +25,14 @@ export type {
 export { PostList } from './PostList.js';
 export type { PostListProps } from './PostList.js';
 
-export { PostContent } from './PostContent.js';
+export { PostContentRenderer } from './PostContentRenderer.js';
 export type {
   PostContentProps,
   PostContentData,
-} from './PostContent.js';
+} from './PostContentRenderer.js';
+
+export { GatedContent } from './GatedContent.js';
+export type { GatedContentProps } from './GatedContent.js';
+
+export { PremiumContent } from './PremiumContent.js';
+export type { PremiumContentProps } from './PremiumContent.js';

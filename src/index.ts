@@ -18,6 +18,8 @@ export {
   useCustomFields,
   usePosts,
   usePost,
+  useSubscriberAccess,
+  usePostAccess,
 } from './hooks/index.js';
 
 export type {
@@ -41,7 +43,9 @@ export {
   SubscriptionForm,
   PostCard,
   PostList,
-  PostContent,
+  PostContentRenderer,
+  GatedContent,
+  PremiumContent,
 } from './components/index.js';
 
 export type {
@@ -54,7 +58,16 @@ export type {
   PostListProps,
   PostContentProps,
   PostContentData,
+  GatedContentProps,
+  PremiumContentProps,
 } from './components/index.js';
+
+// --- Utilities ---
+export {
+  canViewContent,
+  getAudienceLabel,
+  getTierLabel,
+} from './utils/index.js';
 
 // --- Types ---
 export type {
@@ -105,4 +118,8 @@ export type {
   UpdateWebhookRequest,
   WebhookResponse,
   WebhookListResponse,
+  AccessResult,
+  UseSubscriberAccessOptions,
+  UsePostAccessOptions,
+  UsePostAccessReturn,
 } from './types/index.js';

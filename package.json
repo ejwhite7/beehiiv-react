@@ -11,6 +11,18 @@
   ],
   "license": "MIT",
   "author": "EJ White",
+  "homepage": "https://github.com/ejwhite7/beehiiv-react#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ejwhite7/beehiiv-react.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ejwhite7/beehiiv-react/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

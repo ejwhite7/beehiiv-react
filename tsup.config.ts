@@ -11,6 +11,24 @@ export default defineConfig([
     external: ['react', 'react-dom'],
     treeshake: true,
   },
+  // TanStack Query adapter (CJS + ESM)
+  {
+    entry: { 'query/index': 'src/query/index.ts' },
+    format: ['cjs', 'esm'],
+    dts: true,
+    sourcemap: true,
+    external: ['react', 'react-dom', '@tanstack/react-query'],
+    treeshake: true,
+  },
+  // Server utilities (CJS + ESM) — RSC-compatible sub-path export
+  {
+    entry: { 'server/index': 'src/server/index.ts' },
+    format: ['cjs', 'esm'],
+    dts: true,
+    sourcemap: true,
+    external: ['react', 'react-dom'],
+    treeshake: true,
+  },
   // CLI (CJS, executable)
   {
     entry: { 'cli/index': 'src/cli/index.ts' },

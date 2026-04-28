@@ -2,6 +2,211 @@
 
 A typed React SDK and CLI for integrating [beehiiv](https://www.beehiiv.com/) newsletters into Next.js applications. Scaffolds configuration, generates TypeScript types from your publication's custom fields, and provides React hooks and components for subscription management.
 
+
+## New in v0.3.0
+
+v0.3.0 delivers full beehiiv API v2 coverage, two new React hooks, a first-class TanStack Query adapter, and React Server Component utilities.
+
+### 4 New Server-Side Endpoints
+
+The `BeehiivClient` now exposes 8 endpoint namespaces (up from 4 in v0.2.x):
+
+#### Webhooks
+
+```ts
+import { BeehiivClient } from 'beehiiv-react';
+
+const client = new BeehiivClient({ apiKey: process.env.BEEHIIV_API_KEY! });
+
+// List all webhooks
+const { data: webhooks } = await client.webhooks.list('pub_abc');
+
+// Create a webhook
+const { data: webhook } = await client.webhooks.create('pub_abc', {
+  url: 'https://example.com/webhook',
+  events: ['subscription.created', 'post.published'],
+});
+
+// Send a test event
+await client.webhooks.test('pub_abc', webhook.id);
+```
+
+#### Segments
+
+```ts
+// List segments
+const { data: segments } = await client.segments.list('pub_abc');
+
+// List members of a segment
+const { data: members } = await client.segments.listMembers('pub_abc', 'seg_123');
+```
+
+#### Automations
+
+```ts
+// List automations
+const { data: automations } = await client.automations.list('pub_abc');
+
+// List journeys for an automation
+const { data: journeys } = await client.automations.listJourneys('pub_abc', 'auto_456');
+```
+
+#### Referrals
+
+```ts
+// Get the referral program
+const { data: program } = await client.referrals.getProgram('pub_abc');
+
+// Get a subscriber's referral stats
+const { data: stats } = await client.referrals.getSubscriberStats('pub_abc', 'sub_789');
+```
+
+### 2 New React Hooks
+
+#### useSubscribers
+
+Fetch and paginate through subscribers:
+
+```tsx
+'use client';
+
+import { useSubscribers } from 'beehiiv-react';
+
+export function SubscriberList() {
+  const { data, loading, error, page, nextPage, prevPage } = useSubscribers({
+    limit: 20,
+  });
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
+  return (
+    <div>
+      <ul>
+        {data?.map((sub) => (
+          <li key={sub.id}>{sub.email}</li>
+        ))}
+      </ul>
+      <button onClick={prevPage} disabled={page === 1}>Previous</button>
+      <button onClick={nextPage}>Next</button>
+    </div>
+  );
+}
+```
+
+#### usePublications
+
+Fetch all publications accessible with the current API key:
+
+```tsx
+'use client';
+
+import { usePublications } from 'beehiiv-react';
+
+export function PublicationPicker() {
+  const { data: publications, loading } = usePublications();
+
+  if (loading) return <p>Loading publications...</p>;
+
+  return (
+    <select>
+      {publications?.map((pub) => (
+        <option key={pub.id} value={pub.id}>{pub.name}</option>
+      ))}
+    </select>
+  );
+}
+```
+
+### `beehiiv-react/query` -- TanStack Query Adapter
+
+A dedicated sub-path export that wraps every beehiiv API call in TanStack Query v5 hooks for automatic caching, deduplication, and background re-fetching.
+
+**Setup:**
+
+```tsx
+// app/providers.tsx
+'use client';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BeehiivProvider } from 'beehiiv-react';
+
+const queryClient = new QueryClient();
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BeehiivProvider
+        publicationId={process.env.NEXT_PUBLIC_BEEHIIV_PUBLICATION_ID!}
+        apiUrl="/api/beehiiv"
+      >
+        {children}
+      </BeehiivProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+**Usage:**
+
+```tsx
+'use client';
+
+import { usePostsQuery, useSubscribeMutation } from 'beehiiv-react/query';
+
+export function PostsFeed() {
+  const { data, isLoading } = usePostsQuery({ status: 'confirmed', limit: 10 });
+  const subscribe = useSubscribeMutation();
+
+  if (isLoading) return <p>Loading...</p>;
+
+  return (
+    <ul>
+      {data?.data.map((post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### `beehiiv-react/server` -- React Server Component Utilities
+
+A sub-path export providing RSC-compatible helpers. No hooks, no client-side state -- just plain async functions safe for Server Components, Route Handlers, and Server Actions.
+
+```tsx
+// app/posts/page.tsx  (Next.js Server Component)
+import { createBeehiivClient, fetchPosts } from 'beehiiv-react/server';
+
+export default async function PostsPage() {
+  const client = createBeehiivClient();       // reads BEEHIIV_API_KEY from env
+  const posts = await fetchPosts(client, process.env.BEEHIIV_PUB_ID!, {
+    status: 'confirmed',
+    limit: 20,
+  });
+
+  return (
+    <ul>
+      {posts.map((post) => (
+        <li key={post.id}>{post.title}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Additional server fetchers: `fetchPost`, `fetchSubscribers`, `fetchSubscription`, `fetchPublications`, `fetchCustomFields`, `fetchWebhooks`, `fetchSegments`.
+
+### Migration from v0.2.x
+
+All v0.2.x APIs remain stable and unchanged. v0.3.0 is a purely additive release:
+
+- Existing hooks (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, etc.) are unchanged.
+- Existing client endpoints (`subscriptions`, `customFields`, `publications`, `posts`) are unchanged.
+- The main `beehiiv-react` import path works exactly as before.
+- New features are available via the main import path (new endpoints and hooks) or the new sub-path imports (`beehiiv-react/query`, `beehiiv-react/server`).
+- `@tanstack/react-query` (>=5.0.0) is an **optional** peer dependency -- only needed if you import from `beehiiv-react/query`.
+
 ## Installation
 
 ```bash

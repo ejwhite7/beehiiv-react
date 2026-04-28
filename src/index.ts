@@ -9,6 +9,10 @@
 
 // --- Client ---
 export { BeehiivClient } from './client/index.js';
+export { WebhooksEndpoint } from './client/endpoints/webhooks.js';
+export { SegmentsEndpoint } from './client/endpoints/segments.js';
+export { AutomationsEndpoint } from './client/endpoints/automations.js';
+export { ReferralsEndpoint } from './client/endpoints/referrals.js';
 
 // --- Hooks ---
 export {
@@ -22,6 +26,8 @@ export {
   usePostAccess,
   useSubscriberProfile,
   useSubscriberTier,
+  useSubscribers,
+  usePublications,
 } from './hooks/index.js';
 
 export type {
@@ -36,6 +42,10 @@ export type {
   UsePostsReturn,
   UsePostOptions,
   UsePostReturn,
+  UseSubscribersOptions,
+  UseSubscribersReturn,
+  UsePublicationsOptions,
+  UsePublicationsReturn,
 } from './hooks/index.js';
 
 // --- Components ---
@@ -122,6 +132,22 @@ export type {
   UpdateWebhookRequest,
   WebhookResponse,
   WebhookListResponse,
+  SegmentType,
+  SegmentStatus,
+  SegmentMembersExpand,
+  SegmentsExpand,
+  SegmentStats,
+  SegmentInfo,
+  SegmentMember,
+  SegmentResponse,
+  SegmentListResponse,
+  SegmentMembersResponse,
+  CustomFieldFilter,
+  SegmentSubscriptionInput,
+  CreateSegmentRequest,
+  ListSegmentsOptions,
+  ListSegmentMembersOptions,
+  SegmentRecalculateResponse,
   AccessResult,
   UseSubscriberAccessOptions,
   UsePostAccessOptions,
@@ -129,4 +155,24 @@ export type {
   UseSubscriberProfileOptions,
   SubscriberProfile,
   SubscriberTierResult,
+  AutomationStatus,
+  AutomationTriggerType,
+  AutomationStepType,
+  AutomationStep,
+  AutomationTrigger,
+  AutomationInfo,
+  AutomationJourneyStatus,
+  AutomationJourney,
+  AutomationResponse,
+  AutomationListResponse,
+  AutomationJourneyListResponse,
+  CreateAutomationRequest,
+  ListAutomationsOptions,
+  ListJourneysOptions,
+  ReferralMilestoneRewardType,
+  ReferralMilestone,
+  ReferralProgram,
+  ReferralStats,
+  ReferralProgramResponse,
+  ReferralStatsResponse,
 } from './types/index.js';

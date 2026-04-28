@@ -20,6 +20,8 @@ export {
   usePost,
   useSubscriberAccess,
   usePostAccess,
+  useSubscriberProfile,
+  useSubscriberTier,
 } from './hooks/index.js';
 
 export type {
@@ -46,6 +48,7 @@ export {
   PostContentRenderer,
   GatedContent,
   PremiumContent,
+  SubscriberBadge,
 } from './components/index.js';
 
 export type {
@@ -60,6 +63,7 @@ export type {
   PostContentData,
   GatedContentProps,
   PremiumContentProps,
+  SubscriberBadgeProps,
 } from './components/index.js';
 
 // --- Utilities ---
@@ -122,4 +126,7 @@ export type {
   UseSubscriberAccessOptions,
   UsePostAccessOptions,
   UsePostAccessReturn,
+  UseSubscriberProfileOptions,
+  SubscriberProfile,
+  SubscriberTierResult,
 } from './types/index.js';

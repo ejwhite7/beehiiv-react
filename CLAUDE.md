@@ -1,4 +1,4 @@
-# CLAUDE.md — beehiiv-react
+# CLAUDE.md -- beehiiv-react
 
 > This file is the authoritative reference for the `beehiiv-react` package architecture. Read it before making any changes.
 
@@ -6,11 +6,13 @@
 
 `beehiiv-react` is a hybrid npm package that provides:
 
-1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only)
-2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`, `useSubscriberProfile`, `useSubscriberTier`) for client-side state management
+1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only) with 8 endpoint namespaces: `subscriptions`, `customFields`, `publications`, `posts`, `webhooks`, `segments`, `automations`, `referrals`
+2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`, `useSubscriberProfile`, `useSubscriberTier`, `useSubscribers`, `usePublications`) for client-side state management -- 12 hooks total (including `useBeehiiv`)
 3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`, `PostCard`, `PostList`, `PostContentRenderer`, `GatedContent`, `PremiumContent`, `SubscriberBadge`) for common UI patterns
 4. **Utility functions** (`canViewContent`, `getAudienceLabel`, `getTierLabel`) for subscriber access resolution
 5. **A CLI tool** (`npx beehiiv-react init/sync`) that scaffolds config, types, and API routes into a Next.js project
+6. **A TanStack Query adapter** (`beehiiv-react/query`) providing `useQuery`/`useMutation` hooks with cache key factories
+7. **React Server Component utilities** (`beehiiv-react/server`) providing `createBeehiivClient` and pure async data-fetching functions
 
 The package targets React 18+ and Next.js 13+ (App Router) projects using TypeScript.
 
@@ -21,14 +23,17 @@ The package targets React 18+ and Next.js 13+ (App Router) projects using TypeSc
 ```
 beehiiv-react/
 ├── src/
-│   ├── index.ts                    # Public package exports
+│   ├── index.ts                    # Public package exports (main entry)
 │   ├── types/                      # TypeScript type definitions (beehiiv API v2)
 │   │   ├── common.ts               # Shared types: config, pagination, errors
 │   │   ├── custom-field.ts          # Custom field definitions and values
 │   │   ├── subscription.ts          # Subscription CRUD types
 │   │   ├── publication.ts           # Publication types
 │   │   ├── post.ts                  # Post/newsletter types (PostContent discriminated union, PostAudience, etc.)
-│   │   ├── webhook.ts               # Webhook event types
+│   │   ├── webhook.ts               # Webhook event types and payloads
+│   │   ├── segment.ts               # Segment types, member responses, filter options
+│   │   ├── automation.ts            # Automation types, journey types, trigger/step types
+│   │   ├── referral.ts              # Referral program types, milestone rewards, subscriber stats
 │   │   ├── access.ts                # AccessResult, UseSubscriberAccessOptions, UsePostAccessOptions
 │   │   └── index.ts                 # Re-exports all types
 │   ├── client/                      # Server-side API client
@@ -38,32 +43,49 @@ beehiiv-react/
 │   │       ├── subscriptions.ts     # Subscription CRUD
 │   │       ├── custom-fields.ts     # Custom field CRUD
 │   │       ├── publications.ts      # Publication read
-│   │       └── posts.ts             # Post CRUD
+│   │       ├── posts.ts             # Post CRUD
+│   │       ├── webhooks.ts          # Webhook CRUD + test endpoint
+│   │       ├── segments.ts          # Segment list/get/delete/recalculate/listMembers
+│   │       ├── automations.ts       # Automation list/get/create + journey listing
+│   │       └── referrals.ts         # Referral program, milestones, subscriber stats
 │   ├── hooks/                       # React hooks (client-side)
 │   │   ├── index.ts                 # Re-exports all hooks
 │   │   ├── useBeehiiv.ts            # Context access hook
 │   │   ├── useSubscribe.ts          # Email subscription hook
 │   │   ├── useSubscription.ts       # Subscription data fetching hook
 │   │   ├── useCustomFields.ts       # Custom fields fetching hook
-│   │   ├── usePosts.ts             # Paginated post list with filters
-│   │   ├── usePost.ts              # Single post by ID
-│   │   ├── useSubscriberAccess.ts  # Subscriber tier/status -> access result
-│   │   ├── usePostAccess.ts        # Combined post + subscriber access check
-│   │   ├── useSubscriberProfile.ts # Full subscriber profile with isPremium/isActive flags (composes useSubscription)
-│   │   └── useSubscriberTier.ts    # Lightweight tier-only hook (strips subscription record from useSubscriberProfile)
+│   │   ├── usePosts.ts              # Paginated post list with filters
+│   │   ├── usePost.ts               # Single post by ID
+│   │   ├── useSubscriberAccess.ts   # Subscriber tier/status -> access result
+│   │   ├── usePostAccess.ts         # Combined post + subscriber access check
+│   │   ├── useSubscriberProfile.ts  # Full subscriber profile with isPremium/isActive flags
+│   │   ├── useSubscriberTier.ts     # Lightweight tier-only hook
+│   │   ├── useSubscribers.ts        # Paginated subscriber list
+│   │   └── usePublications.ts       # All accessible publications
 │   ├── components/                  # React components
 │   │   ├── index.ts                 # Re-exports all components
 │   │   ├── BeehiivProvider.tsx      # React context provider
 │   │   ├── SubscriptionForm.tsx     # Drop-in subscription form
 │   │   ├── PostCard.tsx             # Single post card display
 │   │   ├── PostList.tsx             # Paginated post list with load-more
-│   │   ├── PostContentRenderer.tsx  # HTML/JSON content renderer (renamed from PostContent to avoid type collision)
+│   │   ├── PostContentRenderer.tsx  # HTML/JSON content renderer
 │   │   ├── GatedContent.tsx         # Declarative subscriber-gated content wrapper
 │   │   ├── PremiumContent.tsx       # Premium content gate with upgrade prompt
-│   │   └── SubscriberBadge.tsx     # Subscriber tier badge with headless renderBadge prop
+│   │   └── SubscriberBadge.tsx      # Subscriber tier badge with headless renderBadge prop
 │   ├── utils/                       # Pure utility functions
 │   │   ├── index.ts                 # Re-exports all utilities
 │   │   └── access.ts               # canViewContent, getAudienceLabel, getTierLabel
+│   ├── query/                       # TanStack Query adapter (sub-path: beehiiv-react/query)
+│   │   ├── index.ts                 # Re-exports keys, query hooks, mutation hooks
+│   │   ├── keys.ts                  # Query key factory (beehiivKeys)
+│   │   ├── hooks.ts                 # useQuery-based hooks (usePostsQuery, useSubscribersQuery, etc.)
+│   │   └── mutations.ts             # useMutation-based hooks (useSubscribeMutation, etc.)
+│   ├── server/                      # RSC utilities (sub-path: beehiiv-react/server)
+│   │   ├── index.ts                 # Re-exports client factory + fetchers
+│   │   ├── client.ts                # createBeehiivClient() factory (reads env vars)
+│   │   └── fetchers.ts              # Pure async fetchers: fetchPosts, fetchPost, fetchSubscribers,
+│   │                                #   fetchSubscription, fetchPublications, fetchCustomFields,
+│   │                                #   fetchWebhooks, fetchSegments
 │   └── cli/                         # CLI tool (Node.js)
 │       ├── index.ts                 # Commander.js program setup
 │       ├── auth/
@@ -86,13 +108,25 @@ beehiiv-react/
 │   └── server-action.ts.hbs         # Next.js Server Action template
 ├── package.json
 ├── tsconfig.json
-├── tsup.config.ts                   # Dual build: library (ESM+CJS) + CLI (CJS)
+├── tsup.config.ts                   # Multi-entry build: library + query + server + CLI
 ├── vitest.config.ts                 # Test config with jsdom environment
 ├── .eslintrc.json
 ├── .github/workflows/ci.yml         # GitHub Actions CI
 ├── CLAUDE.md                        # This file
 └── README.md                        # User-facing documentation
 ```
+
+---
+
+## Sub-Path Exports
+
+The package exposes 3 import paths via the `exports` field in `package.json`:
+
+| Import Path | Entry Point | Description |
+|---|---|---|
+| `beehiiv-react` | `src/index.ts` | Main SDK: client, hooks, components, types |
+| `beehiiv-react/query` | `src/query/index.ts` | TanStack Query v5 adapter (optional peer dep) |
+| `beehiiv-react/server` | `src/server/index.ts` | RSC-compatible helpers (no React hooks) |
 
 ---
 
@@ -104,13 +138,49 @@ The `BeehiivClient` requires an API key and must only run server-side. It should
 ### Generated Types
 The `sync` command fetches custom field definitions from the beehiiv API and generates a TypeScript file with strongly-typed field names and value types. This means IDE autocomplete works for custom fields specific to each publication.
 
-### Dual Build Output
-tsup produces two separate builds:
-- **Library** (`dist/index.js` + `dist/index.cjs` + `dist/index.d.ts`): ESM and CJS for the SDK, with React as an external dependency
+### Multi-Entry Build Output
+tsup produces four separate builds:
+- **Library** (`dist/index.js` + `dist/index.mjs` + `dist/index.d.ts`): ESM and CJS for the SDK, with React as an external dependency
+- **Query adapter** (`dist/query/index.js` + `dist/query/index.mjs` + `dist/query/index.d.ts`): ESM and CJS, with React and @tanstack/react-query as external dependencies
+- **Server utilities** (`dist/server/index.js` + `dist/server/index.mjs` + `dist/server/index.d.ts`): ESM and CJS, with React as an external dependency
 - **CLI** (`dist/cli/index.js`): CJS only, bundles all dependencies, includes `#!/usr/bin/env node` shebang
 
 ### Rate Limiting
 The client includes a built-in rate limiter (token-bucket algorithm) to stay within beehiiv's 180 requests/minute limit. This is configurable via `rateLimitPerMinute` in the client config.
+
+---
+
+## Client Endpoints (8 total)
+
+| Namespace | Resource | Key Methods |
+|---|---|---|
+| `subscriptions` | Subscribers | `list`, `getByEmail`, `getById`, `create`, `updateById`, `updateByEmail`, `delete` |
+| `customFields` | Custom Fields | `list`, `get`, `create`, `update`, `delete` |
+| `publications` | Publications | `list`, `get` |
+| `posts` | Posts | `list`, `get`, `create`, `update`, `delete` |
+| `webhooks` | Webhooks | `list`, `get`, `create`, `update`, `delete`, `test` |
+| `segments` | Segments | `list`, `get`, `delete`, `recalculate`, `listMembers` |
+| `automations` | Automations | `list`, `get`, `create`, `listJourneys` |
+| `referrals` | Referrals | `getProgram`, `listMilestones`, `getSubscriberStats` |
+
+---
+
+## React Hooks (12 total)
+
+| Hook | Description |
+|---|---|
+| `useBeehiiv` | Context access (publication ID, API URL) |
+| `useSubscribe` | Email subscription with custom fields |
+| `useSubscription` | Fetch subscription data by email/ID |
+| `useCustomFields` | Fetch custom field definitions |
+| `usePosts` | Paginated post list with filters |
+| `usePost` | Single post by ID |
+| `useSubscriberAccess` | Subscriber tier/status to access result |
+| `usePostAccess` | Combined post + subscriber access check |
+| `useSubscriberProfile` | Full subscriber profile with isPremium/isActive |
+| `useSubscriberTier` | Lightweight tier-only hook |
+| `useSubscribers` | Paginated subscriber list |
+| `usePublications` | All accessible publications |
 
 ---
 
@@ -149,7 +219,7 @@ When `beehiiv-react init --oauth` is used:
 
 | Command | Description |
 |---|---|
-| `npm run build` | Build library + CLI with tsup |
+| `npm run build` | Build library + query + server + CLI with tsup |
 | `npm run dev` | Watch mode build |
 | `npm run typecheck` | Run `tsc --noEmit` (type checking only) |
 | `npm run lint` | ESLint on `src/` |
@@ -158,11 +228,13 @@ When `beehiiv-react init --oauth` is used:
 | `npm run test:coverage` | Run vitest with V8 coverage |
 
 ### How tsup Works
-The `tsup.config.ts` defines two build entries:
+The `tsup.config.ts` defines four build entries:
 1. `src/index.ts` -> `dist/index.js` (ESM) + `dist/index.cjs` (CJS) + `dist/index.d.ts` (types)
-2. `src/cli/index.ts` -> `dist/cli/index.js` (CJS with shebang)
+2. `src/query/index.ts` -> `dist/query/index.js` (ESM) + `dist/query/index.cjs` (CJS) + `dist/query/index.d.ts` (types)
+3. `src/server/index.ts` -> `dist/server/index.js` (ESM) + `dist/server/index.cjs` (CJS) + `dist/server/index.d.ts` (types)
+4. `src/cli/index.ts` -> `dist/cli/index.js` (CJS with shebang)
 
-React and react-dom are externalized from the library build but bundled in the CLI build (CLI doesn't use React).
+React and react-dom are externalized from the library build. @tanstack/react-query is additionally externalized from the query build. CLI bundles all dependencies.
 
 ---
 
@@ -191,17 +263,53 @@ Both hooks use `useBeehiiv()` for the API base URL and follow the same loading/e
 
 ---
 
-
 ## Subscriber Profiles (v0.2.1)
 
 ### Hooks
 
-- **`useSubscriberProfile({ email?, id?, enabled? })`** -- Resolves a subscriber's full profile from their email or subscription ID. Returns the raw `SubscriptionInfo` record alongside pre-computed `isPremium`, `isActive`, and `tier` flags. Composes on top of `useSubscription` and is the canonical way to resolve subscriber identity without a content context.
-- **`useSubscriberTier({ email?, id?, enabled? })`** -- Lightweight alias over `useSubscriberProfile` that strips the `subscription` record and returns only tier/status/flags. Use this when you don't need the raw subscription data.
+- **`useSubscriberProfile({ email?, id?, enabled? })`** -- Resolves a subscriber's full profile from their email or subscription ID. Returns the raw `SubscriptionInfo` record alongside pre-computed `isPremium`, `isActive`, and `tier` flags.
+- **`useSubscriberTier({ email?, id?, enabled? })`** -- Lightweight alias over `useSubscriberProfile` that strips the `subscription` record and returns only tier/status/flags.
 
 ### Component
 
-- **`SubscriberBadge`** -- Drop-in badge component that renders "Premium" or "Free" based on a subscriber's resolved tier. Supports a headless `renderBadge` render prop for fully custom rendering. Includes `data-tier`, `data-subscriber-badge`, and `aria-label` attributes.
+- **`SubscriberBadge`** -- Drop-in badge component that renders "Premium" or "Free" based on a subscriber's resolved tier. Supports a headless `renderBadge` render prop for fully custom rendering.
+
+---
+
+## v0.3.0 New Features
+
+### New Endpoints (webhooks, segments, automations, referrals)
+
+Four new endpoint namespaces were added to `BeehiivClient`, providing full beehiiv API v2 coverage:
+
+- **WebhooksEndpoint** -- CRUD for webhook endpoints plus a test trigger
+- **SegmentsEndpoint** -- List/get/delete segments, recalculate, list segment members
+- **AutomationsEndpoint** -- List/get/create automations, list automation journeys
+- **ReferralsEndpoint** -- Get referral program, list milestones, get subscriber referral stats
+
+### New Hooks (useSubscribers, usePublications)
+
+- **`useSubscribers(options)`** -- Paginated subscriber list with filtering. Returns `{ data, loading, error, page, nextPage, prevPage }`.
+- **`usePublications()`** -- Fetches all accessible publications. Returns `{ data, loading, error }`.
+
+### TanStack Query Adapter (`beehiiv-react/query`)
+
+Sub-path export providing:
+- `beehiivKeys` -- Query key factory for cache management
+- Query hooks: `usePostsQuery`, `usePostQuery`, `useSubscribersQuery`, `useSubscriptionQuery`, `usePublicationsQuery`, `useCustomFieldsQuery`, `useAutomationsQuery`
+- Mutation hooks: `useSubscribeMutation`, `useCreateWebhookMutation`, etc.
+
+Requires `@tanstack/react-query` >= 5.0.0 as a peer dependency.
+
+### Server Utilities (`beehiiv-react/server`)
+
+Sub-path export providing RSC-compatible helpers:
+- `createBeehiivClient()` -- Factory that reads `BEEHIIV_API_KEY` from environment
+- Pure async fetchers: `fetchPosts`, `fetchPost`, `fetchSubscribers`, `fetchSubscription`, `fetchPublications`, `fetchCustomFields`, `fetchWebhooks`, `fetchSegments`
+
+These functions are safe to call inside React Server Components, Route Handlers, and Server Actions.
+
+---
 
 ## How to Add a New Endpoint
 
@@ -215,7 +323,8 @@ Both hooks use `useBeehiiv()` for the API base URL and follow the same loading/e
    this.automations = new AutomationsEndpoint(this._config);
    ```
 5. Re-export new types from `src/index.ts`
-6. Add tests in `src/client/endpoints/__tests__/`
+6. Add tests in `src/client/__tests__/endpoints/`
+7. If adding a server fetcher, add to `src/server/fetchers.ts` and re-export from `src/server/index.ts`
 
 ---
 
@@ -288,86 +397,40 @@ All steps must pass for the CI to be green. The `prepublishOnly` script also run
 
 ---
 
-## Stage 3 Completion Notes (v0.1.0)
+## v0.3.0 Test Summary
 
-### Branch Merge Summary
+**367 tests passing** across 38 test files. Key new test files:
 
-All four feature branches were successfully merged into the `release/v0.1.0` branch:
+- `src/client/__tests__/endpoints/webhooks.test.ts` -- 10 tests
+- `src/client/__tests__/endpoints/segments.test.ts` -- 11 tests
+- `src/client/__tests__/endpoints/automations.test.ts` -- 9 tests
+- `src/client/__tests__/endpoints/referrals.test.ts` -- 5 tests
+- `src/hooks/__tests__/useSubscribers.test.tsx` -- 6 tests
+- `src/hooks/__tests__/usePublications.test.tsx` -- 7 tests
+- `src/query/__tests__/hooks.test.tsx` -- 9 tests
+- `src/query/__tests__/keys.test.ts` -- 22 tests
+- `src/query/__tests__/mutations.test.tsx` -- 5 tests
+- `src/server/__tests__/client.test.ts` -- 7 tests
+- `src/server/__tests__/fetchers.test.ts` -- 13 tests
 
-1. `feature/hooks` (PR #1) -- BeehiivProvider, React hooks (useBeehiiv, useSubscribe, useSubscription, useCustomFields)
-2. `feature/api-client` (PR #2) -- BeehiivClient, endpoint classes (subscriptions, custom-fields, publications, posts), rate limiter
-3. `feature/components` (PR #3) -- SubscriptionForm with headless mode, Handlebars templates
-4. `feature/cli` (PR #4) -- CLI init/sync commands, OAuth2 PKCE flow, API key auth, code generators
-
-### Integration Issues Resolved
-
-- **SubscriptionForm / useSubscribe mismatch**: The `SubscriptionForm` component was passing UTM parameters (`utmSource`, `utmMedium`, `utmCampaign`) in the `useSubscribe` options and calling `subscribe(email)` as a plain string. Fixed to pass UTM params via the `SubscribeData` object and call `subscribe({ email, customFields, utmSource, ... })` instead.
-- **Template / generator field name mismatch**: The Handlebars templates from `feature/components` used `{{camelCaseKey}}` but the CLI generator from `feature/cli` only passed `camelCaseDisplay`. Added `camelCaseKey` to the generator's field template data.
-- **Missing `generatedAt` template variable**: The custom-fields Handlebars template referenced `{{generatedAt}}` but the generator did not pass it. Added `generatedAt: new Date().toISOString()` to the template data.
-- **ESLint `prefer-const` false positive**: The OAuth2 module declared `let timeoutHandle` which was flagged by ESLint's `prefer-const` rule, but `let` is required because the variable is assigned after declaration. Added an ESLint disable comment.
-- **Unused import**: `waitFor` was imported but never used in `useSubscribe.test.tsx`. Removed the unused import.
-
-### Final Test Count (v0.2.0)
-
-**234 tests passing** across 23 test files:
-
-- `src/client/__tests__/client.test.ts` -- 18 tests
-- `src/client/__tests__/endpoints/custom-fields.test.ts` -- 9 tests
-- `src/client/__tests__/endpoints/subscriptions.test.ts` -- 14 tests
-- `src/client/__tests__/rate-limiter.test.ts` -- 8 tests
-- `src/hooks/__tests__/BeehiivProvider.test.tsx` -- 4 tests
-- `src/hooks/__tests__/useBeehiiv.test.tsx` -- 3 tests
-- `src/hooks/__tests__/useCustomFields.test.tsx` -- 4 tests
-- `src/hooks/__tests__/useSubscribe.test.tsx` -- 6 tests
-- `src/hooks/__tests__/useSubscription.test.tsx` -- 5 tests
-- `src/hooks/__tests__/usePosts.test.tsx` -- 6 tests
-- `src/hooks/__tests__/usePost.test.tsx` -- 4 tests
-- `src/__tests__/hooks/useSubscriberAccess.test.tsx` -- 8 tests
-- `src/components/__tests__/SubscriptionForm.test.tsx` -- 29 tests
-- `src/components/__tests__/templates.test.ts` -- 9 tests
-- `src/components/__tests__/PostCard.test.tsx` -- 19 tests
-- `src/components/__tests__/PostList.test.tsx` -- 15 tests
-- `src/components/__tests__/PostContentRenderer.test.tsx` -- 9 tests
-- `src/__tests__/components/GatedContent.test.tsx` -- 11 tests
-- `src/__tests__/components/PremiumContent.test.tsx` -- 10 tests
-- `src/__tests__/utils/access.test.ts` -- 26 tests
-- `src/cli/__tests__/auth/api-key.test.ts` -- 5 tests
-- `src/cli/__tests__/generators/config.test.ts` -- 3 tests
-- `src/cli/__tests__/generators/custom-fields.test.ts` -- 9 tests
-
-### Build Output Verified (v0.2.0)
+### Build Output (v0.3.0)
 
 ```
 dist/
-  index.js        (CJS, 50.58 KB)
-  index.mjs       (ESM, 49.24 KB)
-  index.d.ts      (DTS, 74.70 KB)
-  index.d.mts     (DTS, 74.70 KB)
-  index.js.map
-  index.mjs.map
+  index.js          (CJS, ~69 KB)
+  index.mjs         (ESM, ~67 KB)
+  index.d.ts        (DTS, ~113 KB)
+  index.d.mts       (DTS, ~113 KB)
+  query/
+    index.js        (CJS, ~10 KB)
+    index.mjs       (ESM, ~10 KB)
+    index.d.ts      (DTS, ~24 KB)
+    index.d.mts     (DTS, ~24 KB)
+  server/
+    index.js        (CJS, ~34 KB)
+    index.mjs       (ESM, ~34 KB)
+    index.d.ts      (DTS, ~62 KB)
+    index.d.mts     (DTS, ~62 KB)
   cli/
-    index.js      (CJS, 29.24 KB)
-    index.js.map
+    index.js        (CJS, ~29 KB)
 ```
-
-CLI help output confirmed working: `node dist/cli/index.js --help` prints Commander.js help with `init` and `sync` commands.
-
-
----
-
-## Stage 4 Completion Notes (v0.2.0)
-
-### Branch Merge Summary
-
-Three feature branches were merged into the `feature/posts-visibility-v0.2.0` integration branch:
-
-1. `feature/post-hooks` -- usePosts/usePost hooks, PostContent type (discriminated union), expanded ListPostsOptions, UTM field fixes
-2. `feature/post-components` -- PostCard, PostList, PostContent (later renamed PostContentRenderer) components
-3. `feature/content-gating` -- canViewContent utility, useSubscriberAccess/usePostAccess hooks, GatedContent/PremiumContent components
-
-### Integration Issues Resolved
-
-- **PostContent naming collision**: Agent B created a `PostContent` React component, but Agent A had already introduced a `PostContent` type (discriminated union for html/json content). The component was renamed to `PostContentRenderer` to avoid the collision, and all exports, imports, and tests were updated accordingly.
-- **Merge conflicts**: The `feature/content-gating` branch conflicted with the merged `feature/post-hooks` + `feature/post-components` code in `src/index.ts`, `src/hooks/index.ts`, and `src/components/index.ts`. All three conflicts were resolved by combining both sets of exports.
-- **Unused imports (lint errors)**: `SubscriptionTier` and `SubscriptionStatus` were imported but unused in `GatedContent.tsx` and `access.test.ts`. `waitFor` was unused in `GatedContent.test.tsx`. `PostAudience` was unused in `PostCard.test.tsx`. All removed.
-- **New `src/utils/` directory**: Added by the content-gating branch for pure utility functions. tsup picks it up automatically since it bundles from the `src/index.ts` entry point which re-exports from `utils/index.ts`.

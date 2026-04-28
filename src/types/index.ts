@@ -78,3 +78,48 @@ export type {
   SubscriberTierResult,
   SubscriberBadgeProps,
 } from './access.js';
+
+export type {
+  SegmentType,
+  SegmentStatus,
+  SegmentMembersExpand,
+  SegmentsExpand,
+  SegmentStats,
+  SegmentInfo,
+  SegmentMember,
+  SegmentResponse,
+  SegmentListResponse,
+  SegmentMembersResponse,
+  CustomFieldFilter,
+  SegmentSubscriptionInput,
+  CreateSegmentRequest,
+  ListSegmentsOptions,
+  ListSegmentMembersOptions,
+  SegmentRecalculateResponse,
+} from './segment.js';
+
+export type {
+  AutomationStatus,
+  AutomationTriggerType,
+  AutomationStepType,
+  AutomationStep,
+  AutomationTrigger,
+  AutomationInfo,
+  AutomationJourneyStatus,
+  AutomationJourney,
+  AutomationResponse,
+  AutomationListResponse,
+  AutomationJourneyListResponse,
+  CreateAutomationRequest,
+  ListAutomationsOptions,
+  ListJourneysOptions,
+} from './automation.js';
+
+export type {
+  ReferralMilestoneRewardType,
+  ReferralMilestone,
+  ReferralProgram,
+  ReferralStats,
+  ReferralProgramResponse,
+  ReferralStatsResponse,
+} from './referral.js';

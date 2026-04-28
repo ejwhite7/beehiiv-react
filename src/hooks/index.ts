@@ -45,3 +45,15 @@ export { usePostAccess } from './usePostAccess.js';
 export { useSubscriberProfile } from './useSubscriberProfile.js';
 
 export { useSubscriberTier } from './useSubscriberTier.js';
+
+export { useSubscribers } from './useSubscribers.js';
+export type {
+  UseSubscribersOptions,
+  UseSubscribersReturn,
+} from './useSubscribers.js';
+
+export { usePublications } from './usePublications.js';
+export type {
+  UsePublicationsOptions,
+  UsePublicationsReturn,
+} from './usePublications.js';

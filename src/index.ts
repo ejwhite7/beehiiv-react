@@ -22,6 +22,8 @@ export {
   usePostAccess,
   useSubscriberProfile,
   useSubscriberTier,
+  useSubscribers,
+  usePublications,
 } from './hooks/index.js';
 
 export type {
@@ -36,6 +38,10 @@ export type {
   UsePostsReturn,
   UsePostOptions,
   UsePostReturn,
+  UseSubscribersOptions,
+  UseSubscribersReturn,
+  UsePublicationsOptions,
+  UsePublicationsReturn,
 } from './hooks/index.js';
 
 // --- Components ---

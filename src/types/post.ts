@@ -12,6 +12,53 @@ export type PostStatus = 'draft' | 'confirmed' | 'archived';
 /** The intended audience for a post */
 export type PostAudience = 'free' | 'premium' | 'all';
 
+/**
+ * Discriminator for the format of post content.
+ * - `'html'` — content is a raw HTML string
+ * - `'json'` — content is a Lexical/ProseMirror-style JSON document
+ */
+export type PostContentFormat = 'html' | 'json';
+
+/**
+ * Post content in HTML format.
+ *
+ * Returned when the beehiiv API delivers content as a rendered
+ * HTML string.
+ */
+export interface PostContentHtml {
+  /** Discriminator — always `'html'` for this variant */
+  format: 'html';
+  /** The raw HTML string of the post body */
+  html: string;
+}
+
+/**
+ * Post content in JSON format.
+ *
+ * Returned when the beehiiv API delivers content as a
+ * Lexical/ProseMirror-style JSON document tree.
+ */
+export interface PostContentJson {
+  /** Discriminator — always `'json'` for this variant */
+  format: 'json';
+  /** The Lexical/ProseMirror-style JSON document tree */
+  document: Record<string, unknown>;
+}
+
+/**
+ * Discriminated union of possible post content representations.
+ *
+ * Use the `format` field to narrow the type:
+ * ```ts
+ * if (content.format === 'html') {
+ *   console.log(content.html);
+ * } else {
+ *   console.log(content.document);
+ * }
+ * ```
+ */
+export type PostContent = PostContentHtml | PostContentJson;
+
 /** Engagement statistics for a post */
 export interface PostStats {
   /** Total number of recipients the post was sent to */
@@ -62,8 +109,8 @@ export interface PostInfo {
   publish_date?: number;
   /** Unix timestamp when the post was last updated */
   updated_at?: number;
-  /** Content of the post in JSON format */
-  content?: unknown;
+  /** Content of the post as a discriminated union, or `null` if not loaded */
+  content?: PostContent | null;
 }
 
 /** Request body for creating a new post */

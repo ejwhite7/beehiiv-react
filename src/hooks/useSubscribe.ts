@@ -43,6 +43,10 @@ export interface SubscribeData<TCustomFields = Record<string, unknown>> {
   utmMedium?: string;
   /** UTM campaign for attribution tracking */
   utmCampaign?: string;
+  /** UTM term for attribution tracking */
+  utmTerm?: string;
+  /** UTM content for attribution tracking */
+  utmContent?: string;
 }
 
 /**
@@ -135,6 +139,8 @@ export function useSubscribe<TCustomFields = Record<string, unknown>>(
             utmSource: data.utmSource,
             utmMedium: data.utmMedium,
             utmCampaign: data.utmCampaign,
+            utmTerm: data.utmTerm,
+            utmContent: data.utmContent,
           }),
         });
 

@@ -25,3 +25,15 @@ export type {
 
 export { useCustomFields } from './useCustomFields.js';
 export type { UseCustomFieldsReturn } from './useCustomFields.js';
+
+export { usePosts } from './usePosts.js';
+export type {
+  UsePostsOptions,
+  UsePostsReturn,
+} from './usePosts.js';
+
+export { usePost } from './usePost.js';
+export type {
+  UsePostOptions,
+  UsePostReturn,
+} from './usePost.js';

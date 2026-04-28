@@ -16,6 +16,8 @@ export {
   useSubscribe,
   useSubscription,
   useCustomFields,
+  usePosts,
+  usePost,
 } from './hooks/index.js';
 
 export type {
@@ -26,6 +28,10 @@ export type {
   UseSubscriptionOptions,
   UseSubscriptionReturn,
   UseCustomFieldsReturn,
+  UsePostsOptions,
+  UsePostsReturn,
+  UsePostOptions,
+  UsePostReturn,
 } from './hooks/index.js';
 
 // --- Components ---
@@ -74,6 +80,10 @@ export type {
   PublicationsListResponse,
   PostStatus,
   PostAudience,
+  PostContentFormat,
+  PostContentHtml,
+  PostContentJson,
+  PostContent,
   PostStats,
   PostInfo,
   CreatePostRequest,

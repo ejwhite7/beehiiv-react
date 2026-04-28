@@ -25,3 +25,7 @@ export type {
 
 export { useCustomFields } from './useCustomFields.js';
 export type { UseCustomFieldsReturn } from './useCustomFields.js';
+
+export { useSubscriberAccess } from './useSubscriberAccess.js';
+
+export { usePostAccess } from './usePostAccess.js';

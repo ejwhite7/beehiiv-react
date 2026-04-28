@@ -63,3 +63,10 @@ export type {
   WebhookResponse,
   WebhookListResponse,
 } from './webhook.js';
+
+export type {
+  AccessResult,
+  UseSubscriberAccessOptions,
+  UsePostAccessOptions,
+  UsePostAccessReturn,
+} from './access.js';

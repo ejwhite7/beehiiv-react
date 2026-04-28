@@ -15,3 +15,9 @@ export type {
   CustomFieldConfig,
   RenderFormProps,
 } from './SubscriptionForm.js';
+
+export { GatedContent } from './GatedContent.js';
+export type { GatedContentProps } from './GatedContent.js';
+
+export { PremiumContent } from './PremiumContent.js';
+export type { PremiumContentProps } from './PremiumContent.js';

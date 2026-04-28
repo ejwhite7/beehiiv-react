@@ -16,6 +16,8 @@ export {
   useSubscribe,
   useSubscription,
   useCustomFields,
+  useSubscriberAccess,
+  usePostAccess,
 } from './hooks/index.js';
 
 export type {
@@ -33,6 +35,8 @@ export {
   BeehiivProvider,
   BeehiivContext,
   SubscriptionForm,
+  GatedContent,
+  PremiumContent,
 } from './components/index.js';
 
 export type {
@@ -40,7 +44,16 @@ export type {
   SubscriptionFormProps,
   CustomFieldConfig,
   RenderFormProps,
+  GatedContentProps,
+  PremiumContentProps,
 } from './components/index.js';
+
+// --- Utilities ---
+export {
+  canViewContent,
+  getAudienceLabel,
+  getTierLabel,
+} from './utils/index.js';
 
 // --- Types ---
 export type {
@@ -87,4 +100,8 @@ export type {
   UpdateWebhookRequest,
   WebhookResponse,
   WebhookListResponse,
+  AccessResult,
+  UseSubscriberAccessOptions,
+  UsePostAccessOptions,
+  UsePostAccessReturn,
 } from './types/index.js';

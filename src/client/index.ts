@@ -14,6 +14,8 @@ import { SubscriptionsEndpoint } from './endpoints/subscriptions.js';
 import { CustomFieldsEndpoint } from './endpoints/custom-fields.js';
 import { PublicationsEndpoint } from './endpoints/publications.js';
 import { PostsEndpoint } from './endpoints/posts.js';
+import { WebhooksEndpoint } from './endpoints/webhooks.js';
+import { SegmentsEndpoint } from './endpoints/segments.js';
 
 /**
  * Internal HTTP client interface used by endpoint classes to make API requests.
@@ -130,6 +132,10 @@ export class BeehiivClient {
   public readonly publications: PublicationsEndpoint;
   /** Post management endpoints */
   public readonly posts: PostsEndpoint;
+  /** Webhook management endpoints */
+  public readonly webhooks: WebhooksEndpoint;
+  /** Segment management endpoints */
+  public readonly segments: SegmentsEndpoint;
 
   /** Resolved configuration with defaults applied */
   private readonly _config: Required<
@@ -166,6 +172,8 @@ export class BeehiivClient {
     this.customFields = new CustomFieldsEndpoint(httpClient);
     this.publications = new PublicationsEndpoint(httpClient);
     this.posts = new PostsEndpoint(httpClient);
+    this.webhooks = new WebhooksEndpoint(httpClient);
+    this.segments = new SegmentsEndpoint(httpClient);
   }
 
   /**

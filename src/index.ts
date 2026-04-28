@@ -9,6 +9,8 @@
 
 // --- Client ---
 export { BeehiivClient } from './client/index.js';
+export { WebhooksEndpoint } from './client/endpoints/webhooks.js';
+export { SegmentsEndpoint } from './client/endpoints/segments.js';
 
 // --- Hooks ---
 export {
@@ -122,6 +124,22 @@ export type {
   UpdateWebhookRequest,
   WebhookResponse,
   WebhookListResponse,
+  SegmentType,
+  SegmentStatus,
+  SegmentMembersExpand,
+  SegmentsExpand,
+  SegmentStats,
+  SegmentInfo,
+  SegmentMember,
+  SegmentResponse,
+  SegmentListResponse,
+  SegmentMembersResponse,
+  CustomFieldFilter,
+  SegmentSubscriptionInput,
+  CreateSegmentRequest,
+  ListSegmentsOptions,
+  ListSegmentMembersOptions,
+  SegmentRecalculateResponse,
   AccessResult,
   UseSubscriberAccessOptions,
   UsePostAccessOptions,

@@ -78,3 +78,22 @@ export type {
   SubscriberTierResult,
   SubscriberBadgeProps,
 } from './access.js';
+
+export type {
+  SegmentType,
+  SegmentStatus,
+  SegmentMembersExpand,
+  SegmentsExpand,
+  SegmentStats,
+  SegmentInfo,
+  SegmentMember,
+  SegmentResponse,
+  SegmentListResponse,
+  SegmentMembersResponse,
+  CustomFieldFilter,
+  SegmentSubscriptionInput,
+  CreateSegmentRequest,
+  ListSegmentsOptions,
+  ListSegmentMembersOptions,
+  SegmentRecalculateResponse,
+} from './segment.js';

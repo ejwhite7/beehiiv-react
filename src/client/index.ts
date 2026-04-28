@@ -14,6 +14,8 @@ import { SubscriptionsEndpoint } from './endpoints/subscriptions.js';
 import { CustomFieldsEndpoint } from './endpoints/custom-fields.js';
 import { PublicationsEndpoint } from './endpoints/publications.js';
 import { PostsEndpoint } from './endpoints/posts.js';
+import { AutomationsEndpoint } from './endpoints/automations.js';
+import { ReferralsEndpoint } from './endpoints/referrals.js';
 
 /**
  * Internal HTTP client interface used by endpoint classes to make API requests.
@@ -101,7 +103,7 @@ export class BeehiivApiError extends Error {
  *
  * Creates rate-limited, authenticated HTTP connections to the beehiiv API v2.
  * Provides typed endpoint namespaces for subscriptions, publications,
- * custom fields, and posts.
+ * custom fields, posts, automations, and referrals.
  *
  * When a `publicationId` is provided in the config, endpoint methods that
  * require a publication ID can be called without explicitly passing it --
@@ -130,6 +132,10 @@ export class BeehiivClient {
   public readonly publications: PublicationsEndpoint;
   /** Post management endpoints */
   public readonly posts: PostsEndpoint;
+  /** Automation workflow management endpoints */
+  public readonly automations: AutomationsEndpoint;
+  /** Referral program management endpoints */
+  public readonly referrals: ReferralsEndpoint;
 
   /** Resolved configuration with defaults applied */
   private readonly _config: Required<
@@ -166,6 +172,8 @@ export class BeehiivClient {
     this.customFields = new CustomFieldsEndpoint(httpClient);
     this.publications = new PublicationsEndpoint(httpClient);
     this.posts = new PostsEndpoint(httpClient);
+    this.automations = new AutomationsEndpoint(httpClient);
+    this.referrals = new ReferralsEndpoint(httpClient);
   }
 
   /**

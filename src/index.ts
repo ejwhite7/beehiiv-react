@@ -9,6 +9,8 @@
 
 // --- Client ---
 export { BeehiivClient } from './client/index.js';
+export { AutomationsEndpoint } from './client/endpoints/automations.js';
+export { ReferralsEndpoint } from './client/endpoints/referrals.js';
 
 // --- Hooks ---
 export {
@@ -129,4 +131,24 @@ export type {
   UseSubscriberProfileOptions,
   SubscriberProfile,
   SubscriberTierResult,
+  AutomationStatus,
+  AutomationTriggerType,
+  AutomationStepType,
+  AutomationStep,
+  AutomationTrigger,
+  AutomationInfo,
+  AutomationJourneyStatus,
+  AutomationJourney,
+  AutomationResponse,
+  AutomationListResponse,
+  AutomationJourneyListResponse,
+  CreateAutomationRequest,
+  ListAutomationsOptions,
+  ListJourneysOptions,
+  ReferralMilestoneRewardType,
+  ReferralMilestone,
+  ReferralProgram,
+  ReferralStats,
+  ReferralProgramResponse,
+  ReferralStatsResponse,
 } from './types/index.js';

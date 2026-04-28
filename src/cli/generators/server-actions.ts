@@ -39,7 +39,6 @@ export async function generateServerActions(
     __dirname,
     '..',
     '..',
-    '..',
     'templates',
     'server-action.ts.hbs',
   );

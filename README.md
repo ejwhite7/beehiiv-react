@@ -124,7 +124,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.3.5
+# beehiiv-react/0.3.12
 ```
 
 ---
@@ -488,6 +488,39 @@ import { SubscriberBadge } from 'beehiiv-react';
 ---
 
 ## Release Notes
+
+### v0.3.12
+- Fixed 5 scaffold template bugs surfaced in generated projects:
+  - `publicationId` now wired through correctly in generated server actions and API routes
+  - Generated `BeehiivCustomFields` import path matches the custom-fields generator output
+  - `expand` parameter properly passed through to the posts list/get endpoints
+  - `PostContent` type is exported and aligned across `PostContent`/`PostContentRenderer` components and the `posts` endpoint
+  - `usePosts` cursor pagination fixed (load-more no longer clobbers prior pages)
+
+### v0.3.11
+- Republish of v0.3.10 with the v0.3.6–v0.3.10 changelog entries now included in the tarball
+
+### v0.3.10
+- New CLI-generated subscribe flow with persistence and analytics
+  - Two-step subscribe component (`SubscribeCTA` + `SubscribeStepTwo`) with a shared `SubscribeWrapper`
+  - Subscriber identity persisted to cookies and `localStorage` so returning visitors skip the form
+  - `useSubscriberStatus` hook generated alongside the components for status-aware UI
+  - Auto-hides CTAs once a visitor is subscribed
+  - Emits `dataLayer` events (`subscribe_view`, `subscribe_step_one`, `subscribe_complete`) for GTM/analytics integration
+- New generated `analytics.ts` helper and `posts-route.ts` API route templates
+- `PostList` accepts an `onSubscribeClick` prop for inline subscribe entry points
+
+### v0.3.9
+- Generated `actions.ts` template now includes the missing `enrichSubscriptionAction` server action
+
+### v0.3.8
+- Reverted the ESM CLI build that broke `__dirname` resolution; CLI is back on CJS with the version injected at build time via tsup `define`
+
+### v0.3.7
+- CLI reads its version dynamically from `package.json` instead of a hardcoded string
+
+### v0.3.6
+- Split server and client exports so the package no longer crosses Next.js RSC boundaries (fixes "Server Components cannot import client components" error)
 
 ### v0.3.5
 - Fixed 7 TypeScript errors in generated API route templates

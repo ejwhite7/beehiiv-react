@@ -1,6 +1,11 @@
 import { defineConfig } from 'tsup';
 import { readFile, writeFile } from 'fs/promises';
+import { readFileSync } from 'fs';
 import { join } from 'path';
+
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8')) as {
+  version: string;
+};
 
 /**
  * Prepend a "use client" directive to compiled output files.
@@ -81,5 +86,8 @@ export default defineConfig([
     banner: { js: '#!/usr/bin/env node' },
     external: [],
     platform: 'node',
+    define: {
+      __PACKAGE_VERSION__: JSON.stringify(pkg.version),
+    },
   },
 ]);

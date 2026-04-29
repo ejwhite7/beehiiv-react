@@ -4,7 +4,7 @@
  * Validates that:
  * - It fetches posts on mount when enabled (default)
  * - It passes audience and status as query params
- * - Cursor-based pagination works via loadMore
+ * - Page-based pagination works via loadMore
  * - Errors are handled correctly
  * - It skips the fetch when enabled is false
  * - The refetch function re-fetches from the first page
@@ -47,9 +47,10 @@ const MOCK_POSTS_PAGE_1 = {
     },
   ],
   pagination: {
-    next_cursor: 'cursor_page2',
-    has_more: true,
+    page: 1,
+    limit: 10,
     total_results: 4,
+    total_pages: 2,
   },
 };
 
@@ -73,9 +74,10 @@ const MOCK_POSTS_PAGE_2 = {
     },
   ],
   pagination: {
-    next_cursor: null,
-    has_more: false,
+    page: 2,
+    limit: 10,
     total_results: 4,
+    total_pages: 2,
   },
 };
 
@@ -108,6 +110,11 @@ describe('usePosts', () => {
     expect(result.current.posts[0].id).toBe('post_001');
     expect(result.current.hasMore).toBe(true);
     expect(result.current.error).toBeNull();
+
+    // Verify page=1 is passed in the URL
+    const calledUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
+      .calls[0][0] as string;
+    expect(calledUrl).toContain('page=1');
   });
 
   it('passes audience and status as query params', async () => {
@@ -131,7 +138,7 @@ describe('usePosts', () => {
     expect(calledUrl).toContain('audience=premium');
   });
 
-  it('supports cursor-based pagination via loadMore', async () => {
+  it('supports page-based pagination via loadMore', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
         ok: true,
@@ -161,9 +168,11 @@ describe('usePosts', () => {
     expect(result.current.posts[2].id).toBe('post_003');
     expect(result.current.hasMore).toBe(false);
 
+    // Verify page=2 is passed in the second call URL (not cursor)
     const secondCallUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
       .calls[1][0] as string;
-    expect(secondCallUrl).toContain('cursor=cursor_page2');
+    expect(secondCallUrl).toContain('page=2');
+    expect(secondCallUrl).not.toContain('cursor');
   });
 
   it('handles error response', async () => {
@@ -216,9 +225,10 @@ describe('usePosts', () => {
             },
           ],
           pagination: {
-            next_cursor: null,
-            has_more: false,
+            page: 1,
+            limit: 10,
             total_results: 1,
+            total_pages: 1,
           },
         }),
       });
@@ -240,5 +250,10 @@ describe('usePosts', () => {
     expect(result.current.posts).toHaveLength(1);
     expect(result.current.posts[0].id).toBe('post_005');
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+
+    // Verify refetch calls page=1
+    const refetchUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
+      .calls[1][0] as string;
+    expect(refetchUrl).toContain('page=1');
   });
 });

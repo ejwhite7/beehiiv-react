@@ -1,7 +1,7 @@
 /**
  * Posts endpoint for the beehiiv API client.
  * Manages newsletter post CRUD operations including listing with
- * cursor-based pagination, creation, updates, deletion, and aggregate stats.
+ * page-based pagination, creation, updates, deletion, and aggregate stats.
  * @module client/endpoints/posts
  */
 
@@ -16,12 +16,12 @@ import type {
 } from '../../types/post.js';
 import type { BeehiivHttpClient } from '../index.js';
 
-/** Options for listing posts with cursor-based pagination */
+/** Options for listing posts with page-based pagination */
 export interface ListPostsOptions {
   /** Maximum number of results to return per page */
   limit?: number;
-  /** Cursor token for fetching the next page of results */
-  cursor?: string;
+  /** Page number for pagination (1-indexed) */
+  page?: number;
   /** Filter posts by their publication status */
   status?: PostStatus;
   /** Filter posts by their intended audience */
@@ -30,6 +30,12 @@ export interface ListPostsOptions {
   orderBy?: 'publish_date' | 'created_at';
   /** Sort direction for the ordered results */
   direction?: 'asc' | 'desc';
+}
+
+/** Options for retrieving a single post */
+export interface GetPostOptions {
+  /** Fields to expand in the response (e.g. 'free_web_content') */
+  expand?: string[];
 }
 
 /** Options for querying aggregate post statistics */
@@ -96,14 +102,14 @@ export class PostsEndpoint {
   }
 
   /**
-   * List posts for a publication with cursor-based pagination.
+   * List posts for a publication with page-based pagination.
    *
    * Calls `GET /v2/publications/{publicationId}/posts` with optional
-   * filtering by status, audience, and cursor-based pagination.
+   * filtering by status, audience, and page-based pagination.
    *
    * @param publicationIdOrOptions - Either the publication ID (starts with "pub_") or filtering/pagination options when using the default publication ID
    * @param options - Optional filtering and pagination parameters (when publicationId is passed explicitly)
-   * @returns Paginated list of posts with cursor metadata
+   * @returns Paginated list of posts with page metadata
    */
   async list(
     publicationIdOrOptions?: string | ListPostsOptions,
@@ -125,8 +131,8 @@ export class PostsEndpoint {
     if (listOptions?.limit !== undefined) {
       params.set('limit', String(listOptions.limit));
     }
-    if (listOptions?.cursor) {
-      params.set('cursor', listOptions.cursor);
+    if (listOptions?.page !== undefined) {
+      params.set('page', String(listOptions.page));
     }
     if (listOptions?.status) {
       params.set('status', listOptions.status);
@@ -151,24 +157,41 @@ export class PostsEndpoint {
    *
    * Calls `GET /v2/publications/{publicationId}/posts/{id}`.
    *
-   * @param publicationIdOrId - Either the publication ID (when called with 2 args) or the post ID (when using default publication ID)
-   * @param id - The post ID (starts with "post_") when publicationId is passed explicitly
+   * @param publicationIdOrId - Either the publication ID (when called with 2+ args) or the post ID (when using default publication ID)
+   * @param idOrOptions - The post ID (when publicationId is passed explicitly) or get options
+   * @param options - Optional parameters for expanding related data (when publicationId is passed explicitly)
    * @returns The post record
    */
-  async get(publicationIdOrId: string, id?: string): Promise<PostResponse> {
+  async get(
+    publicationIdOrId: string,
+    idOrOptions?: string | GetPostOptions,
+    options?: GetPostOptions
+  ): Promise<PostResponse> {
     let publicationId: string;
     let postId: string;
+    let getOptions: GetPostOptions | undefined;
 
-    if (id !== undefined) {
+    if (typeof idOrOptions === 'string') {
       publicationId = publicationIdOrId;
-      postId = id;
+      postId = idOrOptions;
+      getOptions = options;
     } else {
       publicationId = this._resolvePublicationId();
       postId = publicationIdOrId;
+      getOptions = idOrOptions;
     }
 
+    const params = new URLSearchParams();
+
+    if (getOptions?.expand) {
+      for (const field of getOptions.expand) {
+        params.append('expand[]', field);
+      }
+    }
+
+    const query = params.toString();
     return this._http.get<PostResponse>(
-      `/publications/${publicationId}/posts/${postId}`
+      `/publications/${publicationId}/posts/${postId}${query ? `?${query}` : ''}`
     );
   }
 

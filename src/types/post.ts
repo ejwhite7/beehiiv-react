@@ -4,7 +4,7 @@
  * @module types/post
  */
 
-import type { CursorPaginationMeta } from './common.js';
+import type { OffsetPaginationMeta } from './common.js';
 
 /** The publication status of a post */
 export type PostStatus = 'draft' | 'confirmed' | 'archived';
@@ -13,51 +13,43 @@ export type PostStatus = 'draft' | 'confirmed' | 'archived';
 export type PostAudience = 'free' | 'premium' | 'all';
 
 /**
- * Discriminator for the format of post content.
- * - `'html'` — content is a raw HTML string
- * - `'json'` — content is a Lexical/ProseMirror-style JSON document
- */
-export type PostContentFormat = 'html' | 'json';
-
-/**
- * Post content in HTML format.
+ * Content tier containing RSS and web HTML strings.
  *
- * Returned when the beehiiv API delivers content as a rendered
- * HTML string.
+ * The beehiiv API returns post content nested under audience tiers
+ * (e.g. `free`, `premium`). Each tier contains an `rss` field (the
+ * content as sent in the RSS feed / email) and a `web` field (the
+ * content as rendered on the web post page).
  */
-export interface PostContentHtml {
-  /** Discriminator — always `'html'` for this variant */
-  format: 'html';
-  /** The raw HTML string of the post body */
-  html: string;
+export interface PostContentTier {
+  /** The content as rendered in the RSS feed / email */
+  rss: string;
+  /** The content as rendered on the web post page */
+  web: string;
 }
 
 /**
- * Post content in JSON format.
+ * Post content as returned by the beehiiv API.
  *
- * Returned when the beehiiv API delivers content as a
- * Lexical/ProseMirror-style JSON document tree.
- */
-export interface PostContentJson {
-  /** Discriminator — always `'json'` for this variant */
-  format: 'json';
-  /** The Lexical/ProseMirror-style JSON document tree */
-  document: Record<string, unknown>;
-}
-
-/**
- * Discriminated union of possible post content representations.
+ * The actual wire format nests content under audience tiers:
+ * - `free` — content visible to free subscribers
+ * - `premium` — content visible only to premium subscribers (optional)
  *
- * Use the `format` field to narrow the type:
+ * This replaces the old `{ format: string; html: string }` shape which
+ * did not match the actual API response.
+ *
+ * @example
  * ```ts
- * if (content.format === 'html') {
- *   console.log(content.html);
- * } else {
- *   console.log(content.document);
- * }
+ * // Accessing post content:
+ * const html = post.content?.free.web;
+ * const rssContent = post.content?.free.rss;
  * ```
  */
-export type PostContent = PostContentHtml | PostContentJson;
+export interface PostContent {
+  /** Content available to free subscribers */
+  free: PostContentTier;
+  /** Content available only to premium subscribers */
+  premium?: PostContentTier;
+}
 
 /** Engagement statistics for a post */
 export interface PostStats {
@@ -109,7 +101,13 @@ export interface PostInfo {
   publish_date?: number;
   /** Unix timestamp when the post was last updated */
   updated_at?: number;
-  /** Content of the post as a discriminated union, or `null` if not loaded */
+  /**
+   * Content of the post, or `null` if not expanded.
+   *
+   * The beehiiv API only returns content when the `expand[]` query
+   * parameter includes the appropriate content field (e.g.
+   * `free_web_content`). Without expansion this field will be `null`.
+   */
   content?: PostContent | null;
 }
 
@@ -151,8 +149,8 @@ export interface PostResponse {
 export interface PostListResponse {
   /** Array of post records */
   data: PostInfo[];
-  /** Cursor-based pagination metadata */
-  pagination: CursorPaginationMeta;
+  /** Page-based pagination metadata */
+  pagination: OffsetPaginationMeta;
 }
 
 /** Aggregate statistics for posts on a publication */

@@ -195,13 +195,14 @@ describe('server-action.ts.hbs', () => {
     expect(output).toMatchSnapshot();
   });
 
-  it('includes use server directive and both actions', () => {
+  it('includes use server directive and all actions', () => {
     const template = compileTemplate('server-action.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
     expect(output).toContain("'use server'");
     expect(output).toContain('subscribeAction');
     expect(output).toContain('unsubscribeAction');
+    expect(output).toContain('enrichSubscriptionAction');
     expect(output).toContain('BeehiivClient');
     expect(output).toContain('BEEHIIV_API_KEY');
   });

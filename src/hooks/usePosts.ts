@@ -2,9 +2,12 @@
  * Hook for fetching a paginated list of posts from a beehiiv publication.
  *
  * Automatically fetches on mount (unless `enabled` is `false`) and
- * supports cursor-based pagination via the `loadMore` callback.
+ * supports page-based pagination via the `loadMore` callback.
  * Exposes a `refetch` function for manual re-triggering that resets
  * the list to the first page.
+ *
+ * The beehiiv Posts API uses page-based (offset) pagination with a
+ * 1-indexed `page` query parameter — not cursor-based pagination.
  *
  * @module hooks/usePosts
  */
@@ -60,7 +63,7 @@ export interface UsePostsReturn {
  *
  * Uses the nearest `<BeehiivProvider>` to resolve `apiUrl`. The request
  * is sent to `{apiUrl}/posts` with optional query parameters for
- * filtering and pagination.
+ * filtering and page-based pagination.
  *
  * @param options - Filtering, pagination, and fetch configuration
  * @returns Post list data, loading state, error, pagination controls
@@ -97,8 +100,8 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
   const [error, setError] = useState<Error | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(false);
 
-  /** Cursor for the next page of results */
-  const cursorRef = useRef<string | null>(null);
+  /** Current page number (1-indexed, matching the beehiiv API) */
+  const pageRef = useRef<number>(1);
 
   /** Monotonically increasing fetch ID to discard stale responses */
   const fetchIdRef = useRef(0);
@@ -106,11 +109,11 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
   /**
    * Build the endpoint URL with query parameters.
    *
-   * @param cursor - Optional cursor token for pagination
+   * @param page - The 1-indexed page number to fetch
    * @returns The fully-qualified URL string
    */
   const buildUrl = useCallback(
-    (cursor?: string | null): string => {
+    (page: number): string => {
       const params = new URLSearchParams();
       if (publicationId) {
         params.set('publicationId', publicationId);
@@ -124,9 +127,7 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
       if (limit !== undefined) {
         params.set('limit', String(limit));
       }
-      if (cursor) {
-        params.set('cursor', cursor);
-      }
+      params.set('page', String(page));
       const query = params.toString();
       return `${apiUrl}/posts${query ? `?${query}` : ''}`;
     },
@@ -134,19 +135,19 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
   );
 
   /**
-   * Execute the fetch, optionally appending to the existing list.
+   * Execute the fetch for a given page number.
    *
-   * @param cursor - Cursor for the page to fetch (`null` for first page)
+   * @param page - The 1-indexed page to fetch
    * @param append - Whether to append results or replace
    */
   const fetchPosts = useCallback(
-    async (cursor: string | null, append: boolean) => {
+    async (page: number, append: boolean) => {
       const currentFetchId = ++fetchIdRef.current;
       setIsLoading(true);
       setError(null);
 
       try {
-        const url = buildUrl(cursor);
+        const url = buildUrl(page);
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -163,13 +164,21 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
 
         const result = (await response.json()) as {
           data: PostInfo[];
-          pagination: { next_cursor: string | null; has_more: boolean };
+          pagination: {
+            page: number;
+            limit: number;
+            total_results: number;
+            total_pages: number;
+          };
         };
 
         if (currentFetchId === fetchIdRef.current) {
           setPosts((prev) => (append ? [...prev, ...result.data] : result.data));
-          cursorRef.current = result.pagination.next_cursor;
-          setHasMore(result.pagination.has_more);
+          pageRef.current = page;
+
+          // Determine if there are more pages based on offset pagination
+          const morePages = page < result.pagination.total_pages;
+          setHasMore(morePages);
           setIsLoading(false);
         }
       } catch (err: unknown) {
@@ -185,8 +194,8 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
   // Auto-fetch the first page on mount and when filter deps change
   useEffect(() => {
     if (enabled) {
-      cursorRef.current = null;
-      void fetchPosts(null, false);
+      pageRef.current = 1;
+      void fetchPosts(1, false);
     }
   }, [enabled, fetchPosts]);
 
@@ -196,15 +205,15 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
    */
   const loadMore = useCallback(async (): Promise<void> => {
     if (!hasMore || isLoading) return;
-    await fetchPosts(cursorRef.current, true);
+    await fetchPosts(pageRef.current + 1, true);
   }, [hasMore, isLoading, fetchPosts]);
 
   /**
    * Re-fetch from the first page, replacing the entire list.
    */
   const refetch = useCallback(async (): Promise<void> => {
-    cursorRef.current = null;
-    await fetchPosts(null, false);
+    pageRef.current = 1;
+    await fetchPosts(1, false);
   }, [fetchPosts]);
 
   return { posts, isLoading, error, hasMore, loadMore, refetch };

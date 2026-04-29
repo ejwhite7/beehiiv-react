@@ -93,7 +93,7 @@ function readAuthToken(outputDir: string): string | null {
  *
  * Reads the publication ID and API key from existing config files,
  * fetches the current custom field definitions from the beehiiv API,
- * and regenerates `types/beehiiv.generated.ts`. Does NOT overwrite
+ * and regenerates `lib/beehiiv/beehiiv-custom-fields.ts`. Does NOT overwrite
  * config, API routes, or server actions.
  *
  * Reports how many fields were synced and whether any changes were detected
@@ -173,8 +173,9 @@ export async function runSync(options: SyncOptions): Promise<void> {
   // Check if the output file already exists and compare
   const outputPath = path.join(
     outputDir,
-    'types',
-    'beehiiv.generated.ts',
+    'lib',
+    'beehiiv',
+    'beehiiv-custom-fields.ts',
   );
   const existingContent = fs.existsSync(outputPath)
     ? fs.readFileSync(outputPath, 'utf-8')

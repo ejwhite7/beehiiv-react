@@ -50,8 +50,9 @@ export async function fetchPosts(
 /**
  * Fetch a single post by its ID.
  *
- * Calls {@link BeehiivClient.posts.get} and returns the unwrapped post
- * object directly.
+ * Calls {@link BeehiivClient.posts.get} with the `expand` parameter set to
+ * `['free_web_content']` so the API returns the full post content. Without
+ * this expand parameter the beehiiv API returns empty content fields.
  *
  * @param client - An initialised {@link BeehiivClient}
  * @param publicationId - The publication ID (starts with `"pub_"`)
@@ -68,7 +69,9 @@ export async function fetchPost(
   publicationId: string,
   id: string,
 ): Promise<PostInfo> {
-  const response = await client.posts.get(publicationId, id);
+  const response = await client.posts.get(publicationId, id, {
+    expand: ['free_web_content'],
+  });
   return response.data;
 }
 

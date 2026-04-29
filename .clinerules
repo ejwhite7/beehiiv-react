@@ -20,7 +20,7 @@ guide for this repository. The rules below are a summary only.
 5. `react` / `react-dom` are peer dependencies — do not move them to `dependencies`.
 6. `chalk`, `ora`, `open` are ESM-only — use dynamic `import()` inside functions only.
 7. Every new export must be registered in `src/types/index.ts` (types) or `src/index.ts` (all).
-8. Every feature requires tests. Current baseline: 126 tests across 14 files.
+8. Every feature requires tests. Current baseline: 476 tests across 42 files.
 
 ## CI gate (verify locally before committing)
 

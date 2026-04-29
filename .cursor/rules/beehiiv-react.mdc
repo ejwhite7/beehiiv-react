@@ -25,4 +25,4 @@ Read SKILL.md in the repo root before making any changes. It is the canonical so
 **New hook:** `src/hooks/use<Name>.ts` → `src/hooks/index.ts` → `src/index.ts` → tests
 **New component:** `src/components/<Name>.tsx` → `src/components/index.ts` → `src/index.ts` → tests
 
-## Test baseline: 126 passing tests across 14 files. Do not reduce this count.
+## Test baseline: 476 passing tests across 42 files. Do not reduce this count.

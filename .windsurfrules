@@ -17,7 +17,7 @@
 - Named exports everywhere except React components (default export allowed).
 - chalk / ora / open are ESM-only — dynamic import() only, never top-level import.
 - New types → src/types/index.ts + src/index.ts (both required).
-- New features require tests. Baseline: 126 tests across 14 files.
+- New features require tests. Baseline: 476 tests across 42 files.
 
 ## Feature addition order
 Endpoint: types → types/index.ts → endpoint class → BeehiivClient → src/index.ts → tests

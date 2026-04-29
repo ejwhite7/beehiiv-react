@@ -24,7 +24,7 @@ All notable changes to `beehiiv-react` are documented in this file.
 - Full test coverage for all new endpoints and dual-signature patterns (467 tests, 42 files).
 - `CHANGELOG.md` (this file).
 
-### Fixed (ported from v0.3.7--v0.3.12)
+### Fixed (ported from v0.3.7--v0.3.14)
 - **`publicationId` wiring** -- `PostsEndpoint` and all other endpoints now receive `defaultPublicationId` from `BeehiivClient` constructor.
 - **Page-based pagination** -- `PostsEndpoint.list()` uses `page` parameter instead of the broken `cursor` parameter; `usePosts` hook updated accordingly.
 - **`expand` parameter** -- `PostsEndpoint.get()` accepts `GetPostOptions.expand` to request expanded content fields (e.g. `free_web_content`).
@@ -34,11 +34,32 @@ All notable changes to `beehiiv-react` are documented in this file.
 - **`enrichSubscriptionAction`** -- Generated actions template now includes the missing `enrichSubscriptionAction` export.
 - **CLI ESM/CJS build** -- Reverted ESM CLI build to CJS to fix `__dirname` regression.
 - CLI subscriber persistence, CTA hiding, and dataLayer event tracking templates ported.
+- **`BeehiivClient` import path in templates** -- All CLI-generated templates import from `beehiiv-react/server` instead of `beehiiv-react`.
+- **UTM fields in `subscribeAction`** -- Generated server action template accepts and passes through UTM attribution and `reactivateExisting` fields.
+- **`utm_channel` type** -- Added `utm_channel` to `SubscriptionInfo` and `CreateSubscriptionRequest`.
+- **Defensive `usePosts` pagination** -- `data` and `pagination` fields treated as optional in API response; prevents runtime crashes on incomplete responses.
+- **`subscribeAction` response unwrapping** -- Generated server actions now return `response.data` (the `SubscriptionInfo` record) instead of the raw `SubscriptionResponse` wrapper, so consumers can use `sub.id` directly.
+- **API route double-wrapping fix** -- Generated API routes no longer double-wrap responses in `{ data: { data: ... } }`; SDK response objects are passed through directly.
 
 ### Changed
 - Bumped version to 0.4.0.
 - `ListPostsOptions.cursor` replaced with `ListPostsOptions.page` (number, 1-indexed).
 - All endpoint constructors accept an optional second `defaultPublicationId` argument.
+
+## [0.3.14] - 2026-04-29
+
+### Fixed
+- `usePosts` hook now handles API responses with missing `data` or `pagination` fields gracefully.
+- Response type fields changed from required to optional with null-coalescing defaults.
+- Two new test cases for edge-case API responses.
+
+## [0.3.13] - 2026-04-29
+
+### Fixed
+- All CLI-generated templates now import `BeehiivClient` from `beehiiv-react/server` instead of `beehiiv-react`.
+  - `api-route.ts.hbs`, `posts-route.ts.hbs`, `server-action.ts.hbs`, `api-routes.ts` generator.
+- Generated `subscribeAction` now accepts and passes UTM attribution fields (`utmSource`, `utmMedium`, `utmChannel`, `utmCampaign`, `referringSite`, `reactivateExisting`).
+- `utm_channel` added to `SubscriptionInfo` and `CreateSubscriptionRequest` types.
 
 ## [0.3.12] - 2026-04-29
 

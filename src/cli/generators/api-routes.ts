@@ -28,7 +28,7 @@ const SUBSCRIPTION_ID_ROUTE_TEMPLATE = `/**
  * Located at: app/api/beehiiv/subscription/[id]/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react';
+import { BeehiivClient } from 'beehiiv-react/server';
 import beehiivConfig from '@/beehiiv.config';
 
 /**
@@ -48,7 +48,7 @@ export async function GET(
   try {
     const { id } = await params;
     const subscription = await client.subscriptions.get(id);
-    return NextResponse.json({ data: subscription }, { status: 200 });
+    return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to fetch subscription';
     return NextResponse.json({ error: msg }, { status: 500 });

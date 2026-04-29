@@ -324,6 +324,24 @@ These functions are safe to call inside React Server Components, Route Handlers,
 
 ---
 
+## v0.3.13-v0.3.14 Fixes (ported into v0.4.0)
+
+### v0.3.13 -- Template Import Path + UTM Fields
+- All CLI-generated templates now import `BeehiivClient` from `beehiiv-react/server` (was incorrectly `beehiiv-react`)
+- Generated `subscribeAction` accepts and passes through UTM attribution fields: `utmSource`, `utmMedium`, `utmChannel`, `utmCampaign`, `referringSite`, `reactivateExisting`
+- `utm_channel` added to `SubscriptionInfo` and `CreateSubscriptionRequest` types
+
+### v0.3.14 -- Defensive usePosts Pagination
+- `usePosts` hook handles API responses with missing `data` or `pagination` fields gracefully
+- Response type fields changed from required to optional with null-coalescing defaults
+- Prevents runtime crashes when the beehiiv API returns incomplete responses
+
+### Response Unwrapping Fix (v0.4.0)
+- Generated `subscribeAction` server action now returns `response.data` (the `SubscriptionInfo` record) instead of the raw `SubscriptionResponse` wrapper, so consumers can use `sub.id` directly
+- Generated API routes no longer double-wrap responses in `{ data: { data: ... } }`; SDK response objects are passed through directly
+
+---
+
 ## How to Add a New Endpoint
 
 1. Create types in `src/types/` (e.g., `src/types/automation.ts`)
@@ -416,7 +434,7 @@ All steps must pass for the CI to be green. The `prepublishOnly` script also run
 
 ## v0.4.0 Test Summary
 
-**467 tests passing** across 42 test files. Key new test files:
+**476 tests passing** across 42 test files. Key new test files:
 
 - `src/client/__tests__/endpoints/webhooks.test.ts` -- 10 tests
 - `src/client/__tests__/endpoints/segments.test.ts` -- 11 tests

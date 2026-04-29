@@ -4,7 +4,7 @@
  * Located at: app/api/beehiiv/subscribe/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react';
+import { BeehiivClient } from 'beehiiv-react/server';
 
 const client = new BeehiivClient({
   apiKey: process.env.BEEHIIV_API_KEY!,
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       reactivate_existing: body.reactivateExisting ?? false,
     });
 
-    return NextResponse.json({ data: subscription }, { status: 200 });
+    return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Subscription failed';
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 
     const subscription = await client.subscriptions.list({ email });
 
-    return NextResponse.json({ data: subscription }, { status: 200 });
+    return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Failed to fetch subscription';

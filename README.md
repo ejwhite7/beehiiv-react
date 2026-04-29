@@ -497,8 +497,17 @@ import { SubscriberBadge } from 'beehiiv-react';
 - **New methods**: `PostsEndpoint.aggregateStats()`, `SegmentsEndpoint.create()`, `AutomationsEndpoint.get()`, `AutomationsEndpoint.listEmails()`
 - **`GetPostOptions`**: `PostsEndpoint.get()` now accepts an `expand` array to request expanded content fields
 - **New types**: `AutomationJourneyInfo`, `PostAggregateStats`, `AutomationEmailInfo`, and more
-- Merged all v0.3.7--v0.3.12 fixes into the v0.4.0 codebase
+- Merged all v0.3.7--v0.3.14 fixes into the v0.4.0 codebase
 - 467 tests passing across 42 test files
+
+### v0.3.14
+- Defensive guards in `usePosts` hook for API responses missing `data` or `pagination` fields
+- Prevents runtime crashes when the beehiiv API returns incomplete responses
+
+### v0.3.13
+- **BeehiivClient import path fix**: All CLI-generated templates now import `BeehiivClient` from `beehiiv-react/server` (was `beehiiv-react`)
+- **UTM fields in subscribeAction**: Generated server actions now accept and pass through `utmSource`, `utmMedium`, `utmChannel`, `utmCampaign`, `referringSite`, `reactivateExisting`
+- **`utm_channel` type**: Added to `SubscriptionInfo` and `CreateSubscriptionRequest`
 
 ### v0.3.12
 - Fixed 5 scaffold template bugs surfaced in generated projects:

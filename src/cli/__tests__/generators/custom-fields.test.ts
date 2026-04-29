@@ -111,8 +111,9 @@ describe('generateCustomFieldTypes', () => {
 
     const outputPath = path.join(
       tmpDir,
-      'types',
-      'beehiiv.generated.ts',
+      'lib',
+      'beehiiv',
+      'beehiiv-custom-fields.ts',
     );
     expect(fs.existsSync(outputPath)).toBe(true);
 
@@ -120,7 +121,7 @@ describe('generateCustomFieldTypes', () => {
     expect(content).toMatchSnapshot();
   });
 
-  it('should create the types directory', async () => {
+  it('should create the lib/beehiiv directory', async () => {
     await generateCustomFieldTypes({
       fields: mockFields,
       publicationName: 'Test Newsletter',
@@ -128,7 +129,7 @@ describe('generateCustomFieldTypes', () => {
     });
 
     expect(
-      fs.existsSync(path.join(tmpDir, 'types')),
+      fs.existsSync(path.join(tmpDir, 'lib', 'beehiiv')),
     ).toBe(true);
   });
 
@@ -140,7 +141,7 @@ describe('generateCustomFieldTypes', () => {
     });
 
     const content = fs.readFileSync(
-      path.join(tmpDir, 'types', 'beehiiv.generated.ts'),
+      path.join(tmpDir, 'lib', 'beehiiv', 'beehiiv-custom-fields.ts'),
       'utf-8',
     );
     expect(content).toContain('firstName?: string');
@@ -154,7 +155,7 @@ describe('generateCustomFieldTypes', () => {
     });
 
     const content = fs.readFileSync(
-      path.join(tmpDir, 'types', 'beehiiv.generated.ts'),
+      path.join(tmpDir, 'lib', 'beehiiv', 'beehiiv-custom-fields.ts'),
       'utf-8',
     );
     expect(content).toContain('age?: number');
@@ -168,7 +169,7 @@ describe('generateCustomFieldTypes', () => {
     });
 
     const content = fs.readFileSync(
-      path.join(tmpDir, 'types', 'beehiiv.generated.ts'),
+      path.join(tmpDir, 'lib', 'beehiiv', 'beehiiv-custom-fields.ts'),
       'utf-8',
     );
     expect(content).toContain('isPremium?: boolean');
@@ -182,7 +183,7 @@ describe('generateCustomFieldTypes', () => {
     });
 
     const content = fs.readFileSync(
-      path.join(tmpDir, 'types', 'beehiiv.generated.ts'),
+      path.join(tmpDir, 'lib', 'beehiiv', 'beehiiv-custom-fields.ts'),
       'utf-8',
     );
     expect(content).toContain("'red' | 'green' | 'blue'");
@@ -196,7 +197,7 @@ describe('generateCustomFieldTypes', () => {
     });
 
     const content = fs.readFileSync(
-      path.join(tmpDir, 'types', 'beehiiv.generated.ts'),
+      path.join(tmpDir, 'lib', 'beehiiv', 'beehiiv-custom-fields.ts'),
       'utf-8',
     );
     expect(content).toContain('planType?: string');
@@ -210,7 +211,7 @@ describe('generateCustomFieldTypes', () => {
     });
 
     const content = fs.readFileSync(
-      path.join(tmpDir, 'types', 'beehiiv.generated.ts'),
+      path.join(tmpDir, 'lib', 'beehiiv', 'beehiiv-custom-fields.ts'),
       'utf-8',
     );
     expect(content).toContain('My Awesome Newsletter');
@@ -225,8 +226,9 @@ describe('generateCustomFieldTypes', () => {
 
     const outputPath = path.join(
       tmpDir,
-      'types',
-      'beehiiv.generated.ts',
+      'lib',
+      'beehiiv',
+      'beehiiv-custom-fields.ts',
     );
     expect(fs.existsSync(outputPath)).toBe(true);
 

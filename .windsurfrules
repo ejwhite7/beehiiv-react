@@ -1,0 +1,28 @@
+# beehiiv-react — Windsurf Rules
+# Read SKILL.md in the repo root for full conventions before making changes.
+
+## Architecture summary
+- src/client/   → Server-only BeehiivClient (API key lives here; never expose to client)
+- src/hooks/    → Client-side React hooks that proxy through user-owned API routes
+- src/components/ → BeehiivProvider context + SubscriptionForm drop-in component
+- src/cli/      → Commander.js CLI (init + sync commands) with Handlebars code generators
+- src/types/    → One file per resource; all re-exported through src/types/index.ts
+
+## Hard rules
+- BeehiivClient is server-only. Never import in hooks, components, or any client bundle.
+- Hooks use useBeehiiv() for apiUrl. Never hardcode URLs.
+- Hooks use fetchIdRef (useRef) to guard stale async responses.
+- No any types. Strict TypeScript enforced via tsconfig.json.
+- react and react-dom must stay as peerDependencies, never dependencies.
+- Named exports everywhere except React components (default export allowed).
+- chalk / ora / open are ESM-only — dynamic import() only, never top-level import.
+- New types → src/types/index.ts + src/index.ts (both required).
+- New features require tests. Baseline: 126 tests across 14 files.
+
+## Feature addition order
+Endpoint: types → types/index.ts → endpoint class → BeehiivClient → src/index.ts → tests
+Hook:     src/hooks/use<Name>.ts → hooks/index.ts → src/index.ts → tests
+Component: src/components/<Name>.tsx → components/index.ts → src/index.ts → tests
+
+## CI (must pass before merge)
+npm run lint && npm run typecheck && npm test && npm run build

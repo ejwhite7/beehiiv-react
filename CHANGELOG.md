@@ -24,6 +24,9 @@ All notable changes to `beehiiv-react` are documented in this file.
 - Full test coverage for all new endpoints and dual-signature patterns (467 tests, 42 files).
 - `CHANGELOG.md` (this file).
 
+### Fixed
+- **Load More: post content now renders correctly for all paginated results** -- Added `expand` parameter support to `ListPostsOptions`, `usePosts` hook, `usePostsQuery` query hook, and the `posts-route.ts.hbs` API route template. The `expand[]` query parameter (e.g. `free_web_content`) is now forwarded on every fetch, including paginated load-more requests, ensuring post content (body/HTML) is included in all API responses regardless of which page they came from.
+
 ### Fixed (ported from v0.3.7--v0.3.14)
 - **`publicationId` wiring** -- `PostsEndpoint` and all other endpoints now receive `defaultPublicationId` from `BeehiivClient` constructor.
 - **Page-based pagination** -- `PostsEndpoint.list()` uses `page` parameter instead of the broken `cursor` parameter; `usePosts` hook updated accordingly.
@@ -41,23 +44,6 @@ All notable changes to `beehiiv-react` are documented in this file.
 - **`subscribeAction` response unwrapping** -- Generated server actions now return `response.data` (the `SubscriptionInfo` record) instead of the raw `SubscriptionResponse` wrapper, so consumers can use `sub.id` directly.
 - **API route double-wrapping fix** -- Generated API routes no longer double-wrap responses in `{ data: { data: ... } }`; SDK response objects are passed through directly.
 - **SubscribeCTA template `.data` accessor fix** -- Generated `SubscribeCTA` component now correctly accesses unwrapped `SubscriptionInfo` fields directly (e.g. `result?.publication_id`) instead of the removed `.data` envelope (`result?.data?.publication_id`).
-
-### Accessibility
-- **Form field ARIA attributes** -- All form fields across templates and components now include
-  complete ARIA accessibility attributes per WAI-ARIA best practices:
-  - `aria-required="true"` on all required fields (email input in `subscribe-cta.tsx.hbs`,
-    conditional on `field.required` in `subscribe-step-two.tsx.hbs` and `SubscriptionForm`)
-  - `aria-invalid` tied to form validation error state on the email input and all custom field
-    inputs in `SubscriptionForm`, enabling screen readers to announce invalid fields
-  - `aria-describedby` linking form fields to the error display (`beehiiv-form-error`) so
-    assistive technology can announce error messages in context
-  - Error display container now has `id="beehiiv-form-error"` to serve as the `aria-describedby` target
-- **Autocomplete attributes** -- All form fields now include spec-compliant `autocomplete` tokens:
-  - Email fields: `autocomplete="email"` (subscribe-cta template and SubscriptionForm component)
-  - Custom fields: `autoComplete="off"` on all custom field inputs, selects, and checkboxes
-    (SubscriptionForm component and subscribe-step-two template) since custom fields are
-    publication-specific and not suitable for browser autofill
-- Updated template snapshots to reflect the new accessibility attributes.
 
 ### Changed
 - Bumped version to 0.4.0.

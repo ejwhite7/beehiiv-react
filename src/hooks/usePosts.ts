@@ -163,8 +163,8 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
         }
 
         const result = (await response.json()) as {
-          data: PostInfo[];
-          pagination: {
+          data?: PostInfo[];
+          pagination?: {
             page: number;
             limit: number;
             total_results: number;
@@ -173,11 +173,13 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
         };
 
         if (currentFetchId === fetchIdRef.current) {
-          setPosts((prev) => (append ? [...prev, ...result.data] : result.data));
+          const data = result.data ?? [];
+          setPosts((prev) => (append ? [...prev, ...data] : data));
           pageRef.current = page;
 
           // Determine if there are more pages based on offset pagination
-          const morePages = page < result.pagination.total_pages;
+          const totalPages = result.pagination?.total_pages ?? 0;
+          const morePages = page < totalPages;
           setHasMore(morePages);
           setIsLoading(false);
         }

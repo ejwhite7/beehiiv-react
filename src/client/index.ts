@@ -173,8 +173,9 @@ export class BeehiivClient {
     // Build the internal HTTP client that all endpoints share
     const httpClient = this._createHttpClient();
 
-    // Initialize endpoint namespaces
-    this.subscriptions = new SubscriptionsEndpoint(httpClient);
+    // Initialize endpoint namespaces, passing the default publication ID
+    // so that methods can be called without explicitly providing it.
+    this.subscriptions = new SubscriptionsEndpoint(httpClient, this._config.publicationId);
     this.customFields = new CustomFieldsEndpoint(httpClient);
     this.publications = new PublicationsEndpoint(httpClient);
     this.posts = new PostsEndpoint(httpClient);

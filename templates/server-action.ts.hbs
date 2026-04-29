@@ -38,6 +38,29 @@ export async function subscribeAction(data: {
 }
 
 /**
+ * Enrich (update) a subscription's custom fields by its ID.
+ * Use this to collect additional subscriber data after the initial subscribe,
+ * for example in a multi-step signup form.
+ *
+ * @param id - The subscription ID to update (starts with "sub_")
+ * @param customFields - The custom field values to set on the subscription
+ * @returns The updated subscription record
+ */
+export async function enrichSubscriptionAction(
+  id: string,
+  customFields: Partial<BeehiivCustomFields>,
+) {
+  const subscription = await client.subscriptions.updateById(id, {
+    custom_fields: Object.entries(customFields).map(([name, value]) => ({
+      name,
+      value: value as string | number | boolean | string[],
+    })),
+  });
+
+  return subscription;
+}
+
+/**
  * Unsubscribe (delete) a subscription by its ID.
  *
  * @param id - The subscription ID to delete (starts with "sub_")

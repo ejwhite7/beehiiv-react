@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * GatedContent - a declarative component for conditionally rendering
  * content based on subscriber access level.

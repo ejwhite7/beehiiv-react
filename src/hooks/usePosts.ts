@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Hook for fetching a paginated list of posts from a beehiiv publication.
  *

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Hook for fetching a single post by its ID from a beehiiv publication.
  *

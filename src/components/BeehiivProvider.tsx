@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * BeehiivProvider - React context provider for beehiiv configuration.
  *

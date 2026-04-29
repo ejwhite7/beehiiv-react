@@ -7,16 +7,15 @@
  */
 
 import { Command } from 'commander';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
 import { runInit } from './commands/init.js';
 import { runSync } from './commands/sync.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const { version } = JSON.parse(
-  readFileSync(resolve(__dirname, '../../package.json'), 'utf-8'),
-) as { version: string };
+/**
+ * The package version string, injected at build time by tsup's `define`
+ * option.  See the `define` field in `tsup.config.ts` for the source
+ * mapping (`__PACKAGE_VERSION__` -> `pkg.version`).
+ */
+declare const __PACKAGE_VERSION__: string;
 
 /**
  * Create and configure the CLI program.
@@ -35,7 +34,7 @@ export function createProgram(): Command {
       'CLI tools for beehiiv-react — scaffold config, types, and API routes for your Next.js project',
     )
     .version(
-      `beehiiv-react/${version}`,
+      `beehiiv-react/${__PACKAGE_VERSION__}`,
       '-v, --version',
       'Print the beehiiv-react version',
     );

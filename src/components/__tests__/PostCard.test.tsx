@@ -217,6 +217,96 @@ describe('PostCard', () => {
     });
   });
 
+  // ---- Tags Rendering ----
+  describe('tags', () => {
+    it('renders tags when present on the post', () => {
+      render(
+        <PostCard post={makePost({ tags: ['React', 'TypeScript', 'API'] })} />,
+      );
+
+      expect(screen.getByText('React')).toBeDefined();
+      expect(screen.getByText('TypeScript')).toBeDefined();
+      expect(screen.getByText('API')).toBeDefined();
+    });
+
+    it('renders tags inside an accessible list container', () => {
+      render(
+        <PostCard post={makePost({ tags: ['React', 'API'] })} />,
+      );
+
+      const tagContainer = screen.getByRole('list', { name: 'Tags' });
+      expect(tagContainer).toBeDefined();
+
+      const tagItems = screen.getAllByRole('listitem');
+      expect(tagItems).toHaveLength(2);
+    });
+
+    it('does not render tags container when tags array is empty', () => {
+      render(<PostCard post={makePost({ tags: [] })} />);
+
+      expect(screen.queryByRole('list', { name: 'Tags' })).toBeNull();
+    });
+
+    it('does not render tags container when tags is undefined', () => {
+      render(<PostCard post={makePost({ tags: undefined })} />);
+
+      expect(screen.queryByRole('list', { name: 'Tags' })).toBeNull();
+    });
+
+    it('hides tags when showTags=false', () => {
+      render(
+        <PostCard
+          post={makePost({ tags: ['React', 'TypeScript'] })}
+          showTags={false}
+        />,
+      );
+
+      expect(screen.queryByText('React')).toBeNull();
+      expect(screen.queryByText('TypeScript')).toBeNull();
+    });
+
+    it('applies tagsClassName to the tags container', () => {
+      const { container } = render(
+        <PostCard
+          post={makePost({ tags: ['React'] })}
+          tagsClassName="my-tags"
+        />,
+      );
+
+      const tagContainer = container.querySelector('.my-tags');
+      expect(tagContainer).not.toBeNull();
+    });
+
+    it('passes tags to the renderPost render prop', () => {
+      const renderPost = vi.fn(() => <div>Custom</div>);
+
+      render(
+        <PostCard
+          post={makePost({ tags: ['React', 'API'] })}
+          renderPost={renderPost}
+        />,
+      );
+
+      expect(renderPost).toHaveBeenCalledTimes(1);
+      const renderProps = renderPost.mock.calls[0][0];
+      expect(renderProps.tags).toEqual(['React', 'API']);
+    });
+
+    it('passes empty array to renderPost when tags is undefined', () => {
+      const renderPost = vi.fn(() => <div>Custom</div>);
+
+      render(
+        <PostCard
+          post={makePost({ tags: undefined })}
+          renderPost={renderPost}
+        />,
+      );
+
+      const renderProps = renderPost.mock.calls[0][0];
+      expect(renderProps.tags).toEqual([]);
+    });
+  });
+
   // ---- className Props ----
   describe('className props', () => {
     it('applies className to the card wrapper', () => {

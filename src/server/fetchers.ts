@@ -70,7 +70,7 @@ export async function fetchPost(
   id: string,
 ): Promise<PostInfo> {
   const response = await client.posts.get(publicationId, id, {
-    expand: ['free_web_content'],
+    expand: ['free_web_content', 'tags'],
   });
   return response.data;
 }

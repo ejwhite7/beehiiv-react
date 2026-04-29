@@ -434,7 +434,7 @@ All steps must pass for the CI to be green. The `prepublishOnly` script also run
 
 ## v0.4.0 Test Summary
 
-**486 tests passing** across 44 test files. Key new test files:
+**497 tests passing** across 44 test files. Key new test files:
 
 - `src/client/__tests__/endpoints/webhooks.test.ts` -- 10 tests
 - `src/client/__tests__/endpoints/segments.test.ts` -- 11 tests

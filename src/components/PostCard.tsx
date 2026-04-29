@@ -29,6 +29,8 @@ export interface RenderPostCardProps {
   audienceBadgeLabel: string;
   /** Publish date formatted as "Month DD, YYYY", or `null` if unavailable */
   formattedPublishDate: string | null;
+  /** Tag names associated with this post (empty array when tags are not expanded) */
+  tags: string[];
 }
 
 /**
@@ -56,6 +58,9 @@ export interface PostCardProps {
   /** CSS class applied to the audience badge element */
   audienceBadgeClassName?: string;
 
+  /** CSS class applied to the tags container element */
+  tagsClassName?: string;
+
   /** Callback fired when the card is clicked */
   onClick?: (post: PostInfo) => void;
 
@@ -71,6 +76,9 @@ export interface PostCardProps {
 
   /** Whether to show the publish date. @defaultValue true */
   showPublishDate?: boolean;
+
+  /** Whether to show post tags when available. @defaultValue true */
+  showTags?: boolean;
 
   /**
    * The HTML heading element to use for the post title.
@@ -130,10 +138,12 @@ export function PostCard(props: PostCardProps): React.JSX.Element {
     thumbnailClassName,
     metaClassName,
     audienceBadgeClassName,
+    tagsClassName,
     onClick,
     renderPost,
     showAudienceBadge = true,
     showPublishDate = true,
+    showTags = true,
     titleAs: TitleTag = 'h2',
   } = props;
 
@@ -182,6 +192,7 @@ export function PostCard(props: PostCardProps): React.JSX.Element {
           post,
           audienceBadgeLabel,
           formattedPublishDate,
+          tags: post.tags ?? [],
         })}
       </>
     );
@@ -228,6 +239,17 @@ export function PostCard(props: PostCardProps): React.JSX.Element {
       {/* Subtitle */}
       {post.subtitle && (
         <p className={subtitleClassName}>{post.subtitle}</p>
+      )}
+
+      {/* Tags */}
+      {showTags && post.tags && post.tags.length > 0 && (
+        <div className={tagsClassName} role="list" aria-label="Tags">
+          {post.tags.map((tag) => (
+            <span key={tag} role="listitem" className="beehiiv-post-tag">
+              {tag}
+            </span>
+          ))}
+        </div>
       )}
 
       {/* Metadata */}

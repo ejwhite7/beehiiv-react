@@ -215,6 +215,21 @@ describe('PostList', () => {
     });
   });
 
+  // ---- Tags in Post List ----
+  describe('tags rendering', () => {
+    it('renders tags for posts that include them', () => {
+      const postsWithTags: PostInfo[] = [
+        { ...makePost('post_t1', 'Tagged Post'), tags: ['React', 'TypeScript'] },
+        { ...makePost('post_t2', 'Untagged Post') },
+      ];
+
+      render(<PostList posts={postsWithTags} />);
+
+      expect(screen.getByText('React')).toBeDefined();
+      expect(screen.getByText('TypeScript')).toBeDefined();
+    });
+  });
+
   // ---- dataLayer tracking ----
   describe('dataLayer tracking', () => {
     it('pushes beehiiv_load_more_clicked event when load more is clicked', async () => {

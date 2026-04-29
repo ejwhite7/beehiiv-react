@@ -77,6 +77,18 @@ describe('PostsEndpoint.list expand parameter', () => {
     expect(calledPath).toContain('expand%5B%5D=free_web_content');
   });
 
+  it('should include tags in expand params when requested', async () => {
+    vi.mocked(mockHttp.get).mockResolvedValue({ data: [], pagination: {} });
+
+    await endpoint.list('pub_123', {
+      expand: ['free_web_content', 'tags'],
+    });
+
+    const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
+    expect(calledPath).toContain('expand%5B%5D=free_web_content');
+    expect(calledPath).toContain('expand%5B%5D=tags');
+  });
+
   it('should include expand alongside pagination and filter params', async () => {
     vi.mocked(mockHttp.get).mockResolvedValue({ data: [], pagination: {} });
 

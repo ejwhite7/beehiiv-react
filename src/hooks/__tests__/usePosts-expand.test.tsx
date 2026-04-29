@@ -47,6 +47,7 @@ const MOCK_PAGE_1_WITH_CONTENT = {
           rss: '<p>First post RSS</p>',
         },
       },
+      tags: ['React', 'API'],
     },
     {
       id: 'post_002',
@@ -61,6 +62,7 @@ const MOCK_PAGE_1_WITH_CONTENT = {
           rss: '<p>Second post RSS</p>',
         },
       },
+      tags: ['TypeScript'],
     },
   ],
   pagination: {
@@ -87,6 +89,7 @@ const MOCK_PAGE_2_WITH_CONTENT = {
           rss: '<p>Third post RSS</p>',
         },
       },
+      tags: ['React', 'Hooks'],
     },
     {
       id: 'post_004',
@@ -101,6 +104,7 @@ const MOCK_PAGE_2_WITH_CONTENT = {
           rss: '<p>Fourth post RSS</p>',
         },
       },
+      tags: [],
     },
   ],
   pagination: {
@@ -246,6 +250,43 @@ describe('usePosts expand parameter', () => {
       .calls[1][0] as string;
     expect(secondCallUrl).toContain('expand%5B%5D=free_web_content');
     expect(secondCallUrl).toContain('expand%5B%5D=free_rss_content');
+  });
+
+  it('retains tags on all posts after load-more merges pages', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => MOCK_PAGE_1_WITH_CONTENT,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => MOCK_PAGE_2_WITH_CONTENT,
+      });
+
+    const { result } = renderHook(
+      () => usePosts({ expand: ['free_web_content', 'tags'] }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    /* Verify first page posts have tags */
+    expect(result.current.posts[0].tags).toEqual(['React', 'API']);
+    expect(result.current.posts[1].tags).toEqual(['TypeScript']);
+
+    /* Load more */
+    await act(async () => {
+      await result.current.loadMore();
+    });
+
+    /* Verify ALL posts retain their tags after merge */
+    expect(result.current.posts).toHaveLength(4);
+    expect(result.current.posts[0].tags).toEqual(['React', 'API']);
+    expect(result.current.posts[1].tags).toEqual(['TypeScript']);
+    expect(result.current.posts[2].tags).toEqual(['React', 'Hooks']);
+    expect(result.current.posts[3].tags).toEqual([]);
   });
 
   it('does not include expand[] when expand option is not provided', async () => {

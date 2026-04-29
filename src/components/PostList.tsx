@@ -11,6 +11,12 @@ import type { PostInfo } from '../types/post.js';
 import { PostCard } from './PostCard.js';
 import type { PostCardProps } from './PostCard.js';
 
+declare global {
+  interface Window {
+    dataLayer: Record<string, unknown>[];
+  }
+}
+
 /**
  * Props for the {@link PostList} component.
  */
@@ -120,10 +126,22 @@ export function PostList(props: PostListProps): React.JSX.Element {
     renderLoading,
   } = props;
 
+  /** Running count of how many pages have been loaded */
+  const pageRef = React.useRef(1);
+
   /**
    * Handle the "Load more" button click.
+   * Pushes a beehiiv_load_more_clicked event to the GTM dataLayer.
    */
   const handleLoadMore = useCallback(() => {
+    pageRef.current += 1;
+    if (typeof window !== 'undefined') {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: 'beehiiv_load_more_clicked',
+        page: pageRef.current,
+      });
+    }
     if (onLoadMore) {
       onLoadMore();
     }

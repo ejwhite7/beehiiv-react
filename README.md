@@ -124,7 +124,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.4.1
+# beehiiv-react/0.4.2
 ```
 
 ---
@@ -488,6 +488,11 @@ import { SubscriberBadge } from 'beehiiv-react';
 ---
 
 ## Release Notes
+
+### v0.4.2
+- `PostInfo` now carries an optional `tags?: string[]` field
+- `PostCard` renders tags with accessible list markup (`role="list"` / `role="listitem"`) and exposes `showTags` / `tagsClassName` props plus tags on the headless `renderPost` render prop
+- Server-side `fetchPost` expands both `free_web_content` and `tags` by default
 
 ### v0.4.1
 - **Accessibility**: aria attributes (`aria-required`, `aria-invalid`, `aria-describedby`) and `autocomplete` tokens added across `SubscriptionForm` and the generated subscribe templates (`subscribe-cta`, `subscribe-step-two`)

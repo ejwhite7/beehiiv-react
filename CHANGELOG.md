@@ -2,6 +2,13 @@
 
 All notable changes to `beehiiv-react` are documented in this file.
 
+## [0.4.2] - 2026-04-29
+
+### Added
+- **`tags?: string[]` on `PostInfo`** -- Posts can now carry tag metadata alongside the rest of their fields.
+- **`PostCard` tag rendering** -- `PostCard` renders tags with accessible list markup (`role="list"` / `role="listitem"`), and exposes `showTags`, `tagsClassName`, and headless `renderPost` props for full styling control.
+- **`fetchPost` expands tags by default** -- Server-side `fetchPost` now requests both `free_web_content` and `tags` via the beehiiv API's `expand` parameter so tags are populated on the returned record without additional configuration.
+
 ## [0.4.1] - 2026-04-29
 
 ### Added
@@ -38,7 +45,6 @@ All notable changes to `beehiiv-react` are documented in this file.
 
 ### Fixed
 - **Load More: post content now renders correctly for all paginated results** -- Added `expand` parameter support to `ListPostsOptions`, `usePosts` hook, `usePostsQuery` query hook, and the `posts-route.ts.hbs` API route template. The `expand[]` query parameter (e.g. `free_web_content`) is now forwarded on every fetch, including paginated load-more requests, ensuring post content (body/HTML) is included in all API responses regardless of which page they came from.
-- **Post fetches now include tags and content fields via expand parameter on all page requests** -- Added `tags?: string[]` field to `PostInfo` type. `PostCard` component renders tags with accessible list markup and supports `tagsClassName`, `showTags`, and headless `renderPost` props. Server-side `fetchPost` expands both `free_web_content` and `tags` by default.
 
 ### Fixed (ported from v0.3.7--v0.3.14)
 - **`publicationId` wiring** -- `PostsEndpoint` and all other endpoints now receive `defaultPublicationId` from `BeehiivClient` constructor.

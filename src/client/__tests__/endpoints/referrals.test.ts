@@ -1,6 +1,7 @@
 /**
  * Unit tests for the ReferralsEndpoint class.
- * Tests getProgram, listMilestones, and getSubscriberStats methods.
+ * Tests getProgram, listMilestones, and getSubscriberStats methods,
+ * including dual-signature calling conventions.
  * Uses a mocked BeehiivHttpClient.
  */
 
@@ -76,6 +77,23 @@ describe('ReferralsEndpoint', () => {
       expect(result.data.milestones).toHaveLength(1);
       expect(result.data.milestones[0].reward_type).toBe('custom_reward');
     });
+
+    it('should use default publicationId when called with no args', async () => {
+      const endpointWithDefault = new ReferralsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: { id: 'ref_prog_1' } });
+
+      await endpointWithDefault.getProgram();
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/referral_program'
+      );
+    });
+
+    it('should throw when no publicationId is available', async () => {
+      await expect(endpoint.getProgram()).rejects.toThrow(
+        'publicationId is required'
+      );
+    });
   });
 
   describe('listMilestones', () => {
@@ -113,6 +131,17 @@ describe('ReferralsEndpoint', () => {
         '/publications/pub_123/referral_program/milestones'
       );
       expect(result).toEqual(responseData);
+    });
+
+    it('should use default publicationId when called with no args', async () => {
+      const endpointWithDefault = new ReferralsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: { id: 'ref_prog_1' } });
+
+      await endpointWithDefault.listMilestones();
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/referral_program/milestones'
+      );
     });
   });
 
@@ -153,6 +182,23 @@ describe('ReferralsEndpoint', () => {
 
       expect(result.data.referral_count).toBe(0);
       expect(result.data.milestones_achieved).toHaveLength(0);
+    });
+
+    it('should use default publicationId when called with one arg', async () => {
+      const endpointWithDefault = new ReferralsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: { subscriber_id: 'sub_xyz' } });
+
+      await endpointWithDefault.getSubscriberStats('sub_xyz');
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/referral_program/subscribers/sub_xyz/stats'
+      );
+    });
+
+    it('should throw when no publicationId is available and called with one arg', async () => {
+      await expect(endpoint.getSubscriberStats('sub_xyz')).rejects.toThrow(
+        'publicationId is required'
+      );
     });
   });
 });

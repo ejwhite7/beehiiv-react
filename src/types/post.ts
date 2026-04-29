@@ -154,3 +154,33 @@ export interface PostListResponse {
   /** Cursor-based pagination metadata */
   pagination: CursorPaginationMeta;
 }
+
+/** Aggregate statistics for posts on a publication */
+export interface PostAggregateStats {
+  /** Total number of posts matching the filter criteria */
+  total_posts: number;
+  /** Total number of recipients across all matching posts */
+  total_recipients: number;
+  /** Total number of email opens across all matching posts */
+  total_opens: number;
+  /** Total number of unique email opens across all matching posts */
+  total_unique_opens: number;
+  /** Total number of link clicks across all matching posts */
+  total_clicks: number;
+  /** Total number of unique link clicks across all matching posts */
+  total_unique_clicks: number;
+  /** Average open rate across all matching posts (decimal 0-1) */
+  average_open_rate: number;
+  /** Average click rate across all matching posts (decimal 0-1) */
+  average_click_rate: number;
+  /** Total number of unsubscribes triggered by matching posts */
+  total_unsubscribes: number;
+  /** Total number of spam reports triggered by matching posts */
+  total_spam_reports: number;
+}
+
+/** Response wrapper for aggregate post statistics */
+export interface PostAggregateStatsResponse {
+  /** The aggregate statistics data */
+  data: PostAggregateStats;
+}

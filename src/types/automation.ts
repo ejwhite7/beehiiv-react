@@ -137,3 +137,35 @@ export interface ListJourneysOptions {
   /** Filter journeys by status */
   status?: AutomationJourneyStatus;
 }
+
+/** An email associated with an automation workflow */
+export interface AutomationEmailInfo {
+  /** Unique email ID */
+  id: string;
+  /** The automation this email belongs to */
+  automation_id: string;
+  /** The subject line of the email */
+  subject: string;
+  /** The preheader text of the email */
+  preheader?: string;
+  /** The position of this email in the automation sequence */
+  position: number;
+  /** Unix timestamp when the email was created */
+  created_at: number;
+  /** Unix timestamp when the email was last updated */
+  updated_at: number;
+}
+
+/** Response wrapper for listing automation emails */
+export interface AutomationEmailListResponse {
+  /** Array of automation email records */
+  data: AutomationEmailInfo[];
+  /** The limit placed on the results */
+  limit: number;
+  /** The page number of the results */
+  page: number;
+  /** The total number of results across all pages */
+  total_results: number;
+  /** The total number of pages */
+  total_pages: number;
+}

@@ -290,3 +290,47 @@ describe('SubscriptionsEndpoint', () => {
     });
   });
 });
+
+describe('SubscriptionsEndpoint (dual-signature)', () => {
+  let mockHttp: BeehiivHttpClient;
+
+  beforeEach(() => {
+    mockHttp = createMockHttpClient();
+  });
+
+  it('should use default publicationId for create when data is passed directly', async () => {
+    const endpoint = new SubscriptionsEndpoint(mockHttp, 'pub_default');
+    vi.mocked(mockHttp.post).mockResolvedValue({
+      data: { id: 'sub_abc', email: 'user@example.com', status: 'active', tier: 'free', publication_id: 'pub_default', created_at: 1700000000 },
+    });
+
+    await endpoint.create({ email: 'user@example.com' });
+
+    expect(mockHttp.post).toHaveBeenCalledWith(
+      '/publications/pub_default/subscriptions',
+      { email: 'user@example.com' }
+    );
+  });
+
+  it('should use default publicationId for list when called with no args', async () => {
+    const endpoint = new SubscriptionsEndpoint(mockHttp, 'pub_default');
+    vi.mocked(mockHttp.get).mockResolvedValue({
+      data: [],
+      pagination: { next_cursor: null, has_more: false, total_results: 0 },
+    });
+
+    await endpoint.list();
+
+    expect(mockHttp.get).toHaveBeenCalledWith(
+      '/publications/pub_default/subscriptions'
+    );
+  });
+
+  it('should throw when no publicationId is available for list', async () => {
+    const endpoint = new SubscriptionsEndpoint(mockHttp);
+
+    await expect(endpoint.list({ status: 'active' })).rejects.toThrow(
+      'publicationId is required'
+    );
+  });
+});

@@ -18,6 +18,7 @@ import { WebhooksEndpoint } from './endpoints/webhooks.js';
 import { SegmentsEndpoint } from './endpoints/segments.js';
 import { AutomationsEndpoint } from './endpoints/automations.js';
 import { ReferralsEndpoint } from './endpoints/referrals.js';
+import { AutomationJourneysEndpoint } from './endpoints/automation-journeys.js';
 
 /**
  * Internal HTTP client interface used by endpoint classes to make API requests.
@@ -142,6 +143,8 @@ export class BeehiivClient {
   public readonly automations: AutomationsEndpoint;
   /** Referral program management endpoints */
   public readonly referrals: ReferralsEndpoint;
+  /** Automation journey management endpoints */
+  public readonly automationJourneys: AutomationJourneysEndpoint;
 
   /** Resolved configuration with defaults applied */
   private readonly _config: Required<
@@ -176,13 +179,14 @@ export class BeehiivClient {
     // Initialize endpoint namespaces, passing the default publication ID
     // so that methods can be called without explicitly providing it.
     this.subscriptions = new SubscriptionsEndpoint(httpClient, this._config.publicationId);
-    this.customFields = new CustomFieldsEndpoint(httpClient);
+    this.customFields = new CustomFieldsEndpoint(httpClient, this._config.publicationId);
     this.publications = new PublicationsEndpoint(httpClient);
-    this.posts = new PostsEndpoint(httpClient);
-    this.webhooks = new WebhooksEndpoint(httpClient);
-    this.segments = new SegmentsEndpoint(httpClient);
-    this.automations = new AutomationsEndpoint(httpClient);
-    this.referrals = new ReferralsEndpoint(httpClient);
+    this.posts = new PostsEndpoint(httpClient, this._config.publicationId);
+    this.webhooks = new WebhooksEndpoint(httpClient, this._config.publicationId);
+    this.segments = new SegmentsEndpoint(httpClient, this._config.publicationId);
+    this.automations = new AutomationsEndpoint(httpClient, this._config.publicationId);
+    this.referrals = new ReferralsEndpoint(httpClient, this._config.publicationId);
+    this.automationJourneys = new AutomationJourneysEndpoint(httpClient, this._config.publicationId);
   }
 
   /**

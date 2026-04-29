@@ -1,6 +1,7 @@
 /**
  * Unit tests for the AutomationsEndpoint class.
- * Tests list, get, create, and listJourneys methods.
+ * Tests list, get, create, listJourneys, and listEmails methods,
+ * including dual-signature calling conventions.
  * Uses a mocked BeehiivHttpClient.
  */
 
@@ -71,6 +72,39 @@ describe('AutomationsEndpoint', () => {
       const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
       expect(calledPath).toContain('status=active');
     });
+
+    it('should use default publicationId when options are passed directly', async () => {
+      const endpointWithDefault = new AutomationsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({
+        data: [],
+        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+      });
+
+      await endpointWithDefault.list({ status: 'active' });
+
+      const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
+      expect(calledPath).toContain('/publications/pub_default/automations');
+    });
+
+    it('should use default publicationId when called with no args', async () => {
+      const endpointWithDefault = new AutomationsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({
+        data: [],
+        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+      });
+
+      await endpointWithDefault.list();
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/automations'
+      );
+    });
+
+    it('should throw when no publicationId is available', async () => {
+      await expect(endpoint.list({ status: 'active' })).rejects.toThrow(
+        'publicationId is required'
+      );
+    });
   });
 
   describe('get', () => {
@@ -96,6 +130,23 @@ describe('AutomationsEndpoint', () => {
         '/publications/pub_123/automations/aut_abc'
       );
       expect(result).toEqual(responseData);
+    });
+
+    it('should use default publicationId when called with one arg', async () => {
+      const endpointWithDefault = new AutomationsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: { id: 'aut_abc' } });
+
+      await endpointWithDefault.get('aut_abc');
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/automations/aut_abc'
+      );
+    });
+
+    it('should throw when no publicationId is available and called with one arg', async () => {
+      await expect(endpoint.get('aut_abc')).rejects.toThrow(
+        'publicationId is required'
+      );
     });
   });
 
@@ -162,6 +213,24 @@ describe('AutomationsEndpoint', () => {
         }
       );
     });
+
+    it('should use default publicationId when data is passed directly', async () => {
+      const endpointWithDefault = new AutomationsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.post).mockResolvedValue({ data: { id: 'aut_new' } });
+
+      await endpointWithDefault.create({
+        name: 'Welcome',
+        trigger: { type: 'subscriber_created', config: {} },
+      });
+
+      expect(mockHttp.post).toHaveBeenCalledWith(
+        '/publications/pub_default/automations',
+        {
+          name: 'Welcome',
+          trigger: { type: 'subscriber_created', config: {} },
+        }
+      );
+    });
   });
 
   describe('listJourneys', () => {
@@ -223,6 +292,96 @@ describe('AutomationsEndpoint', () => {
       });
       expect(page2.pagination.has_more).toBe(false);
       expect(page2.data).toHaveLength(2);
+    });
+
+    it('should use default publicationId when called with automation ID and options', async () => {
+      const endpointWithDefault = new AutomationsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({
+        data: [],
+        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+      });
+
+      await endpointWithDefault.listJourneys('aut_abc', { limit: 5 });
+
+      const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
+      expect(calledPath).toContain('/publications/pub_default/automations/aut_abc/journeys');
+    });
+  });
+
+  describe('listEmails', () => {
+    it('should GET the emails endpoint without params', async () => {
+      const responseData = {
+        data: [],
+        limit: 10,
+        page: 1,
+        total_results: 0,
+        total_pages: 0,
+      };
+      vi.mocked(mockHttp.get).mockResolvedValue(responseData);
+
+      const result = await endpoint.listEmails('pub_123', 'aut_abc');
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_123/automations/aut_abc/emails'
+      );
+      expect(result).toEqual(responseData);
+    });
+
+    it('should include limit and page query parameters', async () => {
+      const responseData = {
+        data: [{ id: 'email_1', automation_id: 'aut_abc', subject: 'Welcome', position: 0, created_at: 1700000000, updated_at: 1700000000 }],
+        limit: 5,
+        page: 2,
+        total_results: 10,
+        total_pages: 2,
+      };
+      vi.mocked(mockHttp.get).mockResolvedValue(responseData);
+
+      await endpoint.listEmails('pub_123', 'aut_abc', { limit: 5, page: 2 });
+
+      const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
+      expect(calledPath).toContain('/publications/pub_123/automations/aut_abc/emails?');
+      expect(calledPath).toContain('limit=5');
+      expect(calledPath).toContain('page=2');
+    });
+
+    it('should use default publicationId when called with automation ID and options', async () => {
+      const endpointWithDefault = new AutomationsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({
+        data: [],
+        limit: 10,
+        page: 1,
+        total_results: 0,
+        total_pages: 0,
+      });
+
+      await endpointWithDefault.listEmails('aut_abc', { limit: 10 });
+
+      const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
+      expect(calledPath).toContain('/publications/pub_default/automations/aut_abc/emails');
+    });
+
+    it('should use default publicationId when called with automation ID only', async () => {
+      const endpointWithDefault = new AutomationsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({
+        data: [],
+        limit: 10,
+        page: 1,
+        total_results: 0,
+        total_pages: 0,
+      });
+
+      await endpointWithDefault.listEmails('aut_abc');
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/automations/aut_abc/emails'
+      );
+    });
+
+    it('should throw when no publicationId is available', async () => {
+      await expect(endpoint.listEmails('aut_abc')).rejects.toThrow(
+        'publicationId is required'
+      );
     });
   });
 });

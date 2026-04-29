@@ -120,7 +120,7 @@ describe('server fetchers', () => {
 
       const result = await fetchPost(client, 'pub_abc', 'post_123');
 
-      expect(client.posts.get).toHaveBeenCalledWith('pub_abc', 'post_123', { expand: ['free_web_content'] });
+      expect(client.posts.get).toHaveBeenCalledWith('pub_abc', 'post_123', { expand: ['free_web_content', 'tags'] });
       expect(result).toEqual(post);
     });
   });

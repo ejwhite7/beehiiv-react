@@ -109,6 +109,14 @@ export interface PostInfo {
    * `free_web_content`). Without expansion this field will be `null`.
    */
   content?: PostContent | null;
+  /**
+   * Tags associated with the post, or `undefined` if not expanded.
+   *
+   * The beehiiv API returns tags as an array of tag name strings when
+   * the `expand[]` query parameter includes `"tags"`. Without expansion
+   * this field is omitted from the response.
+   */
+  tags?: string[];
 }
 
 /** Request body for creating a new post */

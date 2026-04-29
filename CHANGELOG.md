@@ -38,6 +38,7 @@ All notable changes to `beehiiv-react` are documented in this file.
 
 ### Fixed
 - **Load More: post content now renders correctly for all paginated results** -- Added `expand` parameter support to `ListPostsOptions`, `usePosts` hook, `usePostsQuery` query hook, and the `posts-route.ts.hbs` API route template. The `expand[]` query parameter (e.g. `free_web_content`) is now forwarded on every fetch, including paginated load-more requests, ensuring post content (body/HTML) is included in all API responses regardless of which page they came from.
+- **Post fetches now include tags and content fields via expand parameter on all page requests** -- Added `tags?: string[]` field to `PostInfo` type. `PostCard` component renders tags with accessible list markup and supports `tagsClassName`, `showTags`, and headless `renderPost` props. Server-side `fetchPost` expands both `free_web_content` and `tags` by default.
 
 ### Fixed (ported from v0.3.7--v0.3.14)
 - **`publicationId` wiring** -- `PostsEndpoint` and all other endpoints now receive `defaultPublicationId` from `BeehiivClient` constructor.

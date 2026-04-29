@@ -6,11 +6,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BeehiivClient } from 'beehiiv-react';
 
-const publicationId = process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}';
-
 const client = new BeehiivClient({
   apiKey: process.env.BEEHIIV_API_KEY!,
-  publicationId,
+  publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
 });
 
 /** POST /api/beehiiv/subscribe — Create a new subscription */
@@ -25,7 +23,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const subscription = await client.subscriptions.create(publicationId, {
+    const subscription = await client.subscriptions.create({
       email: body.email,
       custom_fields: body.customFields,
       utm_source: body.utmSource,
@@ -55,10 +53,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const subscription = await client.subscriptions.getByEmail(
-      publicationId,
-      email,
-    );
+    const subscription = await client.subscriptions.list({ email });
 
     return NextResponse.json({ data: subscription }, { status: 200 });
   } catch (error: unknown) {

@@ -7,11 +7,16 @@
  */
 
 import { Command } from 'commander';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { runInit } from './commands/init.js';
 import { runSync } from './commands/sync.js';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pkg: { version: string } = require('../../package.json');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const { version } = JSON.parse(
+  readFileSync(resolve(__dirname, '../../package.json'), 'utf-8'),
+) as { version: string };
 
 /**
  * Create and configure the CLI program.
@@ -30,7 +35,7 @@ export function createProgram(): Command {
       'CLI tools for beehiiv-react — scaffold config, types, and API routes for your Next.js project',
     )
     .version(
-      `beehiiv-react/${pkg.version}`,
+      `beehiiv-react/${version}`,
       '-v, --version',
       'Print the beehiiv-react version',
     );

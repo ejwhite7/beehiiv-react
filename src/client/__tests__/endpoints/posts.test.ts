@@ -1,7 +1,7 @@
 /**
  * Unit tests for the PostsEndpoint class.
  * Tests list, get, create, update, delete, and aggregateStats methods,
- * including dual-signature calling conventions.
+ * including dual-signature calling conventions and the expand parameter.
  * Uses a mocked BeehiivHttpClient.
  */
 
@@ -33,7 +33,10 @@ describe('PostsEndpoint', () => {
     it('should GET the posts endpoint without params', async () => {
       const responseData = {
         data: [],
-        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+        page: 1,
+        limit: 10,
+        total_results: 0,
+        total_pages: 0,
       };
       vi.mocked(mockHttp.get).mockResolvedValue(responseData);
 
@@ -48,12 +51,15 @@ describe('PostsEndpoint', () => {
     it('should include filtering and pagination parameters', async () => {
       vi.mocked(mockHttp.get).mockResolvedValue({
         data: [],
-        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+        page: 2,
+        limit: 10,
+        total_results: 50,
+        total_pages: 5,
       });
 
       await endpoint.list('pub_123', {
         limit: 10,
-        cursor: 'abc',
+        page: 2,
         status: 'confirmed',
         audience: 'all',
         orderBy: 'publish_date',
@@ -62,7 +68,7 @@ describe('PostsEndpoint', () => {
 
       const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
       expect(calledPath).toContain('limit=10');
-      expect(calledPath).toContain('cursor=abc');
+      expect(calledPath).toContain('page=2');
       expect(calledPath).toContain('status=confirmed');
       expect(calledPath).toContain('audience=all');
       expect(calledPath).toContain('order_by=publish_date');
@@ -73,7 +79,10 @@ describe('PostsEndpoint', () => {
       const endpointWithDefault = new PostsEndpoint(mockHttp, 'pub_default');
       vi.mocked(mockHttp.get).mockResolvedValue({
         data: [],
-        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+        page: 1,
+        limit: 10,
+        total_results: 0,
+        total_pages: 0,
       });
 
       await endpointWithDefault.list({ status: 'confirmed' });
@@ -86,7 +95,10 @@ describe('PostsEndpoint', () => {
       const endpointWithDefault = new PostsEndpoint(mockHttp, 'pub_default');
       vi.mocked(mockHttp.get).mockResolvedValue({
         data: [],
-        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+        page: 1,
+        limit: 10,
+        total_results: 0,
+        total_pages: 0,
       });
 
       await endpointWithDefault.list();
@@ -127,6 +139,31 @@ describe('PostsEndpoint', () => {
       expect(mockHttp.get).toHaveBeenCalledWith(
         '/publications/pub_default/posts/post_abc'
       );
+    });
+
+    it('should include expand parameters when provided', async () => {
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: { id: 'post_abc' } });
+
+      await endpoint.get('pub_123', 'post_abc', {
+        expand: ['free_web_content', 'free_rss_content'],
+      });
+
+      const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
+      expect(calledPath).toContain('expand%5B%5D=free_web_content');
+      expect(calledPath).toContain('expand%5B%5D=free_rss_content');
+    });
+
+    it('should support expand with default publicationId', async () => {
+      const endpointWithDefault = new PostsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: { id: 'post_abc' } });
+
+      await endpointWithDefault.get('post_abc', {
+        expand: ['free_web_content'],
+      });
+
+      const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
+      expect(calledPath).toContain('/publications/pub_default/posts/post_abc');
+      expect(calledPath).toContain('expand%5B%5D=free_web_content');
     });
   });
 

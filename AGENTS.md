@@ -16,7 +16,7 @@ npm test
 ```bash
 npm run lint       # ESLint
 npm run typecheck  # tsc --noEmit (strict)
-npm test           # vitest — 126 tests must pass
+npm test           # vitest — 467 tests must pass
 npm run build      # tsup dual ESM+CJS build
 ```
 

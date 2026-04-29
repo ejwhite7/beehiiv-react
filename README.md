@@ -124,7 +124,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.3.11
+# beehiiv-react/0.3.12
 ```
 
 ---
@@ -488,6 +488,17 @@ import { SubscriberBadge } from 'beehiiv-react';
 ---
 
 ## Release Notes
+
+### v0.3.12
+- Fixed 5 scaffold template bugs surfaced in generated projects:
+  - `publicationId` now wired through correctly in generated server actions and API routes
+  - Generated `BeehiivCustomFields` import path matches the custom-fields generator output
+  - `expand` parameter properly passed through to the posts list/get endpoints
+  - `PostContent` type is exported and aligned across `PostContent`/`PostContentRenderer` components and the `posts` endpoint
+  - `usePosts` cursor pagination fixed (load-more no longer clobbers prior pages)
+
+### v0.3.11
+- Republish of v0.3.10 with the v0.3.6–v0.3.10 changelog entries now included in the tarball
 
 ### v0.3.10
 - New CLI-generated subscribe flow with persistence and analytics

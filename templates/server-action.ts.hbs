@@ -7,9 +7,11 @@
 import { BeehiivClient } from 'beehiiv-react';
 import type { BeehiivCustomFields } from './beehiiv-custom-fields';
 
+const publicationId = process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}';
+
 const client = new BeehiivClient({
   apiKey: process.env.BEEHIIV_API_KEY!,
-  publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
+  publicationId,
 });
 
 /**
@@ -23,7 +25,7 @@ export async function subscribeAction(data: {
   email: string;
   customFields?: BeehiivCustomFields;
 }) {
-  const subscription = await client.subscriptions.create({
+  const subscription = await client.subscriptions.create(publicationId, {
     email: data.email,
     custom_fields: data.customFields
       ? Object.entries(data.customFields).map(([name, value]) => ({
@@ -43,5 +45,5 @@ export async function subscribeAction(data: {
  * @param id - The subscription ID to delete (starts with "sub_")
  */
 export async function unsubscribeAction(id: string) {
-  await client.subscriptions.delete(id);
+  await client.subscriptions.delete(publicationId, id);
 }

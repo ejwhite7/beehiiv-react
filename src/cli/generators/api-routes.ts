@@ -43,10 +43,11 @@ const client = new BeehiivClient({
 /** GET /api/beehiiv/subscription/[id] -- Get a subscription by ID */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const subscription = await client.subscriptions.get(params.id);
+    const { id } = await params;
+    const subscription = await client.subscriptions.get(id);
     return NextResponse.json({ data: subscription }, { status: 200 });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to fetch subscription';
@@ -57,10 +58,11 @@ export async function GET(
 /** DELETE /api/beehiiv/subscription/[id] -- Unsubscribe */
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await client.subscriptions.delete(params.id);
+    const { id } = await params;
+    await client.subscriptions.delete(id);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to unsubscribe';

@@ -104,7 +104,9 @@ function mapKindToTsType(kind: CustomFieldKind, options?: string[]): string {
  * Maps each `CustomFieldInfo` to template data with computed TypeScript types
  * and camelCase display names. Registers a Handlebars `camelCase` helper,
  * loads the `templates/custom-fields.ts.hbs` template, and writes the compiled
- * output to `{outputDir}/types/beehiiv.generated.ts`.
+ * output to `{outputDir}/lib/beehiiv/beehiiv-custom-fields.ts` so that the
+ * server action template can import it with a relative `./beehiiv-custom-fields`
+ * path.
  *
  * Type mapping:
  * - `string` -> `string`
@@ -167,8 +169,9 @@ export async function generateCustomFieldTypes(
 
   const outputPath = path.join(
     data.outputDir,
-    'types',
-    'beehiiv.generated.ts',
+    'lib',
+    'beehiiv',
+    'beehiiv-custom-fields.ts',
   );
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, output, 'utf-8');

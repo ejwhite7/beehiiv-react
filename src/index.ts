@@ -1,18 +1,22 @@
 /**
  * beehiiv-react - Connect a beehiiv account to your React/Next.js project.
  *
- * Provides a typed API client, React hooks, subscription form component,
- * and CLI scaffolding tool for beehiiv newsletter integration.
+ * Provides React hooks, subscription form components, and client-safe
+ * utilities for beehiiv newsletter integration.
+ *
+ * This is the client-side entry point — all exports here are safe to use
+ * in React Client Components. The "use client" directive is injected at
+ * build time so Next.js treats this module as a client boundary.
+ *
+ * For server-side usage (API routes, Server Components, Server Actions),
+ * import from `beehiiv-react/server` instead:
+ *
+ * ```ts
+ * import { BeehiivClient, createBeehiivClient } from 'beehiiv-react/server';
+ * ```
  *
  * @packageDocumentation
  */
-
-// --- Client ---
-export { BeehiivClient } from './client/index.js';
-export { WebhooksEndpoint } from './client/endpoints/webhooks.js';
-export { SegmentsEndpoint } from './client/endpoints/segments.js';
-export { AutomationsEndpoint } from './client/endpoints/automations.js';
-export { ReferralsEndpoint } from './client/endpoints/referrals.js';
 
 // --- Hooks ---
 export {
@@ -84,6 +88,9 @@ export {
 } from './utils/index.js';
 
 // --- Types ---
+// All types are pure type exports (erased at runtime) and are safe to
+// re-export from the client entry point. They carry no "use client"
+// runtime implications because TypeScript strips them during compilation.
 export type {
   BeehiivErrorDetail,
   BeehiivApiError,

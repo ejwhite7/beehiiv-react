@@ -52,6 +52,31 @@ npm install @tanstack/react-query
 
 ---
 
+## Import Paths
+
+`beehiiv-react` ships two entry points to support Next.js App Router's server/client module boundary:
+
+| Entry Point | Directive | Use In | Exports |
+|---|---|---|---|
+| `beehiiv-react` | `"use client"` | Client Components | Hooks, UI components, utilities |
+| `beehiiv-react/server` | _(none)_ | Server Components, API routes, Server Actions | `BeehiivClient`, endpoint classes, data fetchers |
+
+```ts
+// Client Components
+import { useSubscribe, SubscriptionForm } from 'beehiiv-react';
+
+// Server Components / API Routes / Server Actions
+import { BeehiivClient, createBeehiivClient } from 'beehiiv-react/server';
+```
+
+> **Why two entry points?** Next.js enforces a strict boundary between server and client
+> modules. The root `beehiiv-react` entry has a `"use client"` directive so React hooks
+> and components work in Client Components. Server-only code like `BeehiivClient` must
+> live in a separate entry point without that directive — otherwise Next.js throws
+> _"Cannot access BeehiivClient.prototype on the server."_
+
+---
+
 ## Quick Start
 
 Initialize beehiiv-react in your Next.js project:
@@ -282,10 +307,16 @@ For full control over rendering, use the `renderForm` prop:
 
 ## BeehiivClient (Server-Side)
 
-Use the `BeehiivClient` directly in server-side code (API routes, server actions, scripts):
+Use the `BeehiivClient` directly in server-side code (API routes, server actions, scripts).
+
+> **Important:** Always import server-side classes from `beehiiv-react/server` — not the
+> package root. The root entry point (`beehiiv-react`) carries a `"use client"` directive
+> and is reserved for React components and hooks. Importing `BeehiivClient` from the root
+> in a Server Component or API route will cause a Next.js error:
+> _"Cannot access BeehiivClient.prototype on the server."_
 
 ```ts
-import { BeehiivClient } from 'beehiiv-react';
+import { BeehiivClient } from 'beehiiv-react/server';
 
 const client = new BeehiivClient({
   apiKey: process.env.BEEHIIV_API_KEY!,
@@ -493,7 +524,7 @@ The `BeehiivClient` now exposes 8 endpoint namespaces (up from 4 in v0.2.x):
 #### Webhooks
 
 ```ts
-import { BeehiivClient } from 'beehiiv-react';
+import { BeehiivClient } from 'beehiiv-react/server';
 
 const client = new BeehiivClient({ apiKey: process.env.BEEHIIV_API_KEY! });
 

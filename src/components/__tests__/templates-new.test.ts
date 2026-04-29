@@ -44,12 +44,13 @@ describe('posts-route.ts.hbs', () => {
     expect(output).toMatchSnapshot();
   });
 
-  it('includes GET handler with cursor-based pagination', () => {
+  it('includes GET handler with page-based pagination', () => {
     const template = compileTemplate('posts-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
     expect(output).toContain('export async function GET');
-    expect(output).toContain('cursor');
+    expect(output).toContain('page');
+    expect(output).not.toContain('cursor');
     expect(output).toContain('client.posts.list');
     expect(output).toContain('pagination');
     expect(output).toContain('BeehiivClient');

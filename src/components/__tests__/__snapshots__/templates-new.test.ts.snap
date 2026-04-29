@@ -42,11 +42,11 @@ const client = new BeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? 'pub_posts123',
 });
 
-/** GET /api/beehiiv/posts — List posts with cursor-based pagination */
+/** GET /api/beehiiv/posts — List posts with page-based pagination */
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
-    const cursor = searchParams.get('cursor') ?? undefined;
+    const page = searchParams.get('page');
     const limit = searchParams.get('limit');
     const status = searchParams.get('status') as
       | 'draft'
@@ -59,15 +59,12 @@ export async function GET(req: NextRequest) {
       | 'all'
       | undefined;
 
-    const response = await client.posts.list(
-      process.env.BEEHIIV_PUBLICATION_ID ?? 'pub_posts123',
-      {
-        cursor,
-        limit: limit ? Number(limit) : undefined,
-        status: status ?? undefined,
-        audience: audience ?? undefined,
-      },
-    );
+    const response = await client.posts.list({
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      status: status ?? undefined,
+      audience: audience ?? undefined,
+    });
 
     return NextResponse.json(
       { data: response.data, pagination: response.pagination },

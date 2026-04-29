@@ -46,9 +46,7 @@ export type {
 export type {
   PostStatus,
   PostAudience,
-  PostContentFormat,
-  PostContentHtml,
-  PostContentJson,
+  PostContentTier,
   PostContent,
   PostStats,
   PostInfo,

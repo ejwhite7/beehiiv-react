@@ -261,7 +261,7 @@ export async function runInit(options: InitOptions): Promise<void> {
     outputDir,
   });
   generatedFiles.push(
-    path.join(outputDir, 'types', 'beehiiv.generated.ts'),
+    path.join(outputDir, 'lib', 'beehiiv', 'beehiiv-custom-fields.ts'),
   );
 
   if (features.apiRoutes) {

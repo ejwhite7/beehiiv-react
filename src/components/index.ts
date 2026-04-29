@@ -27,8 +27,7 @@ export type { PostListProps } from './PostList.js';
 
 export { PostContentRenderer } from './PostContentRenderer.js';
 export type {
-  PostContentProps,
-  PostContentData,
+  PostContentRendererProps,
 } from './PostContentRenderer.js';
 
 export { GatedContent } from './GatedContent.js';

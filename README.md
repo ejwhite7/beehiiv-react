@@ -124,7 +124,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.3.13
+# beehiiv-react/0.3.14
 ```
 
 ---
@@ -488,6 +488,9 @@ import { SubscriberBadge } from 'beehiiv-react';
 ---
 
 ## Release Notes
+
+### v0.3.14
+- `usePosts` now defensively guards against responses with missing or malformed `pagination` data — `hasMore` and `loadMore` behave correctly when the API omits pagination metadata
 
 ### v0.3.13
 - Generated server action and API route templates now import `BeehiivClient` from `beehiiv-react/server` (correct entry point) instead of the root `beehiiv-react` import

@@ -1,6 +1,11 @@
 import { defineConfig } from 'tsup';
 import { readFile, writeFile } from 'fs/promises';
+import { readFileSync } from 'fs';
 import { join } from 'path';
+
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8')) as {
+  version: string;
+};
 
 /**
  * Prepend a "use client" directive to compiled output files.
@@ -41,8 +46,8 @@ export default defineConfig([
     external: ['react', 'react-dom'],
     treeshake: true,
     onSuccess: prependUseClientDirective(
-      join('dist', 'index.cjs'),
       join('dist', 'index.js'),
+      join('dist', 'index.mjs'),
     ),
   },
   // TanStack Query adapter (CJS + ESM) — also client-side; same
@@ -55,8 +60,8 @@ export default defineConfig([
     external: ['react', 'react-dom', '@tanstack/react-query'],
     treeshake: true,
     onSuccess: prependUseClientDirective(
-      join('dist', 'query', 'index.cjs'),
       join('dist', 'query', 'index.js'),
+      join('dist', 'query', 'index.mjs'),
     ),
   },
   // Server utilities (CJS + ESM) — RSC-compatible sub-path export.
@@ -70,16 +75,19 @@ export default defineConfig([
     external: ['react', 'react-dom'],
     treeshake: true,
   },
-  // CLI (ESM, executable) — Node.js CLI tool, not a React entry
+  // CLI (CJS, executable) — Node.js CLI tool, not a React entry
   // point.  The shebang banner is required so the compiled script is
   // directly executable via npx / bin link.
   {
     entry: { 'cli/index': 'src/cli/index.ts' },
-    format: ['esm'],
+    format: ['cjs'],
     dts: false,
     sourcemap: true,
     banner: { js: '#!/usr/bin/env node' },
     external: [],
     platform: 'node',
+    define: {
+      __PACKAGE_VERSION__: JSON.stringify(pkg.version),
+    },
   },
 ]);

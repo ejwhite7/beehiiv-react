@@ -89,6 +89,12 @@ export interface UsePostsQueryOptions {
   /** Maximum number of results to return per page */
   limit?: number;
   /**
+   * Fields to expand in the response (e.g. ['free_web_content']).
+   * When included, the beehiiv API returns the full post content
+   * alongside the standard list fields.
+   */
+  expand?: string[];
+  /**
    * Stale time in milliseconds before a background re-fetch is triggered.
    * @defaultValue 60_000 (1 minute)
    */
@@ -130,6 +136,7 @@ export function usePostsQuery(
     status,
     audience,
     limit,
+    expand,
     staleTime = 60_000,
     enabled = true,
   } = options;
@@ -138,6 +145,7 @@ export function usePostsQuery(
     ...(status ? { status } : {}),
     ...(audience ? { audience } : {}),
     ...(limit !== undefined ? { limit } : {}),
+    ...(expand && expand.length > 0 ? { expand } : {}),
   };
 
   return useQuery<PostsListResponse>({
@@ -148,6 +156,11 @@ export function usePostsQuery(
       if (status) params.set('status', status);
       if (audience) params.set('audience', audience);
       if (limit !== undefined) params.set('limit', String(limit));
+      if (expand) {
+        for (const field of expand) {
+          params.append('expand[]', field);
+        }
+      }
       const query = params.toString();
       return fetchJson<PostsListResponse>(
         `${apiUrl}/posts${query ? `?${query}` : ''}`,

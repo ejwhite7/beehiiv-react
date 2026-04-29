@@ -56,7 +56,7 @@ export function SubscribeCTA({
       try {
         const result = await subscribeAction({ email });
         pushEvent('beehiiv_subscribe_success', {
-          publication_id: result?.data?.publication_id ?? '',
+          publication_id: result?.publication_id ?? '',
         });
         markSubscribed();
       } catch (err: unknown) {
@@ -75,6 +75,8 @@ export function SubscribeCTA({
         required
         disabled={isPending}
         aria-label="Email address"
+        aria-required="true"
+        autocomplete="email"
       />
       <button type="submit" disabled={isPending}>
         {isPending ? 'Subscribing...' : submitLabel}

@@ -12,7 +12,7 @@
  * @module hooks/usePosts
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { PostInfo, PostAudience, PostStatus } from '../types/post.js';
 import { useBeehiiv } from './useBeehiiv.js';
@@ -32,6 +32,14 @@ export interface UsePostsOptions {
   audience?: PostAudience;
   /** Maximum number of results to return per page */
   limit?: number;
+  /**
+   * Fields to expand in the response (e.g. ['free_web_content']).
+   * When included, the beehiiv API returns the full post content
+   * alongside the standard list fields. This parameter is forwarded
+   * on every fetch, including paginated load-more requests, so that
+   * all posts in the accumulated list contain their content.
+   */
+  expand?: string[];
   /**
    * Whether the fetch should run automatically on mount.
    * Set to `false` to defer fetching until `refetch()` is called.
@@ -93,7 +101,19 @@ export interface UsePostsReturn {
  */
 export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
   const { apiUrl } = useBeehiiv();
-  const { publicationId, status, audience, limit, enabled = true } = options;
+  const { publicationId, status, audience, limit, expand, enabled = true } = options;
+
+  /**
+   * Serialised expand key for stable dependency tracking.
+   * Arrays are compared by reference in dependency arrays, so we
+   * serialise to avoid infinite re-render loops when callers pass
+   * a new array literal on each render.
+   */
+  const expandKey = useMemo(
+    () => (expand ? JSON.stringify(expand) : ''),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [expand?.join(',')],
+  );
 
   const [posts, setPosts] = useState<PostInfo[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -127,11 +147,16 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
       if (limit !== undefined) {
         params.set('limit', String(limit));
       }
+      if (expand) {
+        for (const field of expand) {
+          params.append('expand[]', field);
+        }
+      }
       params.set('page', String(page));
       const query = params.toString();
       return `${apiUrl}/posts${query ? `?${query}` : ''}`;
     },
-    [apiUrl, publicationId, status, audience, limit],
+    [apiUrl, publicationId, status, audience, limit, expandKey],
   );
 
   /**

@@ -59,11 +59,14 @@ export async function GET(req: NextRequest) {
       | 'all'
       | undefined;
 
+    const expand = searchParams.getAll('expand[]');
+
     const response = await client.posts.list({
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
       status: status ?? undefined,
       audience: audience ?? undefined,
+      expand: expand.length > 0 ? expand : undefined,
     });
 
     return NextResponse.json(
@@ -138,7 +141,7 @@ export function SubscribeCTA({
       try {
         const result = await subscribeAction({ email });
         pushEvent('beehiiv_subscribe_success', {
-          publication_id: result?.data?.publication_id ?? '',
+          publication_id: result?.publication_id ?? '',
         });
         markSubscribed();
       } catch (err: unknown) {

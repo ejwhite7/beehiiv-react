@@ -24,6 +24,9 @@ All notable changes to `beehiiv-react` are documented in this file.
 - Full test coverage for all new endpoints and dual-signature patterns (467 tests, 42 files).
 - `CHANGELOG.md` (this file).
 
+### Fixed
+- **Load More: post content now renders correctly for all paginated results** -- Added `expand` parameter support to `ListPostsOptions`, `usePosts` hook, `usePostsQuery` query hook, and the `posts-route.ts.hbs` API route template. The `expand[]` query parameter (e.g. `free_web_content`) is now forwarded on every fetch, including paginated load-more requests, ensuring post content (body/HTML) is included in all API responses regardless of which page they came from.
+
 ### Fixed (ported from v0.3.7--v0.3.14)
 - **`publicationId` wiring** -- `PostsEndpoint` and all other endpoints now receive `defaultPublicationId` from `BeehiivClient` constructor.
 - **Page-based pagination** -- `PostsEndpoint.list()` uses `page` parameter instead of the broken `cursor` parameter; `usePosts` hook updated accordingly.
@@ -40,6 +43,7 @@ All notable changes to `beehiiv-react` are documented in this file.
 - **Defensive `usePosts` pagination** -- `data` and `pagination` fields treated as optional in API response; prevents runtime crashes on incomplete responses.
 - **`subscribeAction` response unwrapping** -- Generated server actions now return `response.data` (the `SubscriptionInfo` record) instead of the raw `SubscriptionResponse` wrapper, so consumers can use `sub.id` directly.
 - **API route double-wrapping fix** -- Generated API routes no longer double-wrap responses in `{ data: { data: ... } }`; SDK response objects are passed through directly.
+- **SubscribeCTA template `.data` accessor fix** -- Generated `SubscribeCTA` component now correctly accesses unwrapped `SubscriptionInfo` fields directly (e.g. `result?.publication_id`) instead of the removed `.data` envelope (`result?.data?.publication_id`).
 
 ### Changed
 - Bumped version to 0.4.0.

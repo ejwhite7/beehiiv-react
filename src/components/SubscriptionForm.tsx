@@ -351,7 +351,9 @@ export function SubscriptionForm<
           placeholder={emailPlaceholder}
           required
           aria-required="true"
-          aria-invalid={validationError?.includes('email') ? 'true' : undefined}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? 'beehiiv-form-error' : undefined}
+          autoComplete="email"
           className={inputClassName}
           disabled={isLoading}
         />
@@ -361,7 +363,7 @@ export function SubscriptionForm<
       {customFields.map((field) => (
         <div key={field.key}>
           <label htmlFor={`beehiiv-cf-${field.key}`}>{field.display}</label>
-          {renderCustomFieldInput(field, customFieldValues, setCustomField, inputClassName, isLoading)}
+          {renderCustomFieldInput(field, customFieldValues, setCustomField, inputClassName, isLoading, error)}
         </div>
       ))}
 
@@ -376,8 +378,9 @@ export function SubscriptionForm<
       </button>
 
       {/* Error display */}
+      {/* Error display linked via aria-describedby on form fields */}
       {error && (
-        <div role="alert" className={errorClassName} style={{ color: 'red' }}>
+        <div id="beehiiv-form-error" role="alert" className={errorClassName} style={{ color: 'red' }}>
           {error.message}
         </div>
       )}
@@ -401,6 +404,7 @@ function renderCustomFieldInput(
   setField: (key: string, value: unknown) => void,
   inputClassName: string | undefined,
   disabled: boolean,
+  formError: Error | null,
 ): React.JSX.Element {
   const id = `beehiiv-cf-${field.key}`;
   const value = values[field.key];
@@ -416,6 +420,9 @@ function renderCustomFieldInput(
           className={inputClassName}
           disabled={disabled}
           aria-required={field.required ? 'true' : undefined}
+          aria-invalid={formError?.message?.includes(field.display) ? 'true' : undefined}
+          aria-describedby={formError ? 'beehiiv-form-error' : undefined}
+          autoComplete="off"
         />
       );
 
@@ -433,6 +440,9 @@ function renderCustomFieldInput(
           disabled={disabled}
           required={field.required}
           aria-required={field.required ? 'true' : undefined}
+          aria-invalid={formError?.message?.includes(field.display) ? 'true' : undefined}
+          aria-describedby={formError ? 'beehiiv-form-error' : undefined}
+          autoComplete="off"
         />
       );
 
@@ -447,6 +457,9 @@ function renderCustomFieldInput(
           disabled={disabled}
           required={field.required}
           aria-required={field.required ? 'true' : undefined}
+          aria-invalid={formError?.message?.includes(field.display) ? 'true' : undefined}
+          aria-describedby={formError ? 'beehiiv-form-error' : undefined}
+          autoComplete="off"
         />
       );
 
@@ -461,6 +474,9 @@ function renderCustomFieldInput(
           disabled={disabled}
           required={field.required}
           aria-required={field.required ? 'true' : undefined}
+          aria-invalid={formError?.message?.includes(field.display) ? 'true' : undefined}
+          aria-describedby={formError ? 'beehiiv-form-error' : undefined}
+          autoComplete="off"
         />
       );
 
@@ -474,6 +490,9 @@ function renderCustomFieldInput(
           disabled={disabled}
           required={field.required}
           aria-required={field.required ? 'true' : undefined}
+          aria-invalid={formError?.message?.includes(field.display) ? 'true' : undefined}
+          aria-describedby={formError ? 'beehiiv-form-error' : undefined}
+          autoComplete="off"
         >
           <option value="">{field.placeholder ?? `Select ${field.display}`}</option>
           {(field.options ?? []).map((opt) => (
@@ -497,6 +516,9 @@ function renderCustomFieldInput(
           disabled={disabled}
           required={field.required}
           aria-required={field.required ? 'true' : undefined}
+          aria-invalid={formError?.message?.includes(field.display) ? 'true' : undefined}
+          aria-describedby={formError ? 'beehiiv-form-error' : undefined}
+          autoComplete="off"
         />
       );
   }

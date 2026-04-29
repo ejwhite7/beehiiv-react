@@ -30,6 +30,12 @@ export interface ListPostsOptions {
   orderBy?: 'publish_date' | 'created_at';
   /** Sort direction for the ordered results */
   direction?: 'asc' | 'desc';
+  /**
+   * Fields to expand in the response (e.g. 'free_web_content').
+   * When included, the beehiiv API returns the full post content
+   * alongside the standard list fields.
+   */
+  expand?: string[];
 }
 
 /** Options for retrieving a single post */
@@ -145,6 +151,11 @@ export class PostsEndpoint {
     }
     if (listOptions?.direction) {
       params.set('direction', listOptions.direction);
+    }
+    if (listOptions?.expand) {
+      for (const field of listOptions.expand) {
+        params.append('expand[]', field);
+      }
     }
 
     const query = params.toString();

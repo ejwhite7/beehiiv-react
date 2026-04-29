@@ -1,0 +1,41 @@
+# beehiiv-react — Cline Rules
+
+**Before writing any code, read `SKILL.md` in the repo root.** This file is the canonical agent
+guide for this repository. The rules below are a summary only.
+
+## What this package does
+
+`beehiiv-react` is a TypeScript NPM package providing:
+- A typed, rate-limited server-side API client for beehiiv v2 (`BeehiivClient`)
+- React hooks (`useSubscribe`, `useSubscription`, `useCustomFields`, `useBeehiiv`)
+- A drop-in `<SubscriptionForm>` component with headless mode
+- A CLI (`beehiiv-react init` / `beehiiv-react sync`) for project scaffolding
+
+## Non-negotiable rules
+
+1. `BeehiivClient` is **server-only**. API keys must never reach the client bundle.
+2. Hooks must use `useBeehiiv()` for `apiUrl` — never hardcode the beehiiv API URL.
+3. Hooks must use `fetchIdRef = useRef(0)` to discard stale responses.
+4. TypeScript strict mode — `any` and `@ts-ignore` are forbidden.
+5. `react` / `react-dom` are peer dependencies — do not move them to `dependencies`.
+6. `chalk`, `ora`, `open` are ESM-only — use dynamic `import()` inside functions only.
+7. Every new export must be registered in `src/types/index.ts` (types) or `src/index.ts` (all).
+8. Every feature requires tests. Current baseline: 126 tests across 14 files.
+
+## CI gate (verify locally before committing)
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## Priority expansion areas
+
+See SKILL.md "Known Gaps" for details:
+- `usePosts` / `usePost` hooks and `PostList` / `PostCard` components
+- `useSubscribers` paginated list hook
+- `useSubscriberAccess` + `<PremiumContent>` content gating
+- Webhook client endpoint (types already exist in `src/types/webhook.ts`)
+- Add `utmTerm` and `utmContent` to `SubscribeData`

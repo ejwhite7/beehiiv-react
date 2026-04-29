@@ -120,6 +120,8 @@ export function PublicationPicker() {
 
 ### `beehiiv-react/query` -- TanStack Query Adapter
 
+> **Prerequisites:** Install `@tanstack/react-query` before using this sub-path: `npm install @tanstack/react-query`
+
 A dedicated sub-path export that wraps every beehiiv API call in TanStack Query v5 hooks for automatic caching, deduplication, and background re-fetching.
 
 **Setup:**
@@ -212,6 +214,16 @@ All v0.2.x APIs remain stable and unchanged. v0.3.0 is a purely additive release
 ```bash
 npm install beehiiv-react
 ```
+
+### Optional peer dependencies
+
+If you use the `beehiiv-react/query` TanStack Query adapter, install the peer dependency too:
+
+```bash
+npm install @tanstack/react-query
+```
+
+> `@tanstack/react-query` v5+ is required only when importing from `beehiiv-react/query`. If you don't use that sub-path, skip this step.
 
 ## Quick Start
 

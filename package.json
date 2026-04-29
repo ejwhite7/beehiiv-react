@@ -48,7 +48,9 @@
   },
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "README.md",
+    "CLAUDE.md"
   ],
   "scripts": {
     "build": "tsup",

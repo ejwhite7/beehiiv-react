@@ -63,6 +63,14 @@ describe('posts-route.ts.hbs', () => {
 
     expect(output).toContain('pub_loadmore');
   });
+
+  it('imports BeehiivClient from beehiiv-react/server', () => {
+    const template = compileTemplate('posts-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toContain("from 'beehiiv-react/server'");
+    expect(output).not.toMatch(/from 'beehiiv-react'[^/]/);
+  });
 });
 
 // ---------------------------------------------------------------------------

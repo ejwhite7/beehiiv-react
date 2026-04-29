@@ -35,7 +35,7 @@ exports[`posts-route.ts.hbs > generates a valid Next.js posts API route 1`] = `
  * Located at: app/api/beehiiv/posts/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react';
+import { BeehiivClient } from 'beehiiv-react/server';
 
 const client = new BeehiivClient({
   apiKey: process.env.BEEHIIV_API_KEY!,

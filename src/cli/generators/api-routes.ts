@@ -28,7 +28,7 @@ const SUBSCRIPTION_ID_ROUTE_TEMPLATE = `/**
  * Located at: app/api/beehiiv/subscription/[id]/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react';
+import { BeehiivClient } from 'beehiiv-react/server';
 import beehiivConfig from '@/beehiiv.config';
 
 /**

@@ -2,7 +2,19 @@
 
 All notable changes to `beehiiv-react` are documented in this file.
 
-## [0.4.0] - Unreleased
+## [0.4.1] - 2026-04-29
+
+### Added
+- **Accessibility**: `aria-required`, `aria-invalid`, `aria-describedby`, and `autocomplete` tokens added to all subscribe form fields
+  - `SubscriptionForm.tsx`: `autocomplete="email"` on the email input, `autoComplete="off"` on custom field inputs, `aria-invalid` tied to error state, `aria-describedby` linking to a `beehiiv-form-error` error display
+  - `subscribe-cta.tsx.hbs` (CLI template): `aria-required` and `autocomplete="email"` on the email input
+  - `subscribe-step-two.tsx.hbs` (CLI template): `aria-required` and `autoComplete="off"` on custom field inputs/selects
+- **`expand` parameter on `usePosts`/`usePostsQuery`**: list-side equivalent of the v0.4.0 `GetPostOptions.expand` addition. Generated `posts-route.ts.hbs` API route forwards `expand[]` to the beehiiv API for paginated load-more requests so post content (body/HTML) is included on every page.
+
+### Fixed
+- **SubscribeCTA template**: now accesses unwrapped `SubscriptionInfo` fields directly (`result?.publication_id`) instead of `result?.data?.publication_id`, matching the v0.3.x change where `subscribeAction` stopped wrapping the response in a `.data` envelope.
+
+## [0.4.0] - 2026-04-29
 
 ### Added
 - **`defaultPublicationId` dual-signature pattern** on all 9 endpoint classes.

@@ -124,7 +124,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.4.0
+# beehiiv-react/0.4.1
 ```
 
 ---
@@ -488,6 +488,11 @@ import { SubscriberBadge } from 'beehiiv-react';
 ---
 
 ## Release Notes
+
+### v0.4.1
+- **Accessibility**: aria attributes (`aria-required`, `aria-invalid`, `aria-describedby`) and `autocomplete` tokens added across `SubscriptionForm` and the generated subscribe templates (`subscribe-cta`, `subscribe-step-two`)
+- **`expand` on `usePosts`/`usePostsQuery`**: list-side `expand` parameter forwarded to the beehiiv API on every paginated load-more, so post content stays populated across all pages
+- **SubscribeCTA template fix**: accesses unwrapped `SubscriptionInfo` fields directly (`result?.publication_id`) to match the unwrapped `subscribeAction` response shape
 
 ### v0.4.0
 - **`defaultPublicationId` dual-signature pattern** extended to all 9 endpoint classes

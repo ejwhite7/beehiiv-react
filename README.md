@@ -124,7 +124,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.3.12
+# beehiiv-react/0.3.13
 ```
 
 ---
@@ -488,6 +488,10 @@ import { SubscriberBadge } from 'beehiiv-react';
 ---
 
 ## Release Notes
+
+### v0.3.13
+- Generated server action and API route templates now import `BeehiivClient` from `beehiiv-react/server` (correct entry point) instead of the root `beehiiv-react` import
+- `subscribeAction` now accepts and forwards UTM fields (`utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`) to beehiiv
 
 ### v0.3.12
 - Fixed 5 scaffold template bugs surfaced in generated projects:

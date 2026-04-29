@@ -138,7 +138,7 @@ export function SubscribeCTA({
       try {
         const result = await subscribeAction({ email });
         pushEvent('beehiiv_subscribe_success', {
-          publication_id: result?.data?.publication_id ?? '',
+          publication_id: result?.publication_id ?? '',
         });
         markSubscribed();
       } catch (err: unknown) {

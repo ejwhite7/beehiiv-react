@@ -41,8 +41,8 @@ export default defineConfig([
     external: ['react', 'react-dom'],
     treeshake: true,
     onSuccess: prependUseClientDirective(
+      join('dist', 'index.cjs'),
       join('dist', 'index.js'),
-      join('dist', 'index.mjs'),
     ),
   },
   // TanStack Query adapter (CJS + ESM) — also client-side; same
@@ -55,8 +55,8 @@ export default defineConfig([
     external: ['react', 'react-dom', '@tanstack/react-query'],
     treeshake: true,
     onSuccess: prependUseClientDirective(
+      join('dist', 'query', 'index.cjs'),
       join('dist', 'query', 'index.js'),
-      join('dist', 'query', 'index.mjs'),
     ),
   },
   // Server utilities (CJS + ESM) — RSC-compatible sub-path export.
@@ -70,12 +70,12 @@ export default defineConfig([
     external: ['react', 'react-dom'],
     treeshake: true,
   },
-  // CLI (CJS, executable) — Node.js CLI tool, not a React entry
+  // CLI (ESM, executable) — Node.js CLI tool, not a React entry
   // point.  The shebang banner is required so the compiled script is
   // directly executable via npx / bin link.
   {
     entry: { 'cli/index': 'src/cli/index.ts' },
-    format: ['cjs'],
+    format: ['esm'],
     dts: false,
     sourcemap: true,
     banner: { js: '#!/usr/bin/env node' },

@@ -256,4 +256,54 @@ describe('usePosts', () => {
       .calls[1][0] as string;
     expect(refetchUrl).toContain('page=1');
   });
+
+  it('handles response with missing pagination gracefully', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: [
+          {
+            id: 'post_solo',
+            publication_id: 'pub_test',
+            title: 'Solo Post',
+            status: 'confirmed' as const,
+            audience: 'all' as const,
+            created_at: 1700000000,
+          },
+        ],
+      }),
+    });
+
+    const { result } = renderHook(() => usePosts(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.posts).toHaveLength(1);
+    expect(result.current.posts[0].id).toBe('post_solo');
+    expect(result.current.hasMore).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('handles response with missing data gracefully', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}),
+    });
+
+    const { result } = renderHook(() => usePosts(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.posts).toHaveLength(0);
+    expect(result.current.hasMore).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 });

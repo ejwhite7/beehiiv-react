@@ -322,3 +322,101 @@ When implementing any of these, follow the canonical patterns above and ship tes
 - Do not add new top-level exports without registering them in both `src/types/index.ts` (for
   types) and `src/index.ts` (for everything)
 - Do not use `default export` for anything other than React components
+
+---
+
+## Installing Skills in Your Coding Workspace
+
+When you open a project that uses `beehiiv-react` as a dependency, use the instructions below
+to load the agent context for your specific tool. This gives your coding agent full knowledge
+of the package's architecture, patterns, and constraints without reading source code.
+
+### Claude (Claude Code / claude.ai)
+
+Add the following block to your project's `CLAUDE.md` (create the file if it doesn't exist):
+
+````markdown
+## beehiiv-react
+
+This project uses the `beehiiv-react` NPM package. Load the skill context before working with
+any beehiiv integration code:
+
+- Full conventions guide: `node_modules/beehiiv-react/SKILL.md`
+- Run `cat node_modules/beehiiv-react/SKILL.md` to read it at session start.
+
+Key rules (summary):
+- `BeehiivClient` is server-only — never import in hooks, components, or client bundles.
+- Hooks use `useBeehiiv()` for `apiUrl` — never hardcode the beehiiv API URL.
+- Hooks use `fetchIdRef = useRef(0)` to guard stale async responses.
+- All new types register in `src/types/index.ts` AND `src/index.ts`.
+- No `any` types. TypeScript strict mode enforced.
+````
+
+### Cursor
+
+Copy `.cursor/rules/beehiiv-react.mdc` from the package into your project:
+
+```bash
+mkdir -p .cursor/rules
+cp node_modules/beehiiv-react/.cursor/rules/beehiiv-react.mdc .cursor/rules/
+```
+
+Cursor auto-loads all `.mdc` files in `.cursor/rules/` — no further configuration needed.
+
+### GitHub Copilot
+
+Copy the Copilot instructions file into your project:
+
+```bash
+mkdir -p .github
+cp node_modules/beehiiv-react/.github/copilot-instructions.md .github/copilot-instructions.md
+```
+
+If your project already has a `.github/copilot-instructions.md`, append the beehiiv-react
+section to the end of your existing file instead of replacing it.
+
+### Windsurf
+
+Copy the rules file to your project root:
+
+```bash
+cp node_modules/beehiiv-react/.windsurfrules .windsurfrules
+```
+
+If a `.windsurfrules` already exists, append the beehiiv-react section to it.
+
+### Cline
+
+Copy the rules file to your project root:
+
+```bash
+cp node_modules/beehiiv-react/.clinerules .clinerules
+```
+
+If a `.clinerules` already exists, append the beehiiv-react section to it.
+
+### Aider
+
+Aider supports passing additional context files via `--read`. Add this to your session startup:
+
+```bash
+aider --read node_modules/beehiiv-react/SKILL.md
+```
+
+Or add it to your local `.aider.conf.yml`:
+
+```yaml
+read:
+  - node_modules/beehiiv-react/SKILL.md
+```
+
+### Manual / Any Other Tool
+
+The canonical skill file is always available at:
+
+```
+node_modules/beehiiv-react/SKILL.md
+```
+
+Paste its contents into any tool's system prompt, context window, or rules file to give your
+agent full knowledge of the package conventions.

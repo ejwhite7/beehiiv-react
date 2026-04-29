@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Hook for resolving subscriber access to a specific post.
  *

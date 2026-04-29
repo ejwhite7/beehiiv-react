@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Hook for fetching a paginated list of subscribers from a beehiiv publication.
  *

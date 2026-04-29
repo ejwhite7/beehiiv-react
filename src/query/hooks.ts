@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * TanStack Query hooks for beehiiv API resources.
  *

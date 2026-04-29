@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * @file useSubscriberTier.ts
  * Lightweight hook that returns only a subscriber's tier and access flags,

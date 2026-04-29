@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * PostContent - renders the body content of a beehiiv post.
  * Supports HTML (via `dangerouslySetInnerHTML`), JSON, and fallback modes.

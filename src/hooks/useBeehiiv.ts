@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Core beehiiv context hook.
  *

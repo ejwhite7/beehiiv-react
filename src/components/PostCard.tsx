@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * PostCard - a card component for displaying a beehiiv post summary.
  * Renders thumbnail, title, subtitle, audience badge, and publish date.

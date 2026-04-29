@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * PremiumContent - an opinionated shortcut for gating content behind
  * a premium subscription.

@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * SubscriptionForm - a drop-in email subscription form component.
  * Handles form state, validation, submission, and success/error UI.

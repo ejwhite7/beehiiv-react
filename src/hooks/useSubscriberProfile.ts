@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * @file useSubscriberProfile.ts
  * Hook for resolving a subscriber's full profile — tier, status, and identity flags —

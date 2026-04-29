@@ -16,6 +16,7 @@ Scaffolds configuration, generates TypeScript types from your publication's cust
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [CLI](#cli)
+  - [Version](#version)
 - [BeehiivProvider](#beehiivprovider)
 - [Hooks](#hooks)
   - [useSubscribe](#usesubscribe)
@@ -26,7 +27,7 @@ Scaffolds configuration, generates TypeScript types from your publication's cust
 - [BeehiivClient](#beehiivclient-server-side)
 - [Posts & Content Visibility](#posts--content-visibility)
 - [Subscriber Profiles](#subscriber-profiles)
-- [What's New in v0.3.0](#whats-new-in-v030)
+- [Release Notes](#release-notes)
 - [API Reference](#api-reference)
 - [Contributing](#contributing)
 - [License](#license)
@@ -89,6 +90,17 @@ npx beehiiv-react init --oauth
 ```
 
 This starts a local callback server and opens the beehiiv authorization page in your browser. OAuth2 requires a registered client ID with beehiiv. Contact beehiiv to register your application for OAuth2 access.
+
+### Version
+
+Print the installed version:
+
+```bash
+npx beehiiv-react -v
+# or
+npx beehiiv-react --version
+# beehiiv-react/0.3.5
+```
 
 ---
 
@@ -294,6 +306,8 @@ const { data: subscribers } = await client.subscriptions.list({ limit: 10 });
 const { data: fields } = await client.customFields.list();
 ```
 
+> **Tip:** When `publicationId` is set in the client config, you can omit it from individual method calls — the client injects it automatically.
+
 The client includes built-in rate limiting (180 requests/minute) matching beehiiv's API limits.
 
 ---
@@ -442,7 +456,33 @@ import { SubscriberBadge } from 'beehiiv-react';
 
 ---
 
-## What's New in v0.3.0
+## Release Notes
+
+### v0.3.5
+- Fixed 7 TypeScript errors in generated API route templates
+  - `SubscriptionsEndpoint` now accepts an optional `defaultPublicationId` from client config; all methods support calling without an explicit publication ID argument
+  - Added `get()` alias on `SubscriptionsEndpoint` (maps to `getById`)
+  - Added `email` filter to `ListSubscriptionsOptions`
+  - Custom fields generator now writes to `lib/beehiiv/beehiiv-custom-fields.ts` (fixes TS2307 import path mismatch in generated server actions)
+- Added `-v` / `--version` CLI flag (see [CLI](#cli))
+- Added `SKILL.md` and AI coding tool context files (Cursor, Copilot, Windsurf, Cline, Aider, AGENTS.md)
+
+### v0.3.4
+- Build pipeline injects `"use client"` directives via tsup `onSuccess` hook (resolves Rollup stripping issue)
+
+### v0.3.3
+- Added `"use client"` directives to all client-facing source files
+
+### v0.3.2
+- `README.md` and `CLAUDE.md` included in npm package files
+- Peer dependency install documentation improved
+
+### v0.3.1
+- Fixed ENOENT crash on `npx beehiiv-react init` (CLI template path resolution)
+- Fixed default import for `beehiiv.config`
+- Fixed Next.js 15 compatibility: async `params` in generated API route handlers
+
+### v0.3.0
 
 v0.3.0 delivers full beehiiv API v2 coverage, two new React hooks, a first-class TanStack Query adapter, and React Server Component utilities.
 

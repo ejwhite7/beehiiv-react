@@ -19,7 +19,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BeehiivProvider } from '../../components/BeehiivProvider.js';
 import { usePosts } from '../usePosts.js';
-import type { PostInfo } from '../../types/post.js';
 
 /** Create a wrapper with the BeehiivProvider context */
 function createWrapper(apiUrl = '/api/beehiiv') {

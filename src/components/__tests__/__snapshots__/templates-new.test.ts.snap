@@ -160,6 +160,8 @@ export function SubscribeCTA({
         required
         disabled={isPending}
         aria-label="Email address"
+        aria-required="true"
+        autocomplete="email"
       />
       <button type="submit" disabled={isPending}>
         {isPending ? 'Subscribing...' : submitLabel}
@@ -255,6 +257,8 @@ export function SubscribeStepTwo({
               }
               required={field.required}
               disabled={isPending}
+              aria-required={field.required ? 'true' : undefined}
+              autoComplete="off"
             >
               <option value="">Select...</option>
               {field.options.map((opt) => (
@@ -273,6 +277,8 @@ export function SubscribeStepTwo({
               }
               required={field.required}
               disabled={isPending}
+              aria-required={field.required ? 'true' : undefined}
+              autoComplete="off"
             />
           )}
         </div>

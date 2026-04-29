@@ -111,7 +111,6 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
    */
   const expandKey = useMemo(
     () => (expand ? JSON.stringify(expand) : ''),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [expand?.join(',')],
   );
 

@@ -1,6 +1,7 @@
 /**
  * Unit tests for the WebhooksEndpoint class.
- * Tests list, get, create, update, delete, and test methods.
+ * Tests list, get, create, update, delete, and test methods,
+ * including dual-signature calling conventions.
  * Uses a mocked BeehiivHttpClient.
  */
 
@@ -60,6 +61,23 @@ describe('WebhooksEndpoint', () => {
 
       expect(result.data).toHaveLength(0);
     });
+
+    it('should use default publicationId when called with no args', async () => {
+      const endpointWithDefault = new WebhooksEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: [] });
+
+      await endpointWithDefault.list();
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/webhooks'
+      );
+    });
+
+    it('should throw when no publicationId is available', async () => {
+      await expect(endpoint.list()).rejects.toThrow(
+        'publicationId is required'
+      );
+    });
   });
 
   describe('get', () => {
@@ -82,6 +100,17 @@ describe('WebhooksEndpoint', () => {
         '/publications/pub_123/webhooks/ep_abc'
       );
       expect(result).toEqual(responseData);
+    });
+
+    it('should use default publicationId when called with one arg', async () => {
+      const endpointWithDefault = new WebhooksEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: { id: 'ep_abc' } });
+
+      await endpointWithDefault.get('ep_abc');
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/webhooks/ep_abc'
+      );
     });
   });
 
@@ -131,6 +160,24 @@ describe('WebhooksEndpoint', () => {
         }
       );
     });
+
+    it('should use default publicationId when data is passed directly', async () => {
+      const endpointWithDefault = new WebhooksEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.post).mockResolvedValue({ data: { id: 'ep_new' } });
+
+      await endpointWithDefault.create({
+        url: 'https://example.com/hook',
+        event_types: ['post.sent'],
+      });
+
+      expect(mockHttp.post).toHaveBeenCalledWith(
+        '/publications/pub_default/webhooks',
+        {
+          url: 'https://example.com/hook',
+          event_types: ['post.sent'],
+        }
+      );
+    });
   });
 
   describe('update', () => {
@@ -157,6 +204,18 @@ describe('WebhooksEndpoint', () => {
       );
       expect(result).toEqual(responseData);
     });
+
+    it('should use default publicationId when called with id and data', async () => {
+      const endpointWithDefault = new WebhooksEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.patch).mockResolvedValue({ data: { id: 'ep_abc' } });
+
+      await endpointWithDefault.update('ep_abc', { event_types: ['post.sent'] });
+
+      expect(mockHttp.patch).toHaveBeenCalledWith(
+        '/publications/pub_default/webhooks/ep_abc',
+        { event_types: ['post.sent'] }
+      );
+    });
   });
 
   describe('delete', () => {
@@ -175,6 +234,17 @@ describe('WebhooksEndpoint', () => {
 
       const result = await endpoint.delete('pub_123', 'ep_abc');
       expect(result).toBeUndefined();
+    });
+
+    it('should use default publicationId when called with one arg', async () => {
+      const endpointWithDefault = new WebhooksEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.delete).mockResolvedValue(undefined);
+
+      await endpointWithDefault.delete('ep_abc');
+
+      expect(mockHttp.delete).toHaveBeenCalledWith(
+        '/publications/pub_default/webhooks/ep_abc'
+      );
     });
   });
 
@@ -195,6 +265,18 @@ describe('WebhooksEndpoint', () => {
 
       const result = await endpoint.test('pub_123', 'ep_abc');
       expect(result).toBeUndefined();
+    });
+
+    it('should use default publicationId when called with one arg', async () => {
+      const endpointWithDefault = new WebhooksEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.post).mockResolvedValue(undefined);
+
+      await endpointWithDefault.test('ep_abc');
+
+      expect(mockHttp.post).toHaveBeenCalledWith(
+        '/publications/pub_default/webhooks/ep_abc/test',
+        {}
+      );
     });
   });
 });

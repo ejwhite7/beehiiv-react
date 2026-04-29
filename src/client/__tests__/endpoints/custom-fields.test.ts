@@ -1,6 +1,7 @@
 /**
  * Unit tests for the CustomFieldsEndpoint class.
- * Tests list, get, create, update, and delete operations.
+ * Tests list, get, create, update, and delete operations,
+ * including dual-signature calling conventions.
  * Uses a mocked BeehiivHttpClient.
  */
 
@@ -72,6 +73,33 @@ describe('CustomFieldsEndpoint', () => {
       expect(result.data).toHaveLength(2);
       expect(result.pagination.total_results).toBe(2);
     });
+
+    it('should use default publicationId when options are passed directly', async () => {
+      const endpointWithDefault = new CustomFieldsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: [], pagination: { page: 1, limit: 10, total_results: 0, total_pages: 0 } });
+
+      await endpointWithDefault.list({ limit: 5 });
+
+      const calledPath = vi.mocked(mockHttp.get).mock.calls[0][0];
+      expect(calledPath).toContain('/publications/pub_default/custom_fields');
+    });
+
+    it('should use default publicationId when called with no args', async () => {
+      const endpointWithDefault = new CustomFieldsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: [], pagination: { page: 1, limit: 10, total_results: 0, total_pages: 0 } });
+
+      await endpointWithDefault.list();
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/custom_fields'
+      );
+    });
+
+    it('should throw when no publicationId is available', async () => {
+      await expect(endpoint.list({ limit: 5 })).rejects.toThrow(
+        'publicationId is required'
+      );
+    });
   });
 
   describe('get', () => {
@@ -87,6 +115,17 @@ describe('CustomFieldsEndpoint', () => {
         '/publications/pub_123/custom_fields/cf_abc'
       );
       expect(result).toEqual(responseData);
+    });
+
+    it('should use default publicationId when called with one arg', async () => {
+      const endpointWithDefault = new CustomFieldsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.get).mockResolvedValue({ data: { id: 'cf_abc' } });
+
+      await endpointWithDefault.get('cf_abc');
+
+      expect(mockHttp.get).toHaveBeenCalledWith(
+        '/publications/pub_default/custom_fields/cf_abc'
+      );
     });
   });
 
@@ -124,6 +163,18 @@ describe('CustomFieldsEndpoint', () => {
         { kind: 'boolean', display: 'Opted In' }
       );
     });
+
+    it('should use default publicationId when data is passed directly', async () => {
+      const endpointWithDefault = new CustomFieldsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.post).mockResolvedValue({ data: { id: 'cf_new' } });
+
+      await endpointWithDefault.create({ kind: 'string', display: 'Company' });
+
+      expect(mockHttp.post).toHaveBeenCalledWith(
+        '/publications/pub_default/custom_fields',
+        { kind: 'string', display: 'Company' }
+      );
+    });
   });
 
   describe('update', () => {
@@ -143,6 +194,18 @@ describe('CustomFieldsEndpoint', () => {
       );
       expect(result).toEqual(responseData);
     });
+
+    it('should use default publicationId when called with id and data', async () => {
+      const endpointWithDefault = new CustomFieldsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.put).mockResolvedValue({ data: { id: 'cf_abc' } });
+
+      await endpointWithDefault.update('cf_abc', { display: 'New Name' });
+
+      expect(mockHttp.put).toHaveBeenCalledWith(
+        '/publications/pub_default/custom_fields/cf_abc',
+        { display: 'New Name' }
+      );
+    });
   });
 
   describe('delete', () => {
@@ -161,6 +224,17 @@ describe('CustomFieldsEndpoint', () => {
 
       const result = await endpoint.delete('pub_123', 'cf_xyz');
       expect(result).toBeUndefined();
+    });
+
+    it('should use default publicationId when called with one arg', async () => {
+      const endpointWithDefault = new CustomFieldsEndpoint(mockHttp, 'pub_default');
+      vi.mocked(mockHttp.delete).mockResolvedValue(undefined);
+
+      await endpointWithDefault.delete('cf_abc');
+
+      expect(mockHttp.delete).toHaveBeenCalledWith(
+        '/publications/pub_default/custom_fields/cf_abc'
+      );
     });
   });
 });

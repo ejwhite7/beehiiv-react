@@ -6,7 +6,7 @@
 
 `beehiiv-react` is a hybrid npm package that provides:
 
-1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only) with 8 endpoint namespaces: `subscriptions`, `customFields`, `publications`, `posts`, `webhooks`, `segments`, `automations`, `referrals`
+1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only) with 9 endpoint namespaces: `subscriptions`, `customFields`, `publications`, `posts`, `webhooks`, `segments`, `automations`, `referrals`, `automationJourneys`
 2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`, `useSubscriberProfile`, `useSubscriberTier`, `useSubscribers`, `usePublications`) for client-side state management -- 12 hooks total (including `useBeehiiv`)
 3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`, `PostCard`, `PostList`, `PostContentRenderer`, `GatedContent`, `PremiumContent`, `SubscriberBadge`) for common UI patterns
 4. **Utility functions** (`canViewContent`, `getAudienceLabel`, `getTierLabel`) for subscriber access resolution
@@ -34,6 +34,7 @@ beehiiv-react/
 │   │   ├── segment.ts               # Segment types, member responses, filter options
 │   │   ├── automation.ts            # Automation types, journey types, trigger/step types
 │   │   ├── referral.ts              # Referral program types, milestone rewards, subscriber stats
+│   │   ├── automation-journey.ts    # Automation journey types and responses
 │   │   ├── access.ts                # AccessResult, UseSubscriberAccessOptions, UsePostAccessOptions
 │   │   └── index.ts                 # Re-exports all types
 │   ├── client/                      # Server-side API client
@@ -47,7 +48,8 @@ beehiiv-react/
 │   │       ├── webhooks.ts          # Webhook CRUD + test endpoint
 │   │       ├── segments.ts          # Segment list/get/delete/recalculate/listMembers
 │   │       ├── automations.ts       # Automation list/get/create + journey listing
-│   │       └── referrals.ts         # Referral program, milestones, subscriber stats
+│   │       ├── referrals.ts         # Referral program, milestones, subscriber stats
+│       └── automation-journeys.ts # Automation journey create/get
 │   ├── hooks/                       # React hooks (client-side)
 │   │   ├── index.ts                 # Re-exports all hooks
 │   │   ├── useBeehiiv.ts            # Context access hook
@@ -98,20 +100,30 @@ beehiiv-react/
 │       │   ├── config.ts            # Renders beehiiv.config.ts
 │       │   ├── custom-fields.ts     # Renders typed custom fields
 │       │   ├── api-routes.ts        # Renders Next.js API routes
-│       │   └── server-actions.ts    # Renders Next.js Server Actions
+│       │   ├── server-actions.ts    # Renders Next.js Server Actions
+│       │   ├── analytics.ts         # Renders analytics/dataLayer tracking
+│       │   ├── hooks.ts             # Renders subscriber status hook
+│       │   └── subscribe-components.ts # Renders subscribe flow components
 │       └── prompts/
 │           └── index.ts             # Interactive inquirer prompts
 ├── templates/                       # Handlebars templates for code generation
 │   ├── config.ts.hbs                # beehiiv.config.ts template
 │   ├── custom-fields.ts.hbs         # Custom field types template
 │   ├── api-route.ts.hbs             # Next.js API route template
-│   └── server-action.ts.hbs         # Next.js Server Action template
+│   ├── server-action.ts.hbs         # Next.js Server Action template
+│   ├── analytics.ts.hbs             # Analytics/dataLayer template
+│   ├── posts-route.ts.hbs           # Posts API route template
+│   ├── subscribe-cta.tsx.hbs        # Subscribe CTA component template
+│   ├── subscribe-step-two.tsx.hbs   # Subscribe step-two component template
+│   ├── subscribe-wrapper.tsx.hbs    # Subscribe wrapper component template
+│   └── use-subscriber-status.ts.hbs # Subscriber status hook template
 ├── package.json
 ├── tsconfig.json
 ├── tsup.config.ts                   # Multi-entry build: library + query + server + CLI
 ├── vitest.config.ts                 # Test config with jsdom environment
 ├── .eslintrc.json
 ├── .github/workflows/ci.yml         # GitHub Actions CI
+├── CHANGELOG.md                     # Version history
 ├── CLAUDE.md                        # This file
 └── README.md                        # User-facing documentation
 ```
@@ -150,18 +162,19 @@ The client includes a built-in rate limiter (token-bucket algorithm) to stay wit
 
 ---
 
-## Client Endpoints (8 total)
+## Client Endpoints (9 total)
 
 | Namespace | Resource | Key Methods |
 |---|---|---|
 | `subscriptions` | Subscribers | `list`, `getByEmail`, `getById`, `create`, `updateById`, `updateByEmail`, `delete` |
 | `customFields` | Custom Fields | `list`, `get`, `create`, `update`, `delete` |
 | `publications` | Publications | `list`, `get` |
-| `posts` | Posts | `list`, `get`, `create`, `update`, `delete` |
+| `posts` | Posts | `list`, `get`, `create`, `update`, `delete`, `aggregateStats` |
 | `webhooks` | Webhooks | `list`, `get`, `create`, `update`, `delete`, `test` |
 | `segments` | Segments | `list`, `get`, `delete`, `recalculate`, `listMembers` |
-| `automations` | Automations | `list`, `get`, `create`, `listJourneys` |
+| `automations` | Automations | `list`, `get`, `create`, `listJourneys`, `listEmails` |
 | `referrals` | Referrals | `getProgram`, `listMilestones`, `getSubscriberStats` |
+| `automationJourneys` | Automation Journeys | `create`, `get` |
 
 ---
 
@@ -242,7 +255,7 @@ React and react-dom are externalized from the library build. @tanstack/react-que
 
 ### Post Hooks
 
-- **`usePosts(options)`** -- Paginated post list with `audience`, `status`, `orderBy`, `direction` filters. Returns `{ posts, isLoading, error, hasMore, loadMore }` with cursor-based pagination.
+- **`usePosts(options)`** -- Paginated post list with `audience`, `status`, `orderBy`, `direction` filters. Returns `{ posts, isLoading, error, hasMore, loadMore }` with page-based pagination.
 - **`usePost({ id })`** -- Fetches a single post by ID. Returns `{ post, isLoading, error }`.
 
 Both hooks use `useBeehiiv()` for the API base URL and follow the same loading/error state pattern as existing hooks.
@@ -311,6 +324,24 @@ These functions are safe to call inside React Server Components, Route Handlers,
 
 ---
 
+## v0.3.13-v0.3.14 Fixes (ported into v0.4.0)
+
+### v0.3.13 -- Template Import Path + UTM Fields
+- All CLI-generated templates now import `BeehiivClient` from `beehiiv-react/server` (was incorrectly `beehiiv-react`)
+- Generated `subscribeAction` accepts and passes through UTM attribution fields: `utmSource`, `utmMedium`, `utmChannel`, `utmCampaign`, `referringSite`, `reactivateExisting`
+- `utm_channel` added to `SubscriptionInfo` and `CreateSubscriptionRequest` types
+
+### v0.3.14 -- Defensive usePosts Pagination
+- `usePosts` hook handles API responses with missing `data` or `pagination` fields gracefully
+- Response type fields changed from required to optional with null-coalescing defaults
+- Prevents runtime crashes when the beehiiv API returns incomplete responses
+
+### Response Unwrapping Fix (v0.4.0)
+- Generated `subscribeAction` server action now returns `response.data` (the `SubscriptionInfo` record) instead of the raw `SubscriptionResponse` wrapper, so consumers can use `sub.id` directly
+- Generated API routes no longer double-wrap responses in `{ data: { data: ... } }`; SDK response objects are passed through directly
+
+---
+
 ## How to Add a New Endpoint
 
 1. Create types in `src/types/` (e.g., `src/types/automation.ts`)
@@ -320,8 +351,12 @@ These functions are safe to call inside React Server Components, Route Handlers,
    ```ts
    public readonly automations: AutomationsEndpoint;
    // in constructor:
-   this.automations = new AutomationsEndpoint(this._config);
+   this.automations = new AutomationsEndpoint(httpClient, this._config.publicationId);
    ```
+
+All endpoint constructors accept an optional `defaultPublicationId` second argument.
+When provided (typically by `BeehiivClient`), every method supports dual signatures:
+`method(data)` (uses default) or `method(pubId, data)` (explicit override).
 5. Re-export new types from `src/index.ts`
 6. Add tests in `src/client/__tests__/endpoints/`
 7. If adding a server fetcher, add to `src/server/fetchers.ts` and re-export from `src/server/index.ts`
@@ -397,9 +432,9 @@ All steps must pass for the CI to be green. The `prepublishOnly` script also run
 
 ---
 
-## v0.3.0 Test Summary
+## v0.4.0 Test Summary
 
-**367 tests passing** across 38 test files. Key new test files:
+**476 tests passing** across 42 test files. Key new test files:
 
 - `src/client/__tests__/endpoints/webhooks.test.ts` -- 10 tests
 - `src/client/__tests__/endpoints/segments.test.ts` -- 11 tests

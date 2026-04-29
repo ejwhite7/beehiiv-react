@@ -16,7 +16,7 @@ npm test
 ```bash
 npm run lint       # ESLint
 npm run typecheck  # tsc --noEmit (strict)
-npm test           # vitest — 126 tests must pass
+npm test           # vitest — 476 tests must pass
 npm run build      # tsup dual ESM+CJS build
 ```
 
@@ -24,13 +24,17 @@ All four must pass. Do not commit code that fails any of these.
 
 ## Architecture in one paragraph
 
-`BeehiivClient` (`src/client/`) is a **server-only** typed API client for beehiiv v2 — it holds
-a secret API key and must never appear in client bundles. React hooks (`src/hooks/`) talk to
-user-owned Next.js API routes, never directly to beehiiv. Components (`src/components/`) provide
-a `<BeehiivProvider>` context and a drop-in `<SubscriptionForm>`. The CLI (`src/cli/`) scaffolds
-beehiiv integration into any Next.js project via `beehiiv-react init` and `beehiiv-react sync`.
-Types live in `src/types/` with one file per resource; everything re-exports through
-`src/types/index.ts` and then `src/index.ts`.
+`BeehiivClient` (`src/client/`) is a **server-only** typed API client for beehiiv v2 with 9
+endpoint namespaces — it holds a secret API key and must never appear in client bundles. React
+hooks (`src/hooks/`) — 12 total — talk to user-owned Next.js API routes, never directly to
+beehiiv. Components (`src/components/`) provide a `<BeehiivProvider>` context, a drop-in
+`<SubscriptionForm>`, post display components (`PostCard`, `PostList`, `PostContentRenderer`),
+and subscriber gating components (`GatedContent`, `PremiumContent`, `SubscriberBadge`). The CLI
+(`src/cli/`) scaffolds beehiiv integration into any Next.js project via `beehiiv-react init`
+and `beehiiv-react sync`. The package also provides a TanStack Query adapter
+(`beehiiv-react/query`) and RSC-compatible server utilities (`beehiiv-react/server`). Types live
+in `src/types/` with one file per resource; everything re-exports through `src/types/index.ts`
+and then `src/index.ts`.
 
 ## Key rules for agents
 
@@ -38,19 +42,25 @@ Types live in `src/types/` with one file per resource; everything re-exports thr
 - `react` and `react-dom` must stay in `peerDependencies`.
 - All hooks use `useBeehiiv()` for `apiUrl` and `fetchIdRef` for stale-response protection.
 - All new exports must be registered in `src/types/index.ts` AND `src/index.ts`.
-- New features require tests. Do not reduce the 126-test baseline without justification.
+- New features require tests. Do not reduce the 476-test baseline without justification.
 - `chalk`, `ora`, `open` are ESM-only — dynamic `import()` inside functions only.
+- Endpoint constructors accept optional `defaultPublicationId`; methods support dual signatures.
+- Generated templates import `BeehiivClient` from `beehiiv-react/server`, not `beehiiv-react`.
+- Server actions unwrap `SubscriptionResponse` — return `response.data` (the `SubscriptionInfo`), not the wrapper.
 
 ## File map
 
 | Path | Purpose |
 |---|---|
 | `src/index.ts` | Public package entry — all exports |
-| `src/types/` | TypeScript types for all beehiiv resources |
-| `src/client/` | Server-side API client + rate limiter + endpoints |
-| `src/hooks/` | React hooks (useSubscribe, useSubscription, useCustomFields, useBeehiiv) |
-| `src/components/` | BeehiivProvider + SubscriptionForm |
+| `src/types/` | TypeScript types for all beehiiv resources (11 files) |
+| `src/client/` | Server-side API client + rate limiter + 9 endpoint classes |
+| `src/hooks/` | React hooks (12 total: useSubscribe, useSubscription, useCustomFields, useBeehiiv, usePosts, usePost, useSubscriberAccess, usePostAccess, useSubscriberProfile, useSubscriberTier, useSubscribers, usePublications) |
+| `src/components/` | 8 components: BeehiivProvider, SubscriptionForm, PostCard, PostList, PostContentRenderer, GatedContent, PremiumContent, SubscriberBadge |
+| `src/query/` | TanStack Query v5 adapter (sub-path: `beehiiv-react/query`) |
+| `src/server/` | RSC utilities (sub-path: `beehiiv-react/server`) |
+| `src/utils/` | Pure utility functions (canViewContent, getAudienceLabel, getTierLabel) |
 | `src/cli/` | CLI commands, auth, generators, prompts |
-| `templates/` | Handlebars templates for code generation |
+| `templates/` | 10 Handlebars templates for code generation |
 | `SKILL.md` | Full agent conventions guide |
 | `CLAUDE.md` | Claude-specific project guide |

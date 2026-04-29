@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       reactivate_existing: body.reactivateExisting ?? false,
     });
 
-    return NextResponse.json({ data: subscription }, { status: 200 });
+    return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Subscription failed';
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 
     const subscription = await client.subscriptions.list({ email });
 
-    return NextResponse.json({ data: subscription }, { status: 200 });
+    return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Failed to fetch subscription';

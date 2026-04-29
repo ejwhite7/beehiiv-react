@@ -54,6 +54,8 @@ export type {
   UpdatePostRequest,
   PostResponse,
   PostListResponse,
+  PostAggregateStats,
+  PostAggregateStatsResponse,
 } from './post.js';
 
 export type {
@@ -111,6 +113,8 @@ export type {
   CreateAutomationRequest,
   ListAutomationsOptions,
   ListJourneysOptions,
+  AutomationEmailInfo,
+  AutomationEmailListResponse,
 } from './automation.js';
 
 export type {
@@ -121,3 +125,10 @@ export type {
   ReferralProgramResponse,
   ReferralStatsResponse,
 } from './referral.js';
+
+export type {
+  AutomationJourneyStatus as AutomationJourneyInfoStatus,
+  AutomationJourneyInfo,
+  CreateAutomationJourneyRequest,
+  AutomationJourneyResponse,
+} from './automation-journey.js';

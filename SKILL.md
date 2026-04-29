@@ -31,7 +31,8 @@ holds a secret API key and must never be imported in client bundles.
   internal `BeehiivHttpClient` via constructor injection
 - `src/client/rate-limiter.ts` — Rolling 60-second token bucket, FIFO queue, max 5 concurrent
 - `src/client/endpoints/*.ts` — One file per resource (subscriptions, custom-fields, publications,
-  posts); each is a class that receives `BeehiivHttpClient` via constructor
+  posts, webhooks, segments, automations, referrals, automation-journeys); each is a class
+  that receives `BeehiivHttpClient` and an optional `defaultPublicationId` via constructor
 
 All HTTP logic (auth header, timeout via `AbortController`, error parsing into `BeehiivApiError`,
 rate limiter throttling) lives inside `BeehiivHttpClient`. Endpoint classes call only
@@ -44,17 +45,48 @@ Client-side hooks that POST/GET through user-supplied API routes (never directly
 - `useSubscribe()` — POST to `{apiUrl}/subscribe`
 - `useSubscription()` — GET from `{apiUrl}/subscription/{id}` or `?email=`
 - `useCustomFields()` — GET from `{apiUrl}/custom-fields`
+- `usePosts()` — Paginated post list with filters and page-based pagination
+- `usePost()` — Single post by ID
+- `useSubscriberAccess()` — Subscriber tier/status to access result
+- `usePostAccess()` — Combined post + subscriber access check
+- `useSubscriberProfile()` — Full subscriber profile with isPremium/isActive flags
+- `useSubscriberTier()` — Lightweight tier-only hook
+- `useSubscribers()` — Paginated subscriber list
+- `usePublications()` — All accessible publications
 
-All data-fetching hooks follow the same internal pattern (see "Hook Pattern" below). Do not
-deviate from it when adding new hooks.
+12 hooks total. All data-fetching hooks follow the same internal pattern (see "Hook Pattern"
+below). Do not deviate from it when adding new hooks.
 
 ### 3. React Components (`src/components/`)
 - `BeehiivProvider` — React context provider; accepts `apiUrl` (default `/api/beehiiv`) and
   `publicationId`; wraps the entire app
 - `SubscriptionForm` — Drop-in form with email input, dynamic custom field rendering, UTM
   passthrough, success/error states, accessibility attributes, headless mode via `renderForm`
+- `PostCard` — Single post card display with thumbnail, audience badge, headless `renderCard` prop
+- `PostList` — Paginated post list with load-more, skeleton loading states, empty state
+- `PostContentRenderer` — HTML/JSON content renderer with sanitization callback
+- `GatedContent` — Declarative subscriber-gated content wrapper
+- `PremiumContent` — Premium content gate with upgrade prompt
+- `SubscriberBadge` — Subscriber tier badge with headless `renderBadge` prop
 
-### 4. CLI Tool (`src/cli/`)
+### 4a. TanStack Query Adapter (`src/query/`)
+Sub-path export at `beehiiv-react/query` providing `useQuery`/`useMutation` hooks with cache
+key factories. Requires `@tanstack/react-query` >= 5.0.0 as a peer dependency.
+
+- `keys.ts` — Query key factory (`beehiivKeys`)
+- `hooks.ts` — Query hooks: `usePostsQuery`, `useSubscribersQuery`, etc.
+- `mutations.ts` — Mutation hooks: `useSubscribeMutation`, `useCreateWebhookMutation`, etc.
+
+### 4b. Server Utilities (`src/server/`)
+Sub-path export at `beehiiv-react/server` providing RSC-compatible helpers:
+
+- `client.ts` — `createBeehiivClient()` factory (reads `BEEHIIV_API_KEY` from environment)
+- `fetchers.ts` — Pure async fetchers: `fetchPosts`, `fetchPost`, `fetchSubscribers`,
+  `fetchSubscription`, `fetchPublications`, `fetchCustomFields`, `fetchWebhooks`, `fetchSegments`
+
+These are safe to call inside React Server Components, Route Handlers, and Server Actions.
+
+### 5. CLI Tool (`src/cli/`)
 A Commander.js CLI exposed as the `beehiiv-react` binary. Two commands:
 
 - `init` — Interactive scaffolding: auth (API key or OAuth2 PKCE), publication selection,
@@ -77,11 +109,16 @@ then implement.
 | `subscription.ts` | `SubscriptionInfo`, `CreateSubscriptionRequest`, status/tier enums |
 | `custom-field.ts` | `CustomFieldInfo`, `CustomFieldKind`, value types |
 | `publication.ts` | `PublicationInfo`, stats, expand options |
-| `post.ts` | `PostInfo`, `PostStats`, status/audience enums |
+| `post.ts` | `PostInfo`, `PostStats`, `PostContent`, `PostAggregateStats`, `GetPostOptions`, status/audience enums |
 | `webhook.ts` | `WebhookInfo`, `WebhookEventType`, payload wrapper |
+| `segment.ts` | `SegmentInfo`, filter options, member responses |
+| `automation.ts` | `AutomationInfo`, journey/trigger/step types, email types |
+| `automation-journey.ts` | `AutomationJourneyInfo`, create/response types |
+| `referral.ts` | `ReferralProgramInfo`, milestone rewards, subscriber stats |
+| `access.ts` | `AccessResult`, subscriber/post access option types |
 | `index.ts` | Re-exports everything; the only types file other modules should import from |
 
-**All 42 exported types flow through `src/types/index.ts` and then `src/index.ts`.** When you add
+**All exported types flow through `src/types/index.ts` and then `src/index.ts`.** When you add
 a type, register it in both.
 
 ---
@@ -140,11 +177,25 @@ Key rules:
 
 ```typescript
 export class MyEndpoint {
-  constructor(private readonly client: BeehiivHttpClient) {}
+  constructor(
+    private readonly client: BeehiivHttpClient,
+    private readonly defaultPublicationId?: string,
+  ) {}
 
-  async get(publicationId: string, id: string): Promise<MyResponse> {
+  private _resolvePublicationId(pubIdOrOptions?: string | object): string {
+    if (typeof pubIdOrOptions === 'string') return pubIdOrOptions;
+    if (!this.defaultPublicationId) throw new Error('publicationId is required');
+    return this.defaultPublicationId;
+  }
+
+  /** Dual-signature: get(id, opts?) or get(pubId, id, opts?) */
+  async get(id: string, opts?: GetOptions): Promise<MyResponse>;
+  async get(publicationId: string, id: string, opts?: GetOptions): Promise<MyResponse>;
+  async get(...args: unknown[]): Promise<MyResponse> {
+    const pubId = this._resolvePublicationId(args[0] as string);
+    // ... resolve remaining args based on signature
     return this.client.get<MyResponse>(
-      `/publications/${publicationId}/my-resource/${id}`
+      `/publications/${pubId}/my-resource/${id}`
     );
   }
 }
@@ -152,6 +203,8 @@ export class MyEndpoint {
 
 Key rules:
 - Constructor injection only — never import or instantiate `BeehiivHttpClient` directly
+- Accept optional `defaultPublicationId` in constructor; use `_resolvePublicationId()` helper
+- All methods support dual signatures: `method(data)` (uses default) or `method(pubId, data)` (explicit)
 - Return typed promises; never return `unknown` or `any`
 - Register the endpoint as a `readonly` property on `BeehiivClient` in `src/client/index.ts`
 
@@ -212,8 +265,8 @@ via hook return values — they never catch directly.
 
 ## Testing Requirements
 
-**Every PR must maintain a passing test suite.** The current baseline is 126 passing tests across
-14 files. Do not merge code that reduces this count without a matching explanation.
+**Every PR must maintain a passing test suite.** The current baseline is 474 passing tests across
+42 files. Do not merge code that reduces this count without a matching explanation.
 
 ### Test file locations
 
@@ -255,9 +308,11 @@ npm run typecheck # tsc --noEmit (strict)
 npm run lint      # eslint src --ext .ts,.tsx
 ```
 
-tsup produces two entry points:
-- `src/index.ts` → `dist/index.js` (ESM) + `dist/index.cjs` (CJS) + `dist/index.d.ts`
-- `src/cli/index.ts` → `dist/cli/index.js` (CJS with shebang)
+tsup produces four entry points:
+- `src/index.ts` -> `dist/index.js` (ESM) + `dist/index.cjs` (CJS) + `dist/index.d.ts`
+- `src/query/index.ts` -> `dist/query/index.js` (ESM) + `dist/query/index.cjs` (CJS) + `dist/query/index.d.ts`
+- `src/server/index.ts` -> `dist/server/index.js` (ESM) + `dist/server/index.cjs` (CJS) + `dist/server/index.d.ts`
+- `src/cli/index.ts` -> `dist/cli/index.js` (CJS with shebang)
 
 React and react-dom are **externalized** from the library build. They are peer dependencies —
 never bundle them.
@@ -279,20 +334,14 @@ Never skip or suppress any of these checks.
 
 ## Known Gaps (Expansion Targets)
 
-These features have types defined but no implementation yet. They are the highest-priority
-expansion candidates:
+Most gaps from earlier versions have been implemented. Remaining expansion candidates:
 
 | Gap | What's Missing |
 |---|---|
-| Post hooks | `usePosts`, `usePost` hooks for client-side post fetching |
-| Post components | `PostList`, `PostCard` components |
-| Subscriber list hook | `useSubscribers` for paginated subscriber browsing |
-| Content gating | `useSubscriberAccess`, `<PremiumContent>` wrapper |
-| Webhook endpoint | Client CRUD for webhooks (types exist in `src/types/webhook.ts`) |
 | Missing UTM fields | `utmTerm` and `utmContent` missing from `SubscribeData` (API supports them) |
-| Post audience filter | `audience` not exposed in `ListPostsOptions` |
-| Post content rendering | `PostInfo.content` is typed as `unknown`; no renderer utility |
-| Subscriber search | No list/paginate hook; only lookup by exact email or ID |
+| OAuth token refresh | OAuth2 refresh token rotation not yet automated |
+| Webhook event handlers | No built-in handler utilities for incoming webhook payloads |
+| SSR/streaming support | No Suspense-compatible data fetching pattern |
 
 When implementing any of these, follow the canonical patterns above and ship tests.
 

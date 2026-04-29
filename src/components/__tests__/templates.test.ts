@@ -187,6 +187,14 @@ describe('api-route.ts.hbs', () => {
     expect(output).toContain("from 'beehiiv-react/server'");
     expect(output).not.toMatch(/from 'beehiiv-react'[^/]/);
   });
+
+  it('returns the response directly without double-wrapping', () => {
+    const template = compileTemplate('api-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toContain('return NextResponse.json(subscription');
+    expect(output).not.toContain('{ data: subscription }');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -246,5 +254,13 @@ describe('server-action.ts.hbs', () => {
     expect(output).toContain('utm_campaign: data.utmCampaign');
     expect(output).toContain('referring_site: data.referringSite');
     expect(output).toContain('reactivate_existing: data.reactivateExisting');
+  });
+
+  it('returns response.data (unwrapped SubscriptionInfo) from subscribeAction', () => {
+    const template = compileTemplate('server-action.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toContain('return response.data');
+    expect(output).not.toContain('return subscription;');
   });
 });

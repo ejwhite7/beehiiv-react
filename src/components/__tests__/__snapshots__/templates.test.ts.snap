@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       reactivate_existing: body.reactivateExisting ?? false,
     });
 
-    return NextResponse.json({ data: subscription }, { status: 200 });
+    return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Subscription failed';
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
 
     const subscription = await client.subscriptions.list({ email });
 
-    return NextResponse.json({ data: subscription }, { status: 200 });
+    return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Failed to fetch subscription';
@@ -149,10 +149,10 @@ interface SubscribePayload {
  * Call this from a React Server Component or form action.
  *
  * @param data - The subscription data containing email, optional custom fields, and attribution
- * @returns The created subscription record
+ * @returns The created subscription record (unwrapped SubscriptionInfo)
  */
 export async function subscribeAction(data: SubscribePayload) {
-  const subscription = await client.subscriptions.create({
+  const response = await client.subscriptions.create({
     email: data.email,
     custom_fields: data.customFields
       ? Object.entries(data.customFields).map(([name, value]) => ({
@@ -169,7 +169,7 @@ export async function subscribeAction(data: SubscribePayload) {
     send_welcome_email: true,
   });
 
-  return subscription;
+  return response.data;
 }
 
 /**
@@ -179,20 +179,20 @@ export async function subscribeAction(data: SubscribePayload) {
  *
  * @param id - The subscription ID to update (starts with "sub_")
  * @param customFields - The custom field values to set on the subscription
- * @returns The updated subscription record
+ * @returns The updated subscription record (unwrapped SubscriptionInfo)
  */
 export async function enrichSubscriptionAction(
   id: string,
   customFields: Partial<BeehiivCustomFields>,
 ) {
-  const subscription = await client.subscriptions.updateById(id, {
+  const response = await client.subscriptions.updateById(id, {
     custom_fields: Object.entries(customFields).map(([name, value]) => ({
       name,
       value: value as string | number | boolean | string[],
     })),
   });
 
-  return subscription;
+  return response.data;
 }
 
 /**

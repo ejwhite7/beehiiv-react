@@ -1,7 +1,7 @@
 /**
  * Posts endpoint for the beehiiv API client.
  * Manages newsletter post CRUD operations including listing with
- * page-based pagination, creation, updates, and deletion.
+ * page-based pagination, creation, updates, deletion, and aggregate stats.
  * @module client/endpoints/posts
  */
 
@@ -12,6 +12,7 @@ import type {
   PostResponse,
   CreatePostRequest,
   UpdatePostRequest,
+  PostAggregateStatsResponse,
 } from '../../types/post.js';
 import type { BeehiivHttpClient } from '../index.js';
 
@@ -37,9 +38,18 @@ export interface GetPostOptions {
   expand?: string[];
 }
 
+/** Options for querying aggregate post statistics */
+export interface AggregateStatsOptions {
+  /** Filter by post status */
+  status?: PostStatus;
+  /** Filter by post audience */
+  audience?: PostAudience;
+}
+
 /**
  * Client for the `/publications/{publicationId}/posts` endpoints.
- * Handles creating, reading, updating, and deleting newsletter posts.
+ * Handles creating, reading, updating, deleting newsletter posts, and
+ * fetching aggregate statistics.
  *
  * When a `defaultPublicationId` is provided (typically injected by
  * {@link BeehiivClient}), every method can be called without explicitly
@@ -53,10 +63,10 @@ export interface GetPostOptions {
  *
  * // Uses the default publication ID
  * const list = await posts.list({ status: 'confirmed' });
+ * const post = await posts.get('post_123');
  *
  * // Or pass one explicitly to override
  * const list2 = await posts.list('pub_other', { status: 'confirmed' });
- * const post = await posts.get('post_123');
  * ```
  */
 export class PostsEndpoint {
@@ -256,7 +266,7 @@ export class PostsEndpoint {
    * Calls `DELETE /v2/publications/{publicationId}/posts/{id}`.
    *
    * @param publicationIdOrId - Either the publication ID (when called with 2 args) or the post ID (when using default publication ID)
-   * @param id - The post ID to delete (when publicationId is passed explicitly)
+   * @param id - The post ID to delete (starts with "post_") when publicationId is passed explicitly
    */
   async delete(publicationIdOrId: string, id?: string): Promise<void> {
     let publicationId: string;
@@ -273,5 +283,44 @@ export class PostsEndpoint {
     await this._http.delete(
       `/publications/${publicationId}/posts/${postId}`
     );
+  }
+
+  /**
+   * Get aggregate statistics for posts on a publication.
+   *
+   * Calls `GET /v2/publications/{publicationId}/posts/aggregate_stats`
+   * with optional filtering by status and audience.
+   *
+   * @param publicationIdOrOptions - Either the publication ID (starts with "pub_") or filtering options when using the default publication ID
+   * @param options - Optional filtering parameters (when publicationId is passed explicitly)
+   * @returns Aggregate post statistics
+   */
+  async aggregateStats(
+    publicationIdOrOptions?: string | AggregateStatsOptions,
+    options?: AggregateStatsOptions
+  ): Promise<PostAggregateStatsResponse> {
+    let publicationId: string;
+    let statsOptions: AggregateStatsOptions | undefined;
+
+    if (typeof publicationIdOrOptions === 'string') {
+      publicationId = publicationIdOrOptions;
+      statsOptions = options;
+    } else {
+      publicationId = this._resolvePublicationId();
+      statsOptions = publicationIdOrOptions;
+    }
+
+    const params = new URLSearchParams();
+
+    if (statsOptions?.status) {
+      params.set('status', statsOptions.status);
+    }
+    if (statsOptions?.audience) {
+      params.set('audience', statsOptions.audience);
+    }
+
+    const query = params.toString();
+    const path = `/publications/${publicationId}/posts/aggregate_stats${query ? `?${query}` : ''}`;
+    return this._http.get<PostAggregateStatsResponse>(path);
   }
 }

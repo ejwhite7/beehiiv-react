@@ -124,7 +124,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.3.14
+# beehiiv-react/0.4.0
 ```
 
 ---
@@ -489,12 +489,25 @@ import { SubscriberBadge } from 'beehiiv-react';
 
 ## Release Notes
 
+### v0.4.0
+- **`defaultPublicationId` dual-signature pattern** extended to all 9 endpoint classes
+  - Every method now supports `method(data)` (uses default) or `method(pubId, data)` (explicit override)
+  - Endpoints: segments, automations, webhooks, posts, custom-fields, referrals, subscriptions, automation-journeys
+- **New endpoint**: `AutomationJourneysEndpoint` with `create()` and `get()` methods
+- **New methods**: `PostsEndpoint.aggregateStats()`, `SegmentsEndpoint.create()`, `AutomationsEndpoint.get()`, `AutomationsEndpoint.listEmails()`
+- **`GetPostOptions`**: `PostsEndpoint.get()` now accepts an `expand` array to request expanded content fields
+- **New types**: `AutomationJourneyInfo`, `PostAggregateStats`, `AutomationEmailInfo`, and more
+- Merged all v0.3.7--v0.3.14 fixes into the v0.4.0 codebase
+- 467 tests passing across 42 test files
+
 ### v0.3.14
-- `usePosts` now defensively guards against responses with missing or malformed `pagination` data — `hasMore` and `loadMore` behave correctly when the API omits pagination metadata
+- Defensive guards in `usePosts` hook for API responses missing `data` or `pagination` fields
+- Prevents runtime crashes when the beehiiv API returns incomplete responses
 
 ### v0.3.13
-- Generated server action and API route templates now import `BeehiivClient` from `beehiiv-react/server` (correct entry point) instead of the root `beehiiv-react` import
-- `subscribeAction` now accepts and forwards UTM fields (`utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`) to beehiiv
+- **BeehiivClient import path fix**: All CLI-generated templates now import `BeehiivClient` from `beehiiv-react/server` (was `beehiiv-react`)
+- **UTM fields in subscribeAction**: Generated server actions now accept and pass through `utmSource`, `utmMedium`, `utmChannel`, `utmCampaign`, `referringSite`, `reactivateExisting`
+- **`utm_channel` type**: Added to `SubscriptionInfo` and `CreateSubscriptionRequest`
 
 ### v0.3.12
 - Fixed 5 scaffold template bugs surfaced in generated projects:

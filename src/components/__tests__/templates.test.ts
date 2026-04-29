@@ -179,6 +179,14 @@ describe('api-route.ts.hbs', () => {
     expect(output).toContain('BEEHIIV_API_KEY');
     expect(output).toContain('BEEHIIV_PUBLICATION_ID');
   });
+
+  it('imports BeehiivClient from beehiiv-react/server', () => {
+    const template = compileTemplate('api-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toContain("from 'beehiiv-react/server'");
+    expect(output).not.toMatch(/from 'beehiiv-react'[^/]/);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -205,5 +213,38 @@ describe('server-action.ts.hbs', () => {
     expect(output).toContain('enrichSubscriptionAction');
     expect(output).toContain('BeehiivClient');
     expect(output).toContain('BEEHIIV_API_KEY');
+  });
+
+  it('imports BeehiivClient from beehiiv-react/server', () => {
+    const template = compileTemplate('server-action.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toContain("from 'beehiiv-react/server'");
+    expect(output).not.toMatch(/from 'beehiiv-react'[^/]/);
+  });
+
+  it('includes SubscribePayload with UTM and attribution fields', () => {
+    const template = compileTemplate('server-action.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toContain('interface SubscribePayload');
+    expect(output).toContain('utmSource?: string');
+    expect(output).toContain('utmMedium?: string');
+    expect(output).toContain('utmChannel?: string');
+    expect(output).toContain('utmCampaign?: string');
+    expect(output).toContain('referringSite?: string');
+    expect(output).toContain('reactivateExisting?: boolean');
+  });
+
+  it('passes UTM fields through to client.subscriptions.create with snake_case', () => {
+    const template = compileTemplate('server-action.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toContain('utm_source: data.utmSource');
+    expect(output).toContain('utm_medium: data.utmMedium');
+    expect(output).toContain('utm_channel: data.utmChannel');
+    expect(output).toContain('utm_campaign: data.utmCampaign');
+    expect(output).toContain('referring_site: data.referringSite');
+    expect(output).toContain('reactivate_existing: data.reactivateExisting');
   });
 });

@@ -43,6 +43,8 @@ export interface SubscriptionInfo {
   utm_source?: string;
   /** UTM medium parameter captured at subscription time */
   utm_medium?: string;
+  /** UTM channel parameter captured at subscription time */
+  utm_channel?: string;
   /** UTM campaign parameter captured at subscription time */
   utm_campaign?: string;
   /** UTM term parameter captured at subscription time */
@@ -73,6 +75,8 @@ export interface CreateSubscriptionRequest {
   utm_source?: string;
   /** UTM medium for attribution tracking */
   utm_medium?: string;
+  /** UTM channel for attribution tracking */
+  utm_channel?: string;
   /** UTM campaign for attribution tracking */
   utm_campaign?: string;
   /** UTM term for attribution tracking */

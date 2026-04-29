@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { BeehiivClient } from 'beehiiv-react';
+import { BeehiivClient } from 'beehiiv-react/server';
 import type { BeehiivCustomFields } from './beehiiv-custom-fields';
 
 const client = new BeehiivClient({
@@ -12,17 +12,26 @@ const client = new BeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
 });
 
+/** Payload accepted by the subscribeAction server action */
+interface SubscribePayload {
+  email: string;
+  customFields?: BeehiivCustomFields;
+  utmSource?: string;
+  utmMedium?: string;
+  utmChannel?: string;
+  utmCampaign?: string;
+  referringSite?: string;
+  reactivateExisting?: boolean;
+}
+
 /**
  * Subscribe an email address to the beehiiv publication.
  * Call this from a React Server Component or form action.
  *
- * @param data - The subscription data containing email and optional custom fields
+ * @param data - The subscription data containing email, optional custom fields, and attribution
  * @returns The created subscription record
  */
-export async function subscribeAction(data: {
-  email: string;
-  customFields?: BeehiivCustomFields;
-}) {
+export async function subscribeAction(data: SubscribePayload) {
   const subscription = await client.subscriptions.create({
     email: data.email,
     custom_fields: data.customFields
@@ -31,6 +40,12 @@ export async function subscribeAction(data: {
           value: value as string | number | boolean | string[],
         }))
       : undefined,
+    utm_source: data.utmSource,
+    utm_medium: data.utmMedium,
+    utm_channel: data.utmChannel,
+    utm_campaign: data.utmCampaign,
+    referring_site: data.referringSite,
+    reactivate_existing: data.reactivateExisting,
     send_welcome_email: true,
   });
 

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Hook for fetching subscription data by email or ID.
  *

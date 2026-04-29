@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Hook for fetching custom field definitions from a beehiiv publication.
  *

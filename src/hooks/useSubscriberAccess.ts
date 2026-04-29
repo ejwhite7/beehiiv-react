@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Hook for resolving subscriber access against a content audience level.
  *

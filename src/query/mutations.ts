@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * TanStack Query mutation hooks for beehiiv API write operations.
  *

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * PostContentRenderer - renders the body content of a beehiiv post.
  * Supports HTML (via `dangerouslySetInnerHTML`), JSON, and fallback modes.

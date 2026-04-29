@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * PostList - a list component for rendering multiple beehiiv posts.
  * Renders a `<ul>` of {@link PostCard} components with support for loading,

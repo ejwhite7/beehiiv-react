@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Hook for subscribing an email address to a beehiiv publication.
  *

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * SubscriberBadge - a component that displays a subscriber's tier as a
  * visual badge, or delegates rendering to a headless render prop.

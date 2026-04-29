@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Hook for fetching publications from the beehiiv API.
  *

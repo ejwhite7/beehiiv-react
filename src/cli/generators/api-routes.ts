@@ -138,4 +138,31 @@ export async function generateApiRoutes(
   fs.mkdirSync(path.dirname(subscriptionIdPath), { recursive: true });
   fs.writeFileSync(subscriptionIdPath, SUBSCRIPTION_ID_ROUTE_TEMPLATE, 'utf-8');
   console.log(chalk.green(`  Created ${subscriptionIdPath}`));
+  // Generate the posts route from template
+  const postsTemplatePath = path.resolve(
+    __dirname,
+    '..',
+    '..',
+    'templates',
+    'posts-route.ts.hbs',
+  );
+
+  const postsTemplateSource = fs.readFileSync(postsTemplatePath, 'utf-8');
+  const postsTemplate = Handlebars.compile(postsTemplateSource);
+  const postsOutput = postsTemplate({
+    publicationId: data.publicationId,
+  });
+
+  const postsPath = path.join(
+    data.outputDir,
+    'app',
+    'api',
+    'beehiiv',
+    'posts',
+    'route.ts',
+  );
+  fs.mkdirSync(path.dirname(postsPath), { recursive: true });
+  fs.writeFileSync(postsPath, postsOutput, 'utf-8');
+  console.log(chalk.green(`  Created ${postsPath}`));
+
 }

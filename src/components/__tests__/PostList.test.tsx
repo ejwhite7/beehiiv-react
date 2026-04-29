@@ -214,4 +214,33 @@ describe('PostList', () => {
       expect(list.classList.contains('my-list')).toBe(true);
     });
   });
+
+  // ---- dataLayer tracking ----
+  describe('dataLayer tracking', () => {
+    it('pushes beehiiv_load_more_clicked event when load more is clicked', async () => {
+      const user = userEvent.setup();
+      const handleLoadMore = vi.fn();
+
+      // Reset dataLayer
+      (window as unknown as Record<string, unknown>).dataLayer = [];
+
+      render(
+        <PostList
+          posts={samplePosts}
+          hasMore={true}
+          onLoadMore={handleLoadMore}
+        />,
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Load more' }));
+
+      const dataLayer = (window as unknown as { dataLayer: Record<string, unknown>[] }).dataLayer;
+      const event = dataLayer.find(
+        (e: Record<string, unknown>) => e.event === 'beehiiv_load_more_clicked',
+      );
+      expect(event).toBeDefined();
+      expect(event).toHaveProperty('page', 2);
+    });
+  });
+
 });

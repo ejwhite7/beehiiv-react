@@ -17,6 +17,9 @@ import { generateConfig } from '../generators/config.js';
 import { generateCustomFieldTypes } from '../generators/custom-fields.js';
 import { generateApiRoutes } from '../generators/api-routes.js';
 import { generateServerActions } from '../generators/server-actions.js';
+import { generateSubscriberStatusHook } from '../generators/hooks.js';
+import { generateAnalytics } from '../generators/analytics.js';
+import { generateSubscribeComponents } from '../generators/subscribe-components.js';
 
 /** Options for the init command */
 export interface InitOptions {
@@ -280,6 +283,9 @@ export async function runInit(options: InitOptions): Promise<void> {
         'route.ts',
       ),
     );
+    generatedFiles.push(
+      path.join(outputDir, 'app', 'api', 'beehiiv', 'posts', 'route.ts'),
+    );
   }
 
   if (features.serverActions) {
@@ -288,6 +294,28 @@ export async function runInit(options: InitOptions): Promise<void> {
       path.join(outputDir, 'lib', 'beehiiv', 'actions.ts'),
     );
   }
+
+  // Always generate the subscriber status hook and analytics utility
+  await generateSubscriberStatusHook({ outputDir });
+  generatedFiles.push(
+    path.join(outputDir, 'hooks', 'use-subscriber-status.ts'),
+  );
+
+  await generateAnalytics({ outputDir });
+  generatedFiles.push(
+    path.join(outputDir, 'lib', 'beehiiv', 'analytics.ts'),
+  );
+
+  await generateSubscribeComponents({ outputDir });
+  generatedFiles.push(
+    path.join(outputDir, 'components', 'beehiiv', 'SubscribeCTA.tsx'),
+  );
+  generatedFiles.push(
+    path.join(outputDir, 'components', 'beehiiv', 'SubscribeStepTwo.tsx'),
+  );
+  generatedFiles.push(
+    path.join(outputDir, 'components', 'beehiiv', 'SubscribeWrapper.tsx'),
+  );
 
   // --- Step 6: Update .env.local ---
   if (isOAuth) {

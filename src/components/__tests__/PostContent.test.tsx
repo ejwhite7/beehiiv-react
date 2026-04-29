@@ -1,7 +1,9 @@
 /**
  * Tests for the PostContent component.
- * Covers HTML rendering, sanitisation callback, JSON rendering,
- * fallback behaviour, and the data-format attribute.
+ * Covers HTML rendering from the beehiiv API wire format
+ * { free: { rss, web }, premium?: { rss, web } },
+ * sanitisation callback, tier/variant selection,
+ * fallback behaviour, and CSS class application.
  * @module components/__tests__/PostContent.test
  */
 
@@ -9,19 +11,21 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { PostContent } from '../PostContent';
-import type { PostContentData } from '../PostContent';
+import type { PostContent as PostContentType } from '../../types/post';
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 describe('PostContent', () => {
-  // ---- HTML Content ----
+  // ---- HTML Content (free.web) ----
   describe('HTML content', () => {
-    it('renders HTML content via dangerouslySetInnerHTML', () => {
-      const content: PostContentData = {
-        format: 'html',
-        body: '<p>Hello <strong>world</strong></p>',
+    it('renders free.web content via dangerouslySetInnerHTML', () => {
+      const content: PostContentType = {
+        free: {
+          web: '<p>Hello <strong>world</strong></p>',
+          rss: '<p>Hello world (rss)</p>',
+        },
       };
 
       const { container } = render(<PostContent content={content} />);
@@ -34,9 +38,11 @@ describe('PostContent', () => {
     it('calls sanitizeHtml when provided', () => {
       const sanitize = vi.fn((html: string) => html.replace(/<script.*?<\/script>/g, ''));
 
-      const content: PostContentData = {
-        format: 'html',
-        body: '<p>Safe</p><script>alert("xss")</script>',
+      const content: PostContentType = {
+        free: {
+          web: '<p>Safe</p><script>alert("xss")</script>',
+          rss: '',
+        },
       };
 
       const { container } = render(
@@ -50,53 +56,67 @@ describe('PostContent', () => {
       expect(wrapper?.innerHTML).toBe('<p>Safe</p>');
     });
 
-    it('sets data-format="html" on the wrapper', () => {
-      const content: PostContentData = { format: 'html', body: '<p>Test</p>' };
+    it('sets data-variant="web" and data-tier="free" on the wrapper', () => {
+      const content: PostContentType = {
+        free: { web: '<p>Test</p>', rss: '' },
+      };
 
       const { container } = render(<PostContent content={content} />);
 
       const wrapper = container.querySelector('.beehiiv-post-content');
-      expect(wrapper?.getAttribute('data-format')).toBe('html');
+      expect(wrapper?.getAttribute('data-variant')).toBe('web');
+      expect(wrapper?.getAttribute('data-tier')).toBe('free');
     });
   });
 
-  // ---- JSON Content ----
-  describe('JSON content', () => {
-    it('calls renderJsonContent for JSON format', () => {
-      const doc = { type: 'doc', nodes: [] };
-      const content: PostContentData = { format: 'json', body: doc };
-      const renderJson = vi.fn((d: Record<string, unknown>) => (
-        <div data-testid="json-render">{String(d.type)}</div>
-      ));
+  // ---- RSS variant ----
+  describe('RSS variant', () => {
+    it('renders free.rss when variant is rss', () => {
+      const content: PostContentType = {
+        free: { web: '<p>Web content</p>', rss: '<p>RSS content</p>' },
+      };
 
-      render(
-        <PostContent content={content} renderJsonContent={renderJson} />,
+      const { container } = render(
+        <PostContent content={content} variant="rss" />,
       );
 
-      expect(renderJson).toHaveBeenCalledTimes(1);
-      expect(renderJson).toHaveBeenCalledWith(doc);
-      expect(screen.getByTestId('json-render')).toBeDefined();
-      expect(screen.getByText('doc')).toBeDefined();
+      const wrapper = container.querySelector('.beehiiv-post-content');
+      expect(wrapper?.innerHTML).toBe('<p>RSS content</p>');
+      expect(wrapper?.getAttribute('data-variant')).toBe('rss');
     });
+  });
 
-    it('renders a pre tag with JSON.stringify when renderJsonContent is not provided', () => {
-      const doc = { key: 'value' };
-      const content: PostContentData = { format: 'json', body: doc };
+  // ---- Premium tier ----
+  describe('Premium tier', () => {
+    it('renders premium.web when tier is premium', () => {
+      const content: PostContentType = {
+        free: { web: '<p>Free</p>', rss: '' },
+        premium: { web: '<p>Premium content</p>', rss: '' },
+      };
 
-      const { container } = render(<PostContent content={content} />);
-
-      const pre = container.querySelector('pre');
-      expect(pre).not.toBeNull();
-      expect(pre?.textContent).toBe(JSON.stringify(doc, null, 2));
-    });
-
-    it('sets data-format="json" on the wrapper', () => {
-      const content: PostContentData = { format: 'json', body: {} };
-
-      const { container } = render(<PostContent content={content} />);
+      const { container } = render(
+        <PostContent content={content} tier="premium" />,
+      );
 
       const wrapper = container.querySelector('.beehiiv-post-content');
-      expect(wrapper?.getAttribute('data-format')).toBe('json');
+      expect(wrapper?.innerHTML).toBe('<p>Premium content</p>');
+      expect(wrapper?.getAttribute('data-tier')).toBe('premium');
+    });
+
+    it('renders fallback when premium tier is unavailable', () => {
+      const content: PostContentType = {
+        free: { web: '<p>Free only</p>', rss: '' },
+      };
+
+      render(
+        <PostContent
+          content={content}
+          tier="premium"
+          fallback={<p>No premium content</p>}
+        />,
+      );
+
+      expect(screen.getByText('No premium content')).toBeDefined();
     });
   });
 
@@ -120,7 +140,9 @@ describe('PostContent', () => {
   // ---- className ----
   describe('className', () => {
     it('applies className alongside beehiiv-post-content', () => {
-      const content: PostContentData = { format: 'html', body: '<p>Hi</p>' };
+      const content: PostContentType = {
+        free: { web: '<p>Hi</p>', rss: '' },
+      };
 
       const { container } = render(
         <PostContent content={content} className="prose" />,

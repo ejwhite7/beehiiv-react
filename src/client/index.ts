@@ -178,7 +178,7 @@ export class BeehiivClient {
     this.subscriptions = new SubscriptionsEndpoint(httpClient, this._config.publicationId);
     this.customFields = new CustomFieldsEndpoint(httpClient);
     this.publications = new PublicationsEndpoint(httpClient);
-    this.posts = new PostsEndpoint(httpClient);
+    this.posts = new PostsEndpoint(httpClient, this._config.publicationId);
     this.webhooks = new WebhooksEndpoint(httpClient);
     this.segments = new SegmentsEndpoint(httpClient);
     this.automations = new AutomationsEndpoint(httpClient);

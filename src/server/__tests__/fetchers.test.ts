@@ -87,7 +87,7 @@ describe('server fetchers', () => {
       const posts = [{ id: 'post_1', title: 'Hello' }];
       vi.mocked(client.posts.list).mockResolvedValue({
         data: posts,
-        pagination: { next_cursor: null, has_more: false, total_results: 1 },
+        pagination: { page: 1, limit: 10, total_results: 1, total_pages: 1 },
       } as never);
 
       const result = await fetchPosts(client, 'pub_abc');
@@ -99,7 +99,7 @@ describe('server fetchers', () => {
     it('should forward options to client.posts.list', async () => {
       vi.mocked(client.posts.list).mockResolvedValue({
         data: [],
-        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+        pagination: { page: 1, limit: 10, total_results: 0, total_pages: 0 },
       } as never);
 
       await fetchPosts(client, 'pub_abc', { status: 'confirmed', limit: 5 });
@@ -120,7 +120,7 @@ describe('server fetchers', () => {
 
       const result = await fetchPost(client, 'pub_abc', 'post_123');
 
-      expect(client.posts.get).toHaveBeenCalledWith('pub_abc', 'post_123');
+      expect(client.posts.get).toHaveBeenCalledWith('pub_abc', 'post_123', { expand: ['free_web_content'] });
       expect(result).toEqual(post);
     });
   });
@@ -132,7 +132,7 @@ describe('server fetchers', () => {
       const subs = [{ id: 'sub_1', email: 'a@b.com' }];
       vi.mocked(client.subscriptions.list).mockResolvedValue({
         data: subs,
-        pagination: { next_cursor: null, has_more: false, total_results: 1 },
+        pagination: { page: 1, limit: 10, total_results: 1, total_pages: 1 },
       } as never);
 
       const result = await fetchSubscribers(client, 'pub_abc');
@@ -144,7 +144,7 @@ describe('server fetchers', () => {
     it('should forward options to client.subscriptions.list', async () => {
       vi.mocked(client.subscriptions.list).mockResolvedValue({
         data: [],
-        pagination: { next_cursor: null, has_more: false, total_results: 0 },
+        pagination: { page: 1, limit: 10, total_results: 0, total_pages: 0 },
       } as never);
 
       await fetchSubscribers(client, 'pub_abc', { tier: 'premium' });

@@ -124,7 +124,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.3.10
+# beehiiv-react/0.3.11
 ```
 
 ---

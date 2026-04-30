@@ -50,6 +50,18 @@ export interface AutomationListKeyOptions {
 }
 
 /**
+ * Options used to filter a paginated list of tiers.
+ */
+export interface TierListKeyOptions {
+  /** Filter by tier type (free or premium) */
+  type?: string;
+  /** Filter by active status */
+  active?: boolean;
+  /** Maximum results per page */
+  limit?: number;
+}
+
+/**
  * Query key factory for all beehiiv API resources.
  *
  * Keys follow the hierarchical `[scope, entity, ...params]` convention
@@ -227,5 +239,31 @@ export const beehiivKeys = {
      */
     subscriberStats: (subscriberId: string) =>
       ['beehiiv', 'referrals', 'subscriberStats', subscriberId] as const,
+  },
+
+  /**
+   * Keys for tier-related queries.
+   */
+  tiers: {
+    /** Root key that matches every tier query. */
+    all: ['beehiiv', 'tiers'] as const,
+
+    /**
+     * Key for a filtered/paginated tier list.
+     *
+     * @param options - Optional filter parameters
+     * @returns A readonly query key tuple
+     */
+    list: (options?: TierListKeyOptions) =>
+      ['beehiiv', 'tiers', 'list', options ?? {}] as const,
+
+    /**
+     * Key for a single tier by ID.
+     *
+     * @param id - The tier identifier (starts with "tier_")
+     * @returns A readonly query key tuple
+     */
+    detail: (id: string) =>
+      ['beehiiv', 'tiers', 'detail', id] as const,
   },
 } as const;

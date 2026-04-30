@@ -27,6 +27,11 @@ Scaffolds configuration, generates TypeScript types from your publication's cust
 - [BeehiivClient](#beehiivclient-server-side)
 - [Posts & Content Visibility](#posts--content-visibility)
 - [Subscriber Profiles](#subscriber-profiles)
+- [Tiers](#tiers)
+- [Authors](#authors)
+- [Bulk Subscriptions & Updates](#bulk-subscriptions--updates)
+- [Engagements](#engagements)
+- [Hook Infill](#hook-infill----automations-webhooks-segments-referrals)
 - [Release Notes](#release-notes)
 - [API Reference](#api-reference)
 - [Contributing](#contributing)
@@ -487,7 +492,203 @@ import { SubscriberBadge } from 'beehiiv-react';
 
 ---
 
+
+## Tiers
+
+Manage subscription tiers (free and premium) for your publication.
+
+### Hooks
+
+#### `useTiers`
+
+```tsx
+import { useTiers } from 'beehiiv-react';
+
+function TierList() {
+  const { tiers, isLoading } = useTiers({ type: 'premium' });
+
+  if (isLoading) return <p>Loading...</p>;
+  return (
+    <ul>
+      {tiers.map((tier) => (
+        <li key={tier.id}>{tier.name} -- ${tier.price / 100}/mo</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+#### `useTier`
+
+```tsx
+import { useTier } from 'beehiiv-react';
+
+function TierDetail({ tierId }: { tierId: string }) {
+  const { tier, isLoading } = useTier({ tierId });
+  if (isLoading || !tier) return null;
+  return <h2>{tier.name}</h2>;
+}
+```
+
+### Component
+
+#### `TierBadge`
+
+```tsx
+import { TierBadge } from 'beehiiv-react';
+
+<TierBadge tier={tier} />
+
+{/* Headless mode */}
+<TierBadge tier={tier} renderBadge={({ name, type }) => (
+  <span className={type === 'premium' ? 'gold' : 'gray'}>{name}</span>
+)} />
+```
+
+## Authors
+
+Retrieve author information for your publication.
+
+```tsx
+import { useAuthors, useAuthor } from 'beehiiv-react';
+
+function AuthorList() {
+  const { authors, isLoading } = useAuthors();
+  if (isLoading) return null;
+  return authors.map((a) => <span key={a.id}>{a.name}</span>);
+}
+
+function AuthorDetail({ authorId }: { authorId: string }) {
+  const { author } = useAuthor({ authorId });
+  return author ? <p>{author.bio}</p> : null;
+}
+```
+
+## Bulk Subscriptions & Updates
+
+### Bulk Create Subscriptions (Server-Side)
+
+```ts
+import { BeehiivClient } from 'beehiiv-react/server';
+
+const client = new BeehiivClient({ apiKey: '...', publicationId: '...' });
+
+const { data } = await client.bulkSubscriptions.create({
+  subscriptions: [
+    { email: 'alice@example.com', utm_source: 'import' },
+    { email: 'bob@example.com' },
+  ],
+});
+```
+
+### Bulk Update Fields / Status (Server-Side)
+
+```ts
+// Update custom fields in bulk
+await client.bulkSubscriptionUpdates.updateFields({
+  subscriber_ids: ['sub_1', 'sub_2'],
+  custom_fields: [{ name: 'plan', value: 'enterprise' }],
+});
+
+// Update subscription status in bulk
+await client.bulkSubscriptionUpdates.updateStatus({
+  subscriber_ids: ['sub_1', 'sub_2'],
+  status: 'active',
+});
+```
+
+### Track Bulk Update Jobs
+
+```tsx
+import { useBulkUpdateJob } from 'beehiiv-react';
+
+function JobTracker({ jobId }: { jobId: string }) {
+  const { job, isComplete, progress } = useBulkUpdateJob({
+    jobId,
+    pollInterval: 2000,
+  });
+
+  return (
+    <div>
+      <p>Status: {job?.status}</p>
+      <p>Progress: {Math.round(progress * 100)}%</p>
+    </div>
+  );
+}
+```
+
+## Engagements
+
+Retrieve engagement metrics (opens, clicks, etc.) for a date range.
+
+```tsx
+import { useEngagements } from 'beehiiv-react';
+
+function EngagementDashboard() {
+  const { metrics, isLoading } = useEngagements({
+    startDate: '2025-01-01',
+    endDate: '2025-01-31',
+  });
+
+  if (isLoading || !metrics) return null;
+  return (
+    <dl>
+      <dt>Opens</dt><dd>{metrics.total_opened}</dd>
+      <dt>Clicks</dt><dd>{metrics.total_clicked}</dd>
+    </dl>
+  );
+}
+```
+
+## Hook Infill -- Automations, Webhooks, Segments, Referrals
+
+These hooks provide React-friendly wrappers for resources that previously only had server-side clients.
+
+### `useAutomations`
+
+```tsx
+import { useAutomations } from 'beehiiv-react';
+
+const { automations, isLoading } = useAutomations({ status: 'active' });
+```
+
+### `useWebhooks`
+
+```tsx
+import { useWebhooks } from 'beehiiv-react';
+
+const { webhooks, isLoading } = useWebhooks();
+```
+
+### `useSegments`
+
+```tsx
+import { useSegments } from 'beehiiv-react';
+
+const { segments, isLoading } = useSegments();
+```
+
+### `useReferrals`
+
+```tsx
+import { useReferrals } from 'beehiiv-react';
+
+const { program, subscriberStats } = useReferrals({ subscriberId: 'sub_123' });
+```
+
 ## Release Notes
+
+### v0.5.0
+
+**Tiers, Authors, Bulk Subscriptions, Engagements, and Hook Infill**
+
+- **5 new client namespaces**: `tiers` (list, get, create, update), `authors` (list, get), `bulkSubscriptions` (create), `bulkSubscriptionUpdates` (list, get, updateFields, updateStatus), `engagements` (get)
+- **10 new React hooks**: `useTiers`, `useTier`, `useAuthors`, `useAuthor`, `useBulkUpdateJob`, `useEngagements`, `useAutomations`, `useWebhooks`, `useSegments`, `useReferrals`
+- **1 new component**: `TierBadge` -- renders a tier badge with free/premium styling and headless mode
+- **27 new TanStack Query adapters** added to `beehiiv-react/query`
+- **5 new server fetchers** added to `beehiiv-react/server`
+- **Modified endpoints**: `subscriptions.addTags()`, `segments.listIds()`
+- API coverage: ~50/72 beehiiv API v2 endpoints
 
 ### v0.4.2
 - `PostInfo` now carries an optional `tags?: string[]` field
@@ -745,6 +946,16 @@ All v0.2.x APIs remain stable and unchanged. v0.3.0 is a purely additive release
 | `usePublications()` | Fetch all accessible publications |
 | `useSubscriberProfile()` | Full subscription record with `isPremium` and `isActive` flags |
 | `useSubscriberTier()` | Lightweight tier flags without the full subscription record |
+| `useTiers()` | Paginated tier list with type/active filtering |
+| `useTier()` | Single tier by ID |
+| `useAuthors()` | Paginated author list |
+| `useAuthor()` | Single author by ID |
+| `useBulkUpdateJob()` | Track bulk update job with polling |
+| `useEngagements()` | Engagement metrics by date range |
+| `useAutomations()` | Automation list and detail |
+| `useWebhooks()` | Webhook list and detail |
+| `useSegments()` | Segment list and detail |
+| `useReferrals()` | Referral program and subscriber stats |
 
 ### Components
 
@@ -758,6 +969,7 @@ All v0.2.x APIs remain stable and unchanged. v0.3.0 is a purely additive release
 | `<GatedContent>` | Declarative wrapper for subscriber-gated content |
 | `<PremiumContent>` | Opinionated premium gate with `upgradePrompt` render prop |
 | `<SubscriberBadge>` | Renders a tier badge with optional headless mode |
+| `<TierBadge>` | Renders a tier name badge with free/premium styling |
 
 ### Types
 
@@ -775,6 +987,11 @@ import type {
   WebhookInfo,
   BeehiivApiConfig,
   BeehiivConfig,
+  Tier,
+  TierType,
+  Author,
+  BulkSubscriptionUpdateJob,
+  EngagementMetrics,
 } from 'beehiiv-react';
 ```
 

@@ -38,3 +38,6 @@ export type { PremiumContentProps } from './PremiumContent.js';
 
 export { SubscriberBadge } from './SubscriberBadge.js';
 export type { SubscriberBadgeProps } from './SubscriberBadge.js';
+
+export { TierBadge } from './TierBadge.js';
+export type { TierBadgeProps } from './TierBadge.js';

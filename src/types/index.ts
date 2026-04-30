@@ -137,3 +137,40 @@ export type {
   CreateAutomationJourneyRequest,
   AutomationJourneyResponse,
 } from './automation-journey.js';
+
+export type {
+  Tier,
+  TierType,
+  ListTiersParams,
+  ListTiersResponse,
+  GetTierResponse,
+  CreateTierRequest,
+  CreateTierResponse,
+  UpdateTierRequest,
+  UpdateTierResponse,
+} from './tier.js';
+
+export type {
+  Author,
+  ListAuthorsResponse,
+  GetAuthorResponse,
+} from './author.js';
+
+export type {
+  BulkCreateSubscriptionEntry,
+  BulkCreateSubscriptionsRequest,
+  BulkCreateSubscriptionsResponse,
+  BulkSubscriptionUpdateJobStatus,
+  BulkSubscriptionUpdateJob,
+  BulkUpdateFieldsRequest,
+  BulkUpdateFieldsResponse,
+  BulkUpdateStatusRequest,
+  BulkUpdateStatusResponse,
+  ListBulkUpdateJobsResponse,
+  GetBulkUpdateJobResponse,
+} from './bulk-subscriptions.js';
+
+export type {
+  EngagementMetrics,
+  GetEngagementsResponse,
+} from './engagement.js';

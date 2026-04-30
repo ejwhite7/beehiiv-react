@@ -1,7 +1,8 @@
 /**
  * Segments endpoint for the beehiiv API client.
  * Manages segment operations including listing, retrieval, creation,
- * deletion, recalculation, and member listing for a publication.
+ * deletion, recalculation, member listing, and ID-only result queries
+ * for a publication.
  * @module client/endpoints/segments
  */
 
@@ -16,10 +17,32 @@ import type {
 } from '../../types/segment.js';
 import type { BeehiivHttpClient } from '../index.js';
 
+/** Options for listing segment results (subscriber IDs only) with offset-based pagination */
+export interface ListSegmentResultsOptions {
+  /** Maximum number of results to return per page (1-100, default 10) */
+  limit?: number;
+  /** Page number to retrieve (default 1) */
+  page?: number;
+}
+
+/** Response wrapper for listing segment results (subscriber IDs only, offset-paginated) */
+export interface SegmentResultsResponse {
+  /** Array of subscriber IDs in the segment */
+  data: string[];
+  /** The limit placed on the results */
+  limit: number;
+  /** The page number of the results */
+  page: number;
+  /** The total number of results across all pages */
+  total_results: number;
+  /** The total number of pages */
+  total_pages: number;
+}
+
 /**
  * Client for the `/publications/{publicationId}/segments` endpoints.
  * Handles listing, retrieving, creating, deleting, recalculating segments,
- * and listing segment members.
+ * listing segment members, and fetching subscriber ID results.
  *
  * When a `defaultPublicationId` is provided (typically injected by
  * {@link BeehiivClient}), every method can be called without explicitly
@@ -34,6 +57,7 @@ import type { BeehiivHttpClient } from '../index.js';
  * // Uses the default publication ID
  * const list = await seg.list({ limit: 20 });
  * const members = await seg.listMembers('seg_123');
+ * const ids = await seg.listIds('seg_123');
  *
  * // Or pass one explicitly to override
  * const list2 = await seg.list('pub_other', { limit: 20 });
@@ -290,5 +314,50 @@ export class SegmentsEndpoint {
     const query = params.toString();
     const path = `/publications/${publicationId}/segments/${segmentId}/members${query ? `?${query}` : ''}`;
     return this._http.get<SegmentMembersResponse>(path);
+  }
+
+  /**
+   * List subscriber IDs from a segment's results (lightweight alternative to listMembers).
+   *
+   * Calls `GET /v2/publications/{publicationId}/segments/{segmentId}/results`.
+   * Returns only subscriber IDs, not full subscription data, making it ideal
+   * for bulk operations where you only need to identify who is in a segment.
+   *
+   * @param publicationIdOrSegmentId - Either the publication ID (when called with 3 args) or the segment ID (when using default publication ID)
+   * @param segmentIdOrOptions - The segment ID (when publicationId is passed explicitly) or pagination options
+   * @param options - Optional pagination parameters (when publicationId is passed explicitly)
+   * @returns Paginated list of subscriber IDs with offset pagination metadata
+   */
+  async listIds(
+    publicationIdOrSegmentId: string,
+    segmentIdOrOptions?: string | ListSegmentResultsOptions,
+    options?: ListSegmentResultsOptions
+  ): Promise<SegmentResultsResponse> {
+    let publicationId: string;
+    let segmentId: string;
+    let resultOptions: ListSegmentResultsOptions | undefined;
+
+    if (typeof segmentIdOrOptions === 'string') {
+      publicationId = publicationIdOrSegmentId;
+      segmentId = segmentIdOrOptions;
+      resultOptions = options;
+    } else {
+      publicationId = this._resolvePublicationId();
+      segmentId = publicationIdOrSegmentId;
+      resultOptions = segmentIdOrOptions;
+    }
+
+    const params = new URLSearchParams();
+
+    if (resultOptions?.limit !== undefined) {
+      params.set('limit', String(resultOptions.limit));
+    }
+    if (resultOptions?.page !== undefined) {
+      params.set('page', String(resultOptions.page));
+    }
+
+    const query = params.toString();
+    const path = `/publications/${publicationId}/segments/${segmentId}/results${query ? `?${query}` : ''}`;
+    return this._http.get<SegmentResultsResponse>(path);
   }
 }

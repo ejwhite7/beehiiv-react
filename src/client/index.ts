@@ -19,6 +19,7 @@ import { SegmentsEndpoint } from './endpoints/segments.js';
 import { AutomationsEndpoint } from './endpoints/automations.js';
 import { ReferralsEndpoint } from './endpoints/referrals.js';
 import { AutomationJourneysEndpoint } from './endpoints/automation-journeys.js';
+import { EngagementsEndpoint } from './endpoints/engagements.js';
 
 /**
  * Internal HTTP client interface used by endpoint classes to make API requests.
@@ -145,6 +146,8 @@ export class BeehiivClient {
   public readonly referrals: ReferralsEndpoint;
   /** Automation journey management endpoints */
   public readonly automationJourneys: AutomationJourneysEndpoint;
+  /** Engagement metrics endpoints */
+  public readonly engagements: EngagementsEndpoint;
 
   /** Resolved configuration with defaults applied */
   private readonly _config: Required<
@@ -187,6 +190,7 @@ export class BeehiivClient {
     this.automations = new AutomationsEndpoint(httpClient, this._config.publicationId);
     this.referrals = new ReferralsEndpoint(httpClient, this._config.publicationId);
     this.automationJourneys = new AutomationJourneysEndpoint(httpClient, this._config.publicationId);
+    this.engagements = new EngagementsEndpoint(httpClient, this._config.publicationId);
   }
 
   /**
@@ -288,3 +292,4 @@ export class BeehiivClient {
     };
   }
 }
+

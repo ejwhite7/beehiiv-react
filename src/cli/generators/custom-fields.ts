@@ -140,15 +140,25 @@ export async function generateCustomFieldTypes(
     return toCamelCase(str);
   });
 
-  const fieldsData: FieldTemplateData[] = data.fields.map((field) => ({
-    id: field.id,
-    display: field.display,
-    kind: field.kind,
-    tsType: mapKindToTsType(field.kind, field.options),
-    camelCaseDisplay: toCamelCase(field.display),
-    camelCaseKey: toCamelCase(field.display),
-    options: field.options,
-  }));
+  const fieldsData: FieldTemplateData[] = data.fields
+    .filter(
+      (field): field is CustomFieldInfo & { id: string; display: string; kind: CustomFieldKind } =>
+        typeof field.id === 'string' &&
+        typeof field.display === 'string' &&
+        typeof field.kind === 'string',
+    )
+    .map((field) => {
+      const options = field.options ?? undefined;
+      return {
+        id: field.id,
+        display: field.display,
+        kind: field.kind,
+        tsType: mapKindToTsType(field.kind, options),
+        camelCaseDisplay: toCamelCase(field.display),
+        camelCaseKey: toCamelCase(field.display),
+        options,
+      };
+    });
 
   const templatePath = path.resolve(
     __dirname,

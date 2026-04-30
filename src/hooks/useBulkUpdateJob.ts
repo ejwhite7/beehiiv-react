@@ -114,7 +114,7 @@ export function useBulkUpdateJob(
   const fetchJobStatus = useCallback(async () => {
     try {
       const response = await fetch(
-        `${apiUrl}/bulk_subscription_updates/${jobId}`,
+        `${apiUrl}/publications/${publicationId}/bulk_subscription_updates/${jobId}`,
       );
 
       if (!response.ok) {
@@ -160,7 +160,7 @@ export function useBulkUpdateJob(
         intervalRef.current = null;
       }
     }
-  }, [apiUrl, jobId]);
+  }, [apiUrl, publicationId, jobId]);
 
   /**
    * Set up the polling interval on mount and clean up on unmount
@@ -188,3 +188,4 @@ export function useBulkUpdateJob(
     error: state.error,
   };
 }
+

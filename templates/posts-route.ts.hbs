@@ -29,6 +29,8 @@ export async function GET(req: NextRequest) {
       | undefined;
 
     const expand = searchParams.getAll('expand[]');
+    const orderBy = searchParams.get('order_by') ?? 'publish_date';
+    const direction = searchParams.get('direction') ?? 'desc';
 
     const response = await client.posts.list({
       page: page ? Number(page) : undefined,
@@ -36,10 +38,20 @@ export async function GET(req: NextRequest) {
       status: status ?? undefined,
       audience: audience ?? undefined,
       expand: expand.length > 0 ? expand : undefined,
+      orderBy,
+      direction: direction as 'asc' | 'desc',
     });
 
     return NextResponse.json(
-      { data: response.data, pagination: response.pagination },
+      {
+        data: response.data,
+        pagination: {
+          page: response.page,
+          limit: response.limit,
+          total_results: response.total_results,
+          total_pages: response.total_pages,
+        },
+      },
       { status: 200 },
     );
   } catch (error: unknown) {

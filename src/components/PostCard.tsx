@@ -15,6 +15,7 @@ import type { PostInfo, PostAudience } from '../types/post.js';
 const AUDIENCE_LABELS: Record<PostAudience, string> = {
   free: 'Free',
   premium: 'Premium',
+  both: 'Everyone',
   all: 'Members Only',
 };
 

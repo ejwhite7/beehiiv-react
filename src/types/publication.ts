@@ -1,25 +1,34 @@
 /**
  * Publication types for the beehiiv API v2.
  * Publications represent newsletters managed in beehiiv.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/publication
  */
 
-/** Expandable fields for publication requests */
-export type PublicationsRequestExpand = 'stats';
+import type { components } from './beehiiv-api.generated.js';
 
-/** Aggregate statistics for a publication */
-export interface PublicationStats {
-  /** Total number of active subscriptions */
-  stat_active_subscriptions: number;
-  /** Average email open rate (0-1 decimal) */
-  stat_average_open_rate: number;
-  /** Average email click rate (0-1 decimal) */
-  stat_average_click_rate: number;
-  /** Total number of posts published */
-  stat_total_sent: number;
-  /** Total number of subscribers (all statuses) */
-  stat_total_subscriptions: number;
-}
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
+
+/**
+ * Expandable fields for publication requests.
+ * Re-exported from the generated beehiiv API spec (`PublicationsRequestExpandItem`).
+ */
+export type PublicationsRequestExpand = components['schemas']['PublicationsRequestExpandItem'];
+
+/**
+ * Aggregate statistics for a publication.
+ * Re-exported from the generated beehiiv API spec (`PublicationStats`).
+ */
+export type PublicationStats = components['schemas']['PublicationStats'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (SDK-specific shapes)
+// ---------------------------------------------------------------------------
 
 /** A beehiiv publication */
 export interface PublicationInfo {

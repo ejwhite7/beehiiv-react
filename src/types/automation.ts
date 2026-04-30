@@ -1,13 +1,35 @@
 /**
  * Automation types for the beehiiv API v2.
  * Automations represent automated email workflows triggered by subscriber events.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/automation
  */
 
 import type { CursorPaginationMeta } from './common.js';
+import type { components } from './beehiiv-api.generated.js';
 
-/** The current status of an automation workflow */
-export type AutomationStatus = 'active' | 'inactive' | 'draft';
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
+
+/**
+ * The current status of an automation workflow.
+ * Re-exported from the generated beehiiv API spec (`AutomationStatus`).
+ */
+export type AutomationStatus = components['schemas']['AutomationStatus'];
+
+/**
+ * The status of a subscriber's journey through an automation.
+ * Re-exported from the generated beehiiv API spec (`AutomationJourneyStatus`).
+ */
+export type AutomationJourneyStatus = components['schemas']['AutomationJourneyStatus'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (SDK-specific shapes)
+// ---------------------------------------------------------------------------
 
 /** The type of event that triggers an automation */
 export type AutomationTriggerType =
@@ -66,9 +88,6 @@ export interface AutomationInfo {
   /** Unix timestamp when the automation was last updated */
   updated_at: number;
 }
-
-/** The status of a subscriber's journey through an automation */
-export type AutomationJourneyStatus = 'active' | 'completed' | 'exited';
 
 /** A subscriber's journey record through an automation */
 export interface AutomationJourney {

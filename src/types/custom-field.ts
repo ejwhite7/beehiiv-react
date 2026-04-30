@@ -1,59 +1,53 @@
 /**
  * Custom field types for beehiiv publications.
  * Custom fields let publishers collect additional data from subscribers.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/custom-field
  */
 
-import type { OffsetPaginationMeta } from './common.js';
+import type { components } from './beehiiv-api.generated.js';
+
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
 
 /**
  * The primitive type stored in a beehiiv custom field.
  * Maps to TypeScript types during code generation.
+ * Re-exported from the generated beehiiv API spec (`CustomFieldType`).
  */
-export type CustomFieldKind =
-  | 'string'
-  | 'integer'
-  | 'double'
-  | 'boolean'
-  | 'date'
-  | 'datetime'
-  | 'list';
+export type CustomFieldKind = components['schemas']['CustomFieldType'];
 
-/** A custom field definition on a beehiiv publication */
-export interface CustomFieldInfo {
-  /** The unique ID of the custom field */
-  id: string;
-  /** The data type of the field */
-  kind: CustomFieldKind;
-  /** The display name shown in beehiiv UI */
-  display: string;
-  /** Unix timestamp of field creation */
-  created: number;
-  /** Available options -- only present when kind is "list" */
-  options?: string[];
-}
+/**
+ * A custom field definition on a beehiiv publication.
+ * Re-exported from the generated beehiiv API spec (`CustomFieldInfo`).
+ */
+export type CustomFieldInfo = components['schemas']['CustomFieldInfo'];
 
-/** Response wrapper for a single custom field */
-export interface CustomFieldResponse {
-  data: CustomFieldInfo;
-}
+/**
+ * Response wrapper for a single custom field.
+ * Re-exported from the generated beehiiv API spec (`CustomFieldResponse`).
+ */
+export type CustomFieldResponse = components['schemas']['CustomFieldResponse'];
 
-/** Response wrapper for listing custom fields */
-export interface CustomFieldIndexResponse {
-  data: CustomFieldInfo[];
-  pagination: OffsetPaginationMeta;
-}
+/**
+ * Response wrapper for listing custom fields.
+ * Re-exported from the generated beehiiv API spec (`CustomFieldIndexResponse`).
+ */
+export type CustomFieldIndexResponse = components['schemas']['CustomFieldIndexResponse'];
 
 /**
  * A custom field value sent when creating/updating a subscription.
- * The `name` must match an existing custom field's `display` name.
+ * Re-exported from the generated beehiiv API spec (`CustomFieldValue`).
  */
-export interface CustomFieldValue {
-  /** The display name of the custom field */
-  name: string;
-  /** The value to set -- type depends on the field's kind */
-  value: string | number | boolean | string[];
-}
+export type CustomFieldValue = components['schemas']['CustomFieldValue'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (no generated equivalent)
+// ---------------------------------------------------------------------------
 
 /** Request body for creating a new custom field */
 export interface CreateCustomFieldRequest {

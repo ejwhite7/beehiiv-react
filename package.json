@@ -1,6 +1,6 @@
 {
   "name": "beehiiv-react",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Connect a beehiiv account to your React/Next.js project — typed API client, React hooks, subscription form component, and CLI scaffolding tool.",
   "keywords": [
     "beehiiv",
@@ -60,12 +60,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run build && npm run typecheck && npm run test"
+    "prepublishOnly": "npm run build && npm run typecheck && npm run test",
+    "generate:types": "openapi-typescript src/types/beehiiv-api-spec.yaml -o src/types/beehiiv-api.generated.ts",
+    "check:spec": "curl -sf https://files.buildwithfern.com/https://beehiiv.docs.buildwithfern.com/ce117ceb8170960e1daef3750597e88705645d547d7ee2fee49c5bebfd5c6b6d/assets/beehiiv-API-Specification.yaml -o /dev/null && echo \"beehiiv OpenAPI spec is available\" || (echo \"No beehiiv OpenAPI spec found\" && exit 1)"
   },
   "peerDependencies": {
+    "@tanstack/react-query": ">=5.0.0",
     "react": ">=18.0.0",
-    "react-dom": ">=18.0.0",
-    "@tanstack/react-query": ">=5.0.0"
+    "react-dom": ">=18.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -100,6 +102,7 @@
     "@vitest/coverage-v8": "^1.0.0",
     "eslint": "^8.0.0",
     "jsdom": "^24.0.0",
+    "openapi-typescript": "^7.13.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "tsup": "^8.0.0",

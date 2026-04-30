@@ -1,7 +1,28 @@
 /**
  * Common types shared across all beehiiv API modules.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`. Types that are specific to
+ * this SDK (config objects, generic wrappers) remain hand-written here.
+ *
  * @module types/common
  */
+
+import type { components } from './beehiiv-api.generated.js';
+
+// ---------------------------------------------------------------------------
+// Re-exports from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
+
+/**
+ * Sort direction for list queries.
+ * Re-exported from the generated beehiiv API spec.
+ */
+export type RequestDirection = components['schemas']['RequestDirection'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (no generated equivalent)
+// ---------------------------------------------------------------------------
 
 /** Detail of a single error returned by the beehiiv API */
 export interface BeehiivErrorDetail {
@@ -55,9 +76,6 @@ export interface PaginatedResponse<T> {
   /** Pagination metadata (cursor or offset based) */
   pagination: CursorPaginationMeta | OffsetPaginationMeta;
 }
-
-/** Sort direction for list queries */
-export type RequestDirection = 'asc' | 'desc';
 
 /** Configuration for the beehiiv API client */
 export interface BeehiivApiConfig {

@@ -1,0 +1,79 @@
+# sync-api-types.yml
+#
+# Regenerates TypeScript types from the beehiiv OpenAPI specification on a
+# weekly schedule. If the generated file changes, a pull request is opened
+# automatically so the team can review and merge the updates.
+#
+# The workflow can also be triggered manually via workflow_dispatch.
+
+name: Sync beehiiv API Types
+
+on:
+  schedule:
+    # Run every Monday at 09:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-types:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so the PR diff is accurate
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate types from OpenAPI spec
+        run: npm run generate:types
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet src/types/beehiiv-api.generated.ts; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build project
+        if: steps.diff.outputs.changed == 'true'
+        run: npm run build
+
+      - name: Run tests
+        if: steps.diff.outputs.changed == 'true'
+        run: npm test
+
+      - name: Create pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore: regenerate types from beehiiv OpenAPI spec'
+          title: 'chore: sync beehiiv API types'
+          body: |
+            Automated PR created by the **Sync beehiiv API Types** workflow.
+
+            The beehiiv OpenAPI specification has changed since the last sync.
+            This PR updates `src/types/beehiiv-api.generated.ts` to match.
+
+            **Please review the diff carefully** — breaking changes in the
+            upstream spec may require updates to hand-written types or SDK code.
+
+            ---
+            *This PR was generated automatically. See `.github/workflows/sync-api-types.yml`.*
+          branch: chore/sync-api-types
+          labels: dependencies, automated
+          delete-branch: true

@@ -1,26 +1,28 @@
 /**
  * Webhook types for the beehiiv API v2.
  * Webhooks enable real-time notifications for publication events.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/webhook
  */
 
-/** All supported beehiiv webhook event types */
-export type WebhookEventType =
-  | 'subscription.created'
-  | 'subscription.activated'
-  | 'subscription.deactivated'
-  | 'subscription.upgraded'
-  | 'subscription.downgraded'
-  | 'subscription.deleted'
-  | 'post.sent'
-  | 'post.published'
-  | 'post.draft_created'
-  | 'email.opened'
-  | 'email.clicked'
-  | 'email.complained'
-  | 'email.bounced'
-  | 'referral.created'
-  | 'referral.milestone_reached';
+import type { components } from './beehiiv-api.generated.js';
+
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
+
+/**
+ * All supported beehiiv webhook event types.
+ * Re-exported from the generated beehiiv API spec (`WebhookEventType`).
+ */
+export type WebhookEventType = components['schemas']['WebhookEventType'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (SDK-specific shapes)
+// ---------------------------------------------------------------------------
 
 /** A configured webhook on a beehiiv publication */
 export interface WebhookInfo {

@@ -2,11 +2,28 @@
  * Automation journey types for the beehiiv API v2.
  * Automation journeys represent a subscriber's progression through
  * an automation workflow, including creation and retrieval of journey records.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/automation-journey
  */
 
-/** The status of an automation journey */
-export type AutomationJourneyStatus = 'active' | 'completed' | 'exited';
+import type { components } from './beehiiv-api.generated.js';
+
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
+
+/**
+ * The status of an automation journey.
+ * Re-exported from the generated beehiiv API spec (`AutomationJourneyStatus`).
+ */
+export type AutomationJourneyStatus = components['schemas']['AutomationJourneyStatus'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (SDK-specific shapes)
+// ---------------------------------------------------------------------------
 
 /** An automation journey record returned by the beehiiv API */
 export interface AutomationJourneyInfo {

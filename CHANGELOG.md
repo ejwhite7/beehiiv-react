@@ -2,6 +2,15 @@
 
 All notable changes to `beehiiv-react` are documented in this file.
 
+## [0.4.3] - 2026-04-30
+
+### Added
+- **openapi-typescript codegen wired up to beehiiv API spec for automatic type sync** -- Types in `src/types/` now re-export or extend auto-generated definitions from the official beehiiv OpenAPI specification (`src/types/beehiiv-api.generated.ts`). Run `npm run generate:types` to regenerate.
+- **`generate:types` npm script** -- Runs `openapi-typescript` against the vendored beehiiv API spec to produce `src/types/beehiiv-api.generated.ts`.
+- **`check:spec` npm script** -- Probes known beehiiv spec URLs and exits 0/1 to indicate whether an official OpenAPI spec is available.
+- **Weekly type-sync GitHub Actions workflow** -- `.github/workflows/sync-api-types.yml` regenerates types every Monday and opens a PR if the spec changed.
+- **Type Generation section in CLAUDE.md** -- Documents the codegen pipeline, commands, and architecture decisions.
+
 ## [0.4.2] - 2026-04-29
 
 ### Added

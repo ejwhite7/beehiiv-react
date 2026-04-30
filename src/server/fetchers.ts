@@ -44,7 +44,7 @@ export async function fetchPosts(
   options?: ListPostsOptions,
 ): Promise<PostInfo[]> {
   const response = await client.posts.list(publicationId, options);
-  return response.data;
+  return response.data ?? [];
 }
 
 /**
@@ -72,7 +72,7 @@ export async function fetchPost(
   const response = await client.posts.get(publicationId, id, {
     expand: ['free_web_content', 'tags'],
   });
-  return response.data;
+  return response.data ?? [];
 }
 
 /**
@@ -97,7 +97,7 @@ export async function fetchSubscribers(
   options?: ListSubscriptionsOptions,
 ): Promise<SubscriptionInfo[]> {
   const response = await client.subscriptions.list(publicationId, options);
-  return response.data;
+  return response.data ?? [];
 }
 
 /**
@@ -128,7 +128,7 @@ export async function fetchSubscription(
   const response = emailOrId.includes('@')
     ? await client.subscriptions.getByEmail(publicationId, emailOrId)
     : await client.subscriptions.getById(publicationId, emailOrId);
-  return response.data;
+  return response.data ?? [];
 }
 
 /**
@@ -150,7 +150,7 @@ export async function fetchPublications(
   client: BeehiivClient,
 ): Promise<PublicationInfo[]> {
   const response = await client.publications.list();
-  return response.data;
+  return response.data ?? [];
 }
 
 /**
@@ -173,7 +173,7 @@ export async function fetchCustomFields(
   publicationId: string,
 ): Promise<CustomFieldInfo[]> {
   const response = await client.customFields.list(publicationId);
-  return response.data;
+  return response.data ?? [];
 }
 
 /**
@@ -196,7 +196,7 @@ export async function fetchWebhooks(
   publicationId: string,
 ): Promise<WebhookInfo[]> {
   const response = await client.webhooks.list(publicationId);
-  return response.data;
+  return response.data ?? [];
 }
 
 /**
@@ -219,5 +219,5 @@ export async function fetchSegments(
   publicationId: string,
 ): Promise<SegmentInfo[]> {
   const response = await client.segments.list(publicationId);
-  return response.data;
+  return response.data ?? [];
 }

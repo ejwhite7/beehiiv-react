@@ -2,6 +2,12 @@
 
 All notable changes to `beehiiv-react` are documented in this file.
 
+## [0.4.4] - 2026-04-30
+
+### Fixed
+- **Generated `posts` API route now returns the correct pagination shape** -- The CLI-generated Next.js posts route template was returning `response.pagination` (which does not exist on the SDK response). It now reads `page`, `limit`, `total_results`, and `total_pages` directly from the SDK response, matching the shape `usePosts` expects.
+- **Generated `posts` API route now forwards `order_by` and `direction`** -- The route reads `order_by` (defaults to `publish_date`) and `direction` (defaults to `desc`) from the request query string and passes them through to `client.posts.list`, so client-side ordering controls actually take effect.
+
 ## [0.4.3] - 2026-04-30
 
 ### Added

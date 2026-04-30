@@ -1,7 +1,7 @@
 /**
  * Subscriptions endpoint for the beehiiv API client.
  * Manages subscriber CRUD operations including creation, listing with
- * cursor-based pagination, updates by ID or email, and deletion.
+ * cursor-based pagination, updates by ID or email, deletion, and tag management.
  * @module client/endpoints/subscriptions
  */
 
@@ -27,6 +27,12 @@ export interface ListSubscriptionsOptions {
   status?: SubscriptionStatus;
   /** Filter subscriptions by tier */
   tier?: SubscriptionTier;
+}
+
+/** Response returned after adding tags to a subscription */
+export interface AddTagsResponse {
+  /** The tags that were successfully added to the subscription */
+  tags: string[];
 }
 
 /**
@@ -361,6 +367,38 @@ export class SubscriptionsEndpoint {
 
     await this._http.delete(
       `/publications/${publicationId}/subscriptions/${subscriptionId}`
+    );
+  }
+
+  /**
+   * Add tags to a subscription.
+   *
+   * Calls `POST /v2/publications/{publicationId}/subscriptions/{subscriptionId}/tags`
+   * with a JSON body containing the tags to add.
+   *
+   * @param publicationId - The publication ID (starts with "pub_")
+   * @param subscriptionId - The subscription ID to tag (starts with "sub_")
+   * @param tags - Array of tag strings to add to the subscription
+   * @returns The tags that were added
+   *
+   * @example
+   * ```ts
+   * // Add tags to a specific subscription
+   * const result = await client.subscriptions.addTags(
+   *   'pub_abc',
+   *   'sub_xyz',
+   *   ['vip', 'early-adopter'],
+   * );
+   * ```
+   */
+  async addTags(
+    publicationId: string,
+    subscriptionId: string,
+    tags: string[]
+  ): Promise<AddTagsResponse> {
+    return this._http.post<AddTagsResponse>(
+      `/publications/${publicationId}/subscriptions/${subscriptionId}/tags`,
+      { tags }
     );
   }
 }

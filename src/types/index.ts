@@ -1,5 +1,10 @@
 /**
  * Public type exports for beehiiv-react.
+ *
+ * Where applicable, hand-written types re-export or extend definitions from
+ * the auto-generated OpenAPI types (`beehiiv-api.generated.ts`). Run
+ * `npm run generate:types` to regenerate from the latest beehiiv API spec.
+ *
  * @module types
  */
 

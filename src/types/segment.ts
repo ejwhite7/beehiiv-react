@@ -2,33 +2,47 @@
  * Segment types for the beehiiv API v2.
  * Segments allow grouping subscribers by dynamic rules, static lists,
  * or manual CSV uploads for targeted communication.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/segment
  */
 
 import type { SubscriptionInfo } from './subscription.js';
+import type { components } from './beehiiv-api.generated.js';
 
-/** The type of a segment */
-export type SegmentType = 'dynamic' | 'static' | 'manual' | 'all';
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
+
+/**
+ * The type of a segment.
+ * Re-exported from the generated beehiiv API spec (`SegmentType`).
+ */
+export type SegmentType = components['schemas']['SegmentType'];
 
 /**
  * The status of a segment's most recent calculation.
- * - `pending` - The segment has not been calculated yet.
- * - `processing` - The calculation is in progress.
- * - `completed` - The calculation was successful.
- * - `failed` - Something went wrong during the calculation.
+ * Re-exported from the generated beehiiv API spec (`SegmentStatus`).
  */
-export type SegmentStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type SegmentStatus = components['schemas']['SegmentStatus'];
 
-/** Expand options available when listing segment members */
-export type SegmentMembersExpand =
-  | 'stats'
-  | 'custom_fields'
-  | 'referrals'
-  | 'tags'
-  | 'subscription_premium_tier';
+/**
+ * Expand options available when listing segment members.
+ * Re-exported from the generated beehiiv API spec (`SegmentMembersExpandItems`).
+ */
+export type SegmentMembersExpand = components['schemas']['SegmentMembersExpandItems'];
 
-/** Expand options available when listing or getting segments */
-export type SegmentsExpand = 'stats';
+/**
+ * Expand options available when listing or getting segments.
+ * Re-exported from the generated beehiiv API spec (`SegmentsExpandItems`).
+ */
+export type SegmentsExpand = components['schemas']['SegmentsExpandItems'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (SDK-specific shapes)
+// ---------------------------------------------------------------------------
 
 /** Statistical data for a segment */
 export interface SegmentStats {

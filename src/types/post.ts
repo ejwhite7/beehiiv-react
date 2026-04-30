@@ -1,16 +1,39 @@
 /**
  * Post types for the beehiiv API v2.
  * Posts represent newsletter content (emails, web posts).
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/post
  */
 
 import type { OffsetPaginationMeta } from './common.js';
+import type { components } from './beehiiv-api.generated.js';
 
-/** The publication status of a post */
-export type PostStatus = 'draft' | 'confirmed' | 'archived';
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
 
-/** The intended audience for a post */
-export type PostAudience = 'free' | 'premium' | 'all';
+/**
+ * The publication status of a post.
+ * Re-exported from the generated beehiiv API spec (`PostStatus`).
+ */
+export type PostStatus = components['schemas']['PostStatus'];
+
+/**
+ * The intended audience for a post.
+ *
+ * The upstream API spec defines `PostAudience` as `"free" | "premium" | "both"`.
+ * This SDK also accepts `"all"` as a convenience alias for `"both"` in access-
+ * resolution utilities (e.g. {@link canViewContent}). The API itself never
+ * returns `"all"`, but the SDK uses it as a safe fallback default.
+ */
+export type PostAudience = components['schemas']['PostAudience'] | 'all';
+
+// ---------------------------------------------------------------------------
+// Hand-written types (SDK-specific shapes that differ from raw API)
+// ---------------------------------------------------------------------------
 
 /**
  * Content tier containing RSS and web HTML strings.

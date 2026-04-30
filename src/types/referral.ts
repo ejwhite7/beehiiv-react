@@ -1,11 +1,28 @@
 /**
  * Referral program types for the beehiiv API v2.
  * Referrals represent the subscriber referral program and its milestones.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/referral
  */
 
-/** The type of reward granted when a referral milestone is reached */
-export type ReferralMilestoneRewardType = 'free_month' | 'custom_reward' | string;
+import type { components } from './beehiiv-api.generated.js';
+
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
+
+/**
+ * The type of reward granted when a referral milestone is reached.
+ * Re-exported from the generated beehiiv API spec (`MilestoneRewardType`).
+ */
+export type ReferralMilestoneRewardType = components['schemas']['MilestoneRewardType'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (SDK-specific shapes)
+// ---------------------------------------------------------------------------
 
 /** A single milestone in the referral program */
 export interface ReferralMilestone {

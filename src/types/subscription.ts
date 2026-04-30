@@ -1,21 +1,36 @@
 /**
  * Subscription types for the beehiiv API v2.
  * Subscriptions represent email subscribers to a publication.
+ *
+ * Types that overlap with the auto-generated OpenAPI definitions re-export
+ * or extend from `./beehiiv-api.generated.js`.
+ *
  * @module types/subscription
  */
 
 import type { CursorPaginationMeta } from './common.js';
 import type { CustomFieldValue } from './custom-field.js';
+import type { components } from './beehiiv-api.generated.js';
 
-/** The current status of a subscription */
-export type SubscriptionStatus =
-  | 'active'
-  | 'inactive'
-  | 'pending'
-  | 'validating';
+// ---------------------------------------------------------------------------
+// Re-exports / aliases from the generated OpenAPI spec
+// ---------------------------------------------------------------------------
 
-/** The subscription tier */
-export type SubscriptionTier = 'free' | 'premium';
+/**
+ * The current status of a subscription.
+ * Re-exported from the generated beehiiv API spec (`SubscriptionStatus`).
+ */
+export type SubscriptionStatus = components['schemas']['SubscriptionStatus'];
+
+/**
+ * The subscription tier.
+ * Re-exported from the generated beehiiv API spec (`SubscriptionSubscriptionTier`).
+ */
+export type SubscriptionTier = components['schemas']['SubscriptionSubscriptionTier'];
+
+// ---------------------------------------------------------------------------
+// Hand-written types (SDK-specific shapes that differ from raw API)
+// ---------------------------------------------------------------------------
 
 /** A subscriber's custom field value as returned by the API */
 export interface SubscriptionCustomField {

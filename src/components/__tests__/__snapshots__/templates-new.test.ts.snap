@@ -161,7 +161,7 @@ export function SubscribeCTA({
         disabled={isPending}
         aria-label="Email address"
         aria-required="true"
-        autocomplete="email"
+        autoComplete="email"
       />
       <button type="submit" disabled={isPending}>
         {isPending ? 'Subscribing...' : submitLabel}

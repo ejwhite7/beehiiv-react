@@ -9,7 +9,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { BulkSubscriptionUpdateJob } from '../types/bulk-subscriptions.js';
+import type {
+  BulkSubscriptionUpdateJob,
+  BulkSubscriptionUpdateJobStatus,
+} from '../types/bulk-subscriptions.js';
 import { useBeehiiv } from './useBeehiiv.js';
 
 /**
@@ -50,20 +53,23 @@ const INITIAL_STATE: BulkUpdateJobState = {
 };
 
 /** Job statuses that indicate the job has finished processing */
-const TERMINAL_STATUSES = new Set<string>(['completed', 'failed']);
+const TERMINAL_STATUSES = new Set<BulkSubscriptionUpdateJobStatus>([
+  'completed',
+  'failed',
+]);
 
 /**
  * Hook that polls a bulk subscription update job until it reaches
  * a terminal status ("completed" or "failed").
  *
- * Uses the nearest `<BeehiivProvider>` to resolve `apiUrl` and
- * `publicationId`, then fetches
- * `{apiUrl}/bulk_subscription_updates/{jobId}` on a recurring interval.
+ * Uses the nearest `<BeehiivProvider>` to resolve `apiUrl`, then fetches
+ * `{apiUrl}/bulk_subscription_updates/{jobId}?publicationId={publicationId}`
+ * on a recurring interval.
  *
  * Polling stops automatically when the job reaches a terminal status
  * or when the component unmounts.
  *
- * @param publicationId - The publication ID that owns the bulk job
+ * @param publicationId - The publication ID that owns the bulk job (must be passed explicitly)
  * @param jobId - The bulk update job ID to poll
  * @param options - Optional configuration (e.g. poll interval)
  * @returns The current job record, polling state, and any error
@@ -107,15 +113,27 @@ export function useBulkUpdateJob(
   /** Ref to prevent state updates after unmount */
   const mountedRef = useRef(true);
 
+  /** Monotonically increasing fetch ID to discard stale responses */
+  const fetchIdRef = useRef(0);
+
+  /** Reset state when jobId changes */
+  useEffect(() => {
+    setState({ job: null, isPolling: true, error: null });
+  }, [jobId]);
+
   /**
    * Fetch the current job status from the API.
    * Updates state with the result or any error encountered.
    */
   const fetchJobStatus = useCallback(async () => {
+    const currentFetchId = ++fetchIdRef.current;
+
     try {
       const response = await fetch(
-        `${apiUrl}/publications/${publicationId}/bulk_subscription_updates/${jobId}`,
+        `${apiUrl}/bulk_subscription_updates/${jobId}?publicationId=${publicationId}`,
       );
+
+      if (currentFetchId !== fetchIdRef.current) return;
 
       if (!response.ok) {
         const body = (await response.json().catch(() => ({}))) as Record<
@@ -134,6 +152,7 @@ export function useBulkUpdateJob(
       };
 
       if (!mountedRef.current) return;
+      if (currentFetchId !== fetchIdRef.current) return;
 
       const isTerminal = TERMINAL_STATUSES.has(result.data.status);
 
@@ -150,6 +169,7 @@ export function useBulkUpdateJob(
       }
     } catch (err: unknown) {
       if (!mountedRef.current) return;
+      if (currentFetchId !== fetchIdRef.current) return;
 
       const error = err instanceof Error ? err : new Error(String(err));
       setState((prev) => ({ ...prev, error, isPolling: false }));
@@ -188,4 +208,3 @@ export function useBulkUpdateJob(
     error: state.error,
   };
 }
-

@@ -48,6 +48,29 @@ export interface Author {
 }
 
 // ---------------------------------------------------------------------------
+// Expand fields
+// ---------------------------------------------------------------------------
+
+/** Fields that can be expanded when retrieving author resources */
+export type AuthorExpandField = 'post_count';
+
+// ---------------------------------------------------------------------------
+// List params
+// ---------------------------------------------------------------------------
+
+/**
+ * Query parameters accepted when listing authors.
+ */
+export interface ListAuthorsParams {
+  /** Maximum number of results to return per page */
+  limit?: number;
+  /** Page number for offset-based pagination */
+  page?: number;
+  /** Optional related resources to include in the response */
+  expand?: Array<AuthorExpandField>;
+}
+
+// ---------------------------------------------------------------------------
 // Response wrappers
 // ---------------------------------------------------------------------------
 

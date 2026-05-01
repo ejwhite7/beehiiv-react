@@ -7,6 +7,13 @@
  */
 
 // ---------------------------------------------------------------------------
+// Expand fields
+// ---------------------------------------------------------------------------
+
+/** Fields that can be expanded when retrieving engagement resources */
+export type EngagementExpandField = 'stats';
+
+// ---------------------------------------------------------------------------
 // Hand-written types (SDK-specific shapes)
 // ---------------------------------------------------------------------------
 
@@ -33,6 +40,22 @@ export interface EngagementMetrics {
   unsubscribes: number;
   /** Total number of spam reports received on this date */
   spam_reports: number;
+}
+
+// ---------------------------------------------------------------------------
+// Request params
+// ---------------------------------------------------------------------------
+
+/**
+ * Query parameters accepted when fetching engagement metrics.
+ */
+export interface GetEngagementsParams {
+  /** Start date for the engagement data range (ISO 8601 date string, e.g. "2024-01-01") */
+  start_date: string;
+  /** End date for the engagement data range (ISO 8601 date string, e.g. "2024-01-31") */
+  end_date: string;
+  /** Optional related resources to include in the response */
+  expand?: Array<EngagementExpandField>;
 }
 
 /**

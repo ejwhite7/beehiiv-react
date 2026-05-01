@@ -376,6 +376,9 @@ export class SubscriptionsEndpoint {
    * Calls `POST /v2/publications/{publicationId}/subscriptions/{subscriptionId}/tags`
    * with a JSON body containing the tags to add.
    *
+   * Supports dual-signature calling: pass the publication ID explicitly,
+   * or omit it to use the `defaultPublicationId` from the client config.
+   *
    * @param publicationId - The publication ID (starts with "pub_")
    * @param subscriptionId - The subscription ID to tag (starts with "sub_")
    * @param tags - Array of tag strings to add to the subscription
@@ -383,22 +386,44 @@ export class SubscriptionsEndpoint {
    *
    * @example
    * ```ts
-   * // Add tags to a specific subscription
+   * // Explicit publication ID
    * const result = await client.subscriptions.addTags(
    *   'pub_abc',
    *   'sub_xyz',
    *   ['vip', 'early-adopter'],
    * );
+   *
+   * // Using defaultPublicationId
+   * const result2 = await client.subscriptions.addTags(
+   *   'sub_xyz',
+   *   ['vip', 'early-adopter'],
+   * );
    * ```
    */
+  addTags(publicationId: string, subscriptionId: string, tags: string[]): Promise<AddTagsResponse>;
+  addTags(subscriptionId: string, tags: string[]): Promise<AddTagsResponse>;
   async addTags(
-    publicationId: string,
-    subscriptionId: string,
-    tags: string[]
+    publicationIdOrSubscriptionId: string,
+    subscriptionIdOrTags: string | string[],
+    tags?: string[]
   ): Promise<AddTagsResponse> {
+    let publicationId: string;
+    let subscriptionId: string;
+    let tagList: string[];
+
+    if (typeof subscriptionIdOrTags === 'string') {
+      publicationId = publicationIdOrSubscriptionId;
+      subscriptionId = subscriptionIdOrTags;
+      tagList = tags!;
+    } else {
+      publicationId = this._resolvePublicationId();
+      subscriptionId = publicationIdOrSubscriptionId;
+      tagList = subscriptionIdOrTags;
+    }
+
     return this._http.post<AddTagsResponse>(
       `/publications/${publicationId}/subscriptions/${subscriptionId}/tags`,
-      { tags }
+      { tags: tagList }
     );
   }
 }

@@ -54,6 +54,13 @@ export interface Tier {
 }
 
 // ---------------------------------------------------------------------------
+// Expand fields
+// ---------------------------------------------------------------------------
+
+/** Fields that can be expanded when retrieving tier resources */
+export type TierExpandField = 'free_tier_group' | 'premium_tier_group';
+
+// ---------------------------------------------------------------------------
 // List tiers
 // ---------------------------------------------------------------------------
 
@@ -69,6 +76,8 @@ export interface ListTiersParams {
   type?: TierType;
   /** Filter tiers by active status */
   active?: boolean;
+  /** Optional related resources to include in the response */
+  expand?: Array<TierExpandField>;
 }
 
 /**

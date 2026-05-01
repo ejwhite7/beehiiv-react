@@ -6,9 +6,9 @@
 
 `beehiiv-react` is a hybrid npm package that provides:
 
-1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only) with 9 endpoint namespaces: `subscriptions`, `customFields`, `publications`, `posts`, `webhooks`, `segments`, `automations`, `referrals`, `automationJourneys`
-2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`, `useSubscriberProfile`, `useSubscriberTier`, `useSubscribers`, `usePublications`) for client-side state management -- 12 hooks total (including `useBeehiiv`)
-3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`, `PostCard`, `PostList`, `PostContentRenderer`, `GatedContent`, `PremiumContent`, `SubscriberBadge`) for common UI patterns
+1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only) with 14 endpoint namespaces: `subscriptions`, `customFields`, `publications`, `posts`, `webhooks`, `segments`, `automations`, `referrals`, `automationJourneys`, `tiers`, `authors`, `bulkSubscriptions`, `bulkSubscriptionUpdates`, `engagements`
+2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`, `useSubscriberProfile`, `useSubscriberTier`, `useSubscribers`, `usePublications`) for client-side state management -- 22 hooks total (including `useBeehiiv`)
+3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`, `PostCard`, `PostList`, `PostContentRenderer`, `GatedContent`, `PremiumContent`, `SubscriberBadge`, `TierBadge`) for common UI patterns
 4. **Utility functions** (`canViewContent`, `getAudienceLabel`, `getTierLabel`) for subscriber access resolution
 5. **A CLI tool** (`npx beehiiv-react init/sync`) that scaffolds config, types, and API routes into a Next.js project
 6. **A TanStack Query adapter** (`beehiiv-react/query`) providing `useQuery`/`useMutation` hooks with cache key factories
@@ -162,7 +162,7 @@ The client includes a built-in rate limiter (token-bucket algorithm) to stay wit
 
 ---
 
-## Client Endpoints (9 total)
+## Client Endpoints (14 total)
 
 | Namespace | Resource | Key Methods |
 |---|---|---|
@@ -175,10 +175,15 @@ The client includes a built-in rate limiter (token-bucket algorithm) to stay wit
 | `automations` | Automations | `list`, `get`, `create`, `listJourneys`, `listEmails` |
 | `referrals` | Referrals | `getProgram`, `listMilestones`, `getSubscriberStats` |
 | `automationJourneys` | Automation Journeys | `create`, `get` |
+| `tiers` | Tiers | `list`, `get`, `create`, `update` |
+| `authors` | Authors | `list`, `get` |
+| `bulkSubscriptions` | Bulk Subscriptions | `create` |
+| `bulkSubscriptionUpdates` | Bulk Updates | `list`, `get`, `updateFields`, `updateStatus` |
+| `engagements` | Engagements | `get` |
 
 ---
 
-## React Hooks (12 total)
+## React Hooks (22 total)
 
 | Hook | Description |
 |---|---|
@@ -194,6 +199,16 @@ The client includes a built-in rate limiter (token-bucket algorithm) to stay wit
 | `useSubscriberTier` | Lightweight tier-only hook |
 | `useSubscribers` | Paginated subscriber list |
 | `usePublications` | All accessible publications |
+| `useTiers` | Paginated tier list with type/active filtering |
+| `useTier` | Single tier by ID |
+| `useAuthors` | Paginated author list |
+| `useAuthor` | Single author by ID |
+| `useBulkUpdateJob` | Track bulk update job with polling |
+| `useEngagements` | Engagement metrics by date range |
+| `useAutomations` | Paginated automation list and single automation |
+| `useWebhooks` | Paginated webhook list and single webhook |
+| `useSegments` | Paginated segment list and single segment |
+| `useReferrals` | Referral program and subscriber stats |
 
 ---
 
@@ -339,6 +354,71 @@ These functions are safe to call inside React Server Components, Route Handlers,
 ### Response Unwrapping Fix (v0.4.0)
 - Generated `subscribeAction` server action now returns `response.data` (the `SubscriptionInfo` record) instead of the raw `SubscriptionResponse` wrapper, so consumers can use `sub.id` directly
 - Generated API routes no longer double-wrap responses in `{ data: { data: ... } }`; SDK response objects are passed through directly
+
+---
+
+
+## v0.5.0 -- Tiers, Authors, Bulk Subscriptions, Engagements, Hook Infill
+
+### New Endpoint Namespaces
+
+| Namespace | Resource | Key Methods | Endpoints |
+|---|---|---|---|
+| `tiers` | Tiers | `list`, `get`, `create`, `update` | 4 |
+| `authors` | Authors | `list`, `get` | 2 |
+| `bulkSubscriptions` | Bulk Subscriptions | `create` | 1 |
+| `bulkSubscriptionUpdates` | Bulk Updates | `list`, `get`, `updateFields`, `updateStatus` | 4 |
+| `engagements` | Engagements | `get` | 1 |
+
+Total new endpoints: **12** (was 38/72, now ~50/72 beehiiv API v2 coverage).
+
+### Modified Endpoints
+
+- **`subscriptions.addTags()`** -- New method on SubscriptionsEndpoint for adding tags to a subscriber.
+- **`segments.listIds()`** -- New method on SegmentsEndpoint for fetching subscriber IDs (lightweight alternative to `listMembers`).
+
+### New React Hooks (10 total, bringing total to 22)
+
+| Hook | Description |
+|---|---|
+| `useTiers` | Paginated tier list with filtering |
+| `useTier` | Single tier by ID |
+| `useAuthors` | Paginated author list |
+| `useAuthor` | Single author by ID |
+| `useBulkUpdateJob` | Track bulk update job status with polling |
+| `useEngagements` | Engagement metrics by date range |
+| `useAutomations` | Paginated automation list + single automation |
+| `useWebhooks` | Paginated webhook list + single webhook |
+| `useSegments` | Paginated segment list + single segment |
+| `useReferrals` | Referral program data and subscriber stats |
+
+### New Component
+
+- **`TierBadge`** -- Renders a badge showing the tier name and type (free/premium). Supports headless `renderBadge` render prop.
+
+### New TanStack Query Adapters
+
+Query hooks added to `beehiiv-react/query`:
+- Tiers: `useTiersQuery`, `useTierQuery`, `useCreateTierMutation`, `useUpdateTierMutation`
+- Authors: `useAuthorsQuery`, `useAuthorQuery`
+- Bulk: `useBulkSubscribeMutation`, `useBulkUpdateFieldsMutation`, `useBulkUpdateStatusMutation`, `useAddTagsMutation`
+- Engagements: `useEngagementsQuery`
+- Automations: `useAutomationsQuery`, `useAutomationQuery`, `useCreateAutomationJourneyMutation`
+- Webhooks: `useWebhooksQuery`, `useWebhookQuery`, `useCreateWebhookMutation`, `useUpdateWebhookMutation`, `useDeleteWebhookMutation`
+- Segments: `useSegmentsQuery`, `useSegmentQuery`, `useSegmentResultsQuery`, `useCreateSegmentMutation`, `useDeleteSegmentMutation`, `useRecalculateSegmentMutation`
+- Referrals: `useReferralsQuery`
+
+### New Server Fetchers
+
+Added to `beehiiv-react/server`:
+- `fetchTiers(client, options?)` / `fetchTier(client, tierId)`
+- `fetchAuthors(client, options?)` / `fetchAuthor(client, authorId)`
+- `fetchEngagements(client, params)`
+
+### New Key Factories
+
+`beehiivKeys` now includes: `tiers`, `authors`, `bulkSubscriptions`, `bulkSubscriptionUpdates`, `engagements`.
+Existing factories enhanced: `webhooks.detail`, `segments.detail`, `segments.results`, `automations.detail`.
 
 ---
 

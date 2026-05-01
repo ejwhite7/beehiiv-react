@@ -57,3 +57,69 @@ export type {
   UsePublicationsOptions,
   UsePublicationsReturn,
 } from './usePublications.js';
+
+export { useTiers } from './useTiers.js';
+export type {
+  UseTiersOptions,
+  UseTiersReturn,
+} from './useTiers.js';
+
+export { useTier } from './useTier.js';
+export type {
+  UseTierOptions,
+  UseTierReturn,
+} from './useTier.js';
+
+export { useAuthors } from './useAuthors.js';
+export type {
+  UseAuthorsOptions,
+  UseAuthorsReturn,
+} from './useAuthors.js';
+
+export { useAuthor } from './useAuthor.js';
+export type {
+  UseAuthorOptions,
+  UseAuthorReturn,
+} from './useAuthor.js';
+
+export { useBulkUpdateJob } from './useBulkUpdateJob.js';
+export type {
+  UseBulkUpdateJobOptions,
+  UseBulkUpdateJobReturn,
+} from './useBulkUpdateJob.js';
+
+export { useEngagements } from './useEngagements.js';
+export type {
+  UseEngagementsOptions,
+  UseEngagementsReturn,
+} from './useEngagements.js';
+
+export { useAutomations } from './useAutomations.js';
+export type {
+  UseAutomationsOptions,
+  UseAutomationsReturn,
+  UseAutomationOptions,
+  UseAutomationReturn,
+} from './useAutomations.js';
+
+export { useWebhooks } from './useWebhooks.js';
+export type {
+  UseWebhooksOptions,
+  UseWebhooksReturn,
+  UseWebhookOptions,
+  UseWebhookReturn,
+} from './useWebhooks.js';
+
+export { useSegments } from './useSegments.js';
+export type {
+  UseSegmentsOptions,
+  UseSegmentsReturn,
+  UseSegmentOptions,
+  UseSegmentReturn,
+} from './useSegments.js';
+
+export { useReferrals } from './useReferrals.js';
+export type {
+  UseReferralsOptions,
+  UseReferralsReturn,
+} from './useReferrals.js';

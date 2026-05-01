@@ -19,6 +19,11 @@ import { SegmentsEndpoint } from './endpoints/segments.js';
 import { AutomationsEndpoint } from './endpoints/automations.js';
 import { ReferralsEndpoint } from './endpoints/referrals.js';
 import { AutomationJourneysEndpoint } from './endpoints/automation-journeys.js';
+import { EngagementsEndpoint } from './endpoints/engagements.js';
+import { TiersEndpoint } from './endpoints/tiers.js';
+import { AuthorsEndpoint } from './endpoints/authors.js';
+import { BulkSubscriptionsEndpoint } from './endpoints/bulkSubscriptions.js';
+import { BulkSubscriptionUpdatesEndpoint } from './endpoints/bulkSubscriptionUpdates.js';
 
 /**
  * Internal HTTP client interface used by endpoint classes to make API requests.
@@ -145,6 +150,17 @@ export class BeehiivClient {
   public readonly referrals: ReferralsEndpoint;
   /** Automation journey management endpoints */
   public readonly automationJourneys: AutomationJourneysEndpoint;
+  /** Engagement metrics endpoints */
+  public readonly engagements: EngagementsEndpoint;
+
+  /** Tier management endpoints */
+  public readonly tiers: TiersEndpoint;
+  /** Author management endpoints */
+  public readonly authors: AuthorsEndpoint;
+  /** Bulk subscription creation endpoints */
+  public readonly bulkSubscriptions: BulkSubscriptionsEndpoint;
+  /** Bulk subscription update endpoints */
+  public readonly bulkSubscriptionUpdates: BulkSubscriptionUpdatesEndpoint;
 
   /** Resolved configuration with defaults applied */
   private readonly _config: Required<
@@ -187,6 +203,11 @@ export class BeehiivClient {
     this.automations = new AutomationsEndpoint(httpClient, this._config.publicationId);
     this.referrals = new ReferralsEndpoint(httpClient, this._config.publicationId);
     this.automationJourneys = new AutomationJourneysEndpoint(httpClient, this._config.publicationId);
+    this.tiers = new TiersEndpoint(httpClient, this._config.publicationId);
+    this.authors = new AuthorsEndpoint(httpClient, this._config.publicationId);
+    this.bulkSubscriptions = new BulkSubscriptionsEndpoint(httpClient, this._config.publicationId);
+    this.bulkSubscriptionUpdates = new BulkSubscriptionUpdatesEndpoint(httpClient, this._config.publicationId);
+    this.engagements = new EngagementsEndpoint(httpClient, this._config.publicationId);
   }
 
   /**
@@ -288,3 +309,4 @@ export class BeehiivClient {
     };
   }
 }
+

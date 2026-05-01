@@ -50,6 +50,36 @@ export interface AutomationListKeyOptions {
 }
 
 /**
+ * Options used to filter a paginated list of tiers.
+ */
+export interface TierListKeyOptions {
+  /** Filter by tier type (free or premium) */
+  type?: string;
+  /** Filter by active status */
+  active?: boolean;
+  /** Maximum results per page */
+  limit?: number;
+}
+
+/**
+ * Options used to filter a paginated list of authors.
+ */
+export interface AuthorListKeyOptions {
+  /** Maximum results per page */
+  limit?: number;
+}
+
+/**
+ * Options used to filter engagement queries by date range.
+ */
+export interface EngagementListKeyOptions {
+  /** Start date for the engagement data range (ISO 8601 date string) */
+  start_date?: string;
+  /** End date for the engagement data range (ISO 8601 date string) */
+  end_date?: string;
+}
+
+/**
  * Query key factory for all beehiiv API resources.
  *
  * Keys follow the hierarchical `[scope, entity, ...params]` convention
@@ -172,6 +202,15 @@ export const beehiivKeys = {
      */
     list: () =>
       ['beehiiv', 'webhooks', 'list'] as const,
+
+    /**
+     * Key for a single webhook by ID.
+     *
+     * @param id - The webhook endpoint identifier
+     * @returns A readonly query key tuple
+     */
+    detail: (id: string) =>
+      ['beehiiv', 'webhooks', 'detail', id] as const,
   },
 
   /**
@@ -188,6 +227,24 @@ export const beehiivKeys = {
      */
     list: () =>
       ['beehiiv', 'segments', 'list'] as const,
+
+    /**
+     * Key for a single segment by ID.
+     *
+     * @param id - The segment identifier (starts with "seg_")
+     * @returns A readonly query key tuple
+     */
+    detail: (id: string) =>
+      ['beehiiv', 'segments', 'detail', id] as const,
+
+    /**
+     * Key for a segment's subscriber ID results.
+     *
+     * @param segmentId - The segment identifier (starts with "seg_")
+     * @returns A readonly query key tuple
+     */
+    results: (segmentId: string) =>
+      ['beehiiv', 'segments', 'results', segmentId] as const,
   },
 
   /**
@@ -205,6 +262,15 @@ export const beehiivKeys = {
      */
     list: (options?: AutomationListKeyOptions) =>
       ['beehiiv', 'automations', 'list', options ?? {}] as const,
+
+    /**
+     * Key for a single automation by ID.
+     *
+     * @param id - The automation identifier (starts with "aut_")
+     * @returns A readonly query key tuple
+     */
+    detail: (id: string) =>
+      ['beehiiv', 'automations', 'detail', id] as const,
   },
 
   /**
@@ -227,5 +293,116 @@ export const beehiivKeys = {
      */
     subscriberStats: (subscriberId: string) =>
       ['beehiiv', 'referrals', 'subscriberStats', subscriberId] as const,
+  },
+
+  /**
+   * Keys for tier-related queries.
+   */
+  tiers: {
+    /** Root key that matches every tier query. */
+    all: ['beehiiv', 'tiers'] as const,
+
+    /**
+     * Key for a filtered/paginated tier list.
+     *
+     * @param options - Optional filter parameters
+     * @returns A readonly query key tuple
+     */
+    list: (options?: TierListKeyOptions) =>
+      ['beehiiv', 'tiers', 'list', options ?? {}] as const,
+
+    /**
+     * Key for a single tier by ID.
+     *
+     * @param id - The tier identifier (starts with "tier_")
+     * @returns A readonly query key tuple
+     */
+    detail: (id: string) =>
+      ['beehiiv', 'tiers', 'detail', id] as const,
+  },
+
+  /**
+   * Keys for author-related queries.
+   */
+  authors: {
+    /** Root key that matches every author query. */
+    all: ['beehiiv', 'authors'] as const,
+
+    /**
+     * Key for a filtered/paginated author list.
+     *
+     * @param options - Optional filter parameters
+     * @returns A readonly query key tuple
+     */
+    list: (options?: AuthorListKeyOptions) =>
+      ['beehiiv', 'authors', 'list', options ?? {}] as const,
+
+    /**
+     * Key for a single author by ID.
+     *
+     * @param id - The author identifier (starts with "author_")
+     * @returns A readonly query key tuple
+     */
+    detail: (id: string) =>
+      ['beehiiv', 'authors', 'detail', id] as const,
+  },
+
+  /**
+   * Keys for bulk subscription creation queries.
+   */
+  bulkSubscriptions: {
+    /** Root key that matches every bulk subscription query. */
+    all: ['beehiiv', 'bulkSubscriptions'] as const,
+
+    /**
+     * Key for a specific bulk subscription job by ID.
+     *
+     * @param jobId - The bulk subscription job identifier
+     * @returns A readonly query key tuple
+     */
+    detail: (jobId: string) =>
+      ['beehiiv', 'bulkSubscriptions', 'detail', jobId] as const,
+  },
+
+  /**
+   * Keys for bulk subscription update job queries.
+   */
+  bulkSubscriptionUpdates: {
+    /** Root key that matches every bulk subscription update query. */
+    all: ['beehiiv', 'bulkSubscriptionUpdates'] as const,
+
+    /**
+     * Key for the list of bulk update jobs.
+     *
+     * @returns A readonly query key tuple
+     */
+    list: () =>
+      ['beehiiv', 'bulkSubscriptionUpdates', 'list'] as const,
+
+    /**
+     * Key for a specific bulk update job by ID.
+     *
+     * @param jobId - The bulk update job identifier
+     * @returns A readonly query key tuple
+     */
+    detail: (jobId: string) =>
+      ['beehiiv', 'bulkSubscriptionUpdates', 'detail', jobId] as const,
+  },
+
+  /**
+   * Keys for engagement queries.
+   */
+  engagements: {
+    /** Root key that matches every engagement query. */
+    all: ['beehiiv', 'engagements'] as const,
+
+    /**
+     * Key for engagement metrics filtered by date range.
+     *
+     * @param options - Optional date range filter parameters
+     * @returns A readonly query key tuple
+     */
+    list: (options?: EngagementListKeyOptions) =>
+      ['beehiiv', 'engagements', 'list', options ?? {}] as const,
   },
 } as const;

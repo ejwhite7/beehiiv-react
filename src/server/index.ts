@@ -54,3 +54,25 @@ export {
   fetchWebhooks,
   fetchSegments,
 } from './fetchers.js';
+
+// --- New Endpoint Classes ---
+export { TiersEndpoint } from '../client/endpoints/tiers.js';
+export { AuthorsEndpoint } from '../client/endpoints/authors.js';
+export { BulkSubscriptionsEndpoint } from '../client/endpoints/bulkSubscriptions.js';
+export { BulkSubscriptionUpdatesEndpoint } from '../client/endpoints/bulkSubscriptionUpdates.js';
+export { EngagementsEndpoint } from '../client/endpoints/engagements.js';
+
+// --- New Data Fetchers ---
+export {
+  fetchTiers,
+  fetchTier,
+} from './tiers.js';
+
+export {
+  fetchAuthors,
+  fetchAuthor,
+} from './authors.js';
+
+export {
+  fetchEngagements,
+} from './engagements.js';

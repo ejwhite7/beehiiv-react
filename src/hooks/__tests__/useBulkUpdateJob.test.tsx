@@ -28,7 +28,7 @@ function createWrapper(apiUrl = '/api/beehiiv') {
 
 describe('useBulkUpdateJob', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.stubGlobal('fetch', vi.fn() as ReturnType<typeof vi.fn>);
   });
 
@@ -71,7 +71,8 @@ describe('useBulkUpdateJob', () => {
     // Verify the correct URL was called
     const calledUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
       .calls[0][0] as string;
-    expect(calledUrl).toContain('/publications/pub_test/bulk_subscription_updates/job_001');
+    expect(calledUrl).toContain('/bulk_subscription_updates/job_001');
+    expect(calledUrl).toContain('publicationId=pub_test');
   });
 
   it('stops polling when the job reaches a terminal status', async () => {

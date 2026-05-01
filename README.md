@@ -111,6 +111,9 @@ npx beehiiv-react sync
 
 This re-fetches the custom field definitions from the beehiiv API and updates `types/beehiiv.generated.ts` with the latest fields and types.
 
+> **Upgrading to v0.5.0?** Run `npx beehiiv-react sync` to scaffold routes for the new resources (authors, tiers, engagements, bulk-subscriptions).
+
+
 ### OAuth2 Support
 
 For OAuth2 PKCE-based authentication (instead of API keys):
@@ -1014,3 +1017,4 @@ Please follow the existing code style and include tests for any new functionalit
 ## License
 
 Released under the [MIT License](LICENSE).
+

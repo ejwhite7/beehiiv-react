@@ -72,13 +72,30 @@ export async function DELETE(
 `;
 
 /**
+ * Template-based route definitions for resources generated from .hbs files.
+ * Each entry maps a template file name to its output directory path segment(s).
+ */
+const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
+  { template: 'posts-route.ts.hbs', outputPath: ['posts'] },
+  { template: 'authors-route.ts.hbs', outputPath: ['authors'] },
+  { template: 'tiers-route.ts.hbs', outputPath: ['tiers'] },
+  { template: 'engagements-route.ts.hbs', outputPath: ['engagements'] },
+  { template: 'bulk-subscriptions-route.ts.hbs', outputPath: ['bulk-subscriptions'] },
+];
+
+/**
  * Generate the Next.js API route files from Handlebars templates.
  *
- * Creates two route files:
+ * Creates route files for:
  * 1. `{outputDir}/app/api/beehiiv/subscribe/route.ts` - POST endpoint for
  *    creating new subscriptions (from the `api-route.ts.hbs` template)
  * 2. `{outputDir}/app/api/beehiiv/subscription/[id]/route.ts` - GET and DELETE
  *    endpoints for subscription lookup and unsubscribe (from inline template)
+ * 3. `{outputDir}/app/api/beehiiv/posts/route.ts` - Posts list + detail
+ * 4. `{outputDir}/app/api/beehiiv/authors/route.ts` - Authors list + detail
+ * 5. `{outputDir}/app/api/beehiiv/tiers/route.ts` - Tiers list + detail
+ * 6. `{outputDir}/app/api/beehiiv/engagements/route.ts` - Engagement metrics
+ * 7. `{outputDir}/app/api/beehiiv/bulk-subscriptions/route.ts` - Bulk subscription creation
  *
  * All necessary directories are created automatically.
  *
@@ -138,31 +155,34 @@ export async function generateApiRoutes(
   fs.mkdirSync(path.dirname(subscriptionIdPath), { recursive: true });
   fs.writeFileSync(subscriptionIdPath, SUBSCRIPTION_ID_ROUTE_TEMPLATE, 'utf-8');
   console.log(chalk.green(`  Created ${subscriptionIdPath}`));
-  // Generate the posts route from template
-  const postsTemplatePath = path.resolve(
-    __dirname,
-    '..',
-    '..',
-    'templates',
-    'posts-route.ts.hbs',
-  );
 
-  const postsTemplateSource = fs.readFileSync(postsTemplatePath, 'utf-8');
-  const postsTemplate = Handlebars.compile(postsTemplateSource);
-  const postsOutput = postsTemplate({
-    publicationId: data.publicationId,
-  });
+  // Generate all template-based resource routes
+  for (const route of TEMPLATE_ROUTES) {
+    const routeTemplatePath = path.resolve(
+      __dirname,
+      '..',
+      '..',
+      'templates',
+      route.template,
+    );
 
-  const postsPath = path.join(
-    data.outputDir,
-    'app',
-    'api',
-    'beehiiv',
-    'posts',
-    'route.ts',
-  );
-  fs.mkdirSync(path.dirname(postsPath), { recursive: true });
-  fs.writeFileSync(postsPath, postsOutput, 'utf-8');
-  console.log(chalk.green(`  Created ${postsPath}`));
+    const routeTemplateSource = fs.readFileSync(routeTemplatePath, 'utf-8');
+    const routeTemplate = Handlebars.compile(routeTemplateSource);
+    const routeOutput = routeTemplate({
+      publicationId: data.publicationId,
+    });
+
+    const routePath = path.join(
+      data.outputDir,
+      'app',
+      'api',
+      'beehiiv',
+      ...route.outputPath,
+      'route.ts',
+    );
+    fs.mkdirSync(path.dirname(routePath), { recursive: true });
+    fs.writeFileSync(routePath, routeOutput, 'utf-8');
+    console.log(chalk.green(`  Created ${routePath}`));
+  }
 
 }

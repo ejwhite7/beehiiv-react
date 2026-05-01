@@ -4,17 +4,36 @@
  * Located at: app/api/beehiiv/posts/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react/server';
+import { BeehiivClient, fetchPostBySlug } from 'beehiiv-react/server';
 
 const client = new BeehiivClient({
   apiKey: process.env.BEEHIIV_API_KEY!,
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
 });
 
-/** GET /api/beehiiv/posts — List posts with page-based pagination */
+/**
+ * GET /api/beehiiv/posts
+ *
+ *  - Without `slug`: list posts with page-based pagination.
+ *  - With `?slug=my-post`: resolve a single post by slug. Returns
+ *    `{ data: PostInfo | null }` so the client can distinguish 200-with-null
+ *    from a server error.
+ */
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
+
+    // --- Slug lookup branch ---
+    const slug = searchParams.get('slug');
+    if (slug) {
+      const post = await fetchPostBySlug(
+        client,
+        process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
+        slug,
+      );
+      return NextResponse.json({ data: post }, { status: 200 });
+    }
+
     const page = searchParams.get('page');
     const limit = searchParams.get('limit');
     const status = searchParams.get('status') as

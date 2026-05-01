@@ -9,6 +9,7 @@
 import { Command } from 'commander';
 import { runInit } from './commands/init.js';
 import { runSync } from './commands/sync.js';
+import { runAddBlog } from './commands/add-blog.js';
 
 /**
  * The package version string, injected at build time by tsup's `define`
@@ -48,12 +49,87 @@ export function createProgram(): Command {
       'Output directory for generated files',
       '.',
     )
+    .option(
+      '--blog',
+      'Also scaffold blog reader pages (index, [slug], RSS, sitemap). Off by default.',
+    )
+    .option(
+      '--blog-route <prefix>',
+      'Route prefix for the blog (no leading slash). Implies --blog.',
+    )
+    .option('--blog-title <title>', 'Blog title. Implies --blog.')
+    .option(
+      '--blog-description <description>',
+      'Blog description. Implies --blog.',
+    )
     .action(
-      async (options: { oauth?: boolean; outputDir?: string }) => {
+      async (options: {
+        oauth?: boolean;
+        outputDir?: string;
+        blog?: boolean;
+        blogRoute?: string;
+        blogTitle?: string;
+        blogDescription?: string;
+      }) => {
         try {
+          // Any --blog-* flag implies --blog, so users don't have to repeat it.
+          const blog =
+            options.blog === true ||
+            options.blogRoute !== undefined ||
+            options.blogTitle !== undefined ||
+            options.blogDescription !== undefined;
           await runInit({
             oauth: options.oauth,
             outputDir: options.outputDir,
+            blog,
+            blogRoute: options.blogRoute,
+            blogTitle: options.blogTitle,
+            blogDescription: options.blogDescription,
+          });
+        } catch (error: unknown) {
+          await handleError(error);
+        }
+      },
+    );
+
+  // `add` command group — lets users opt in to features after init.
+  const add = program
+    .command('add')
+    .description('Add an optional feature to an already-initialised project');
+
+  add
+    .command('blog')
+    .description(
+      'Scaffold blog reader pages (index, [slug], RSS, sitemap) into app/<route>/',
+    )
+    .option(
+      '--output-dir <dir>',
+      'Output directory where generated files live',
+      '.',
+    )
+    .option(
+      '--route <prefix>',
+      'Route prefix for the blog (no leading slash)',
+      'blog',
+    )
+    .option('--title <title>', 'Blog title')
+    .option('--description <description>', 'Blog description')
+    .option('-y, --yes', 'Skip prompts and use defaults / flags')
+    .action(
+      async (options: {
+        outputDir?: string;
+        route?: string;
+        title?: string;
+        description?: string;
+        yes?: boolean;
+      }) => {
+        try {
+          await runAddBlog({
+            outputDir: options.outputDir,
+            route: options.route,
+            title: options.title,
+            description: options.description,
+            yes: options.yes,
           });
         } catch (error: unknown) {
           await handleError(error);

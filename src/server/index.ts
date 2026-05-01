@@ -47,6 +47,8 @@ export { createBeehiivClient } from './client.js';
 export {
   fetchPosts,
   fetchPost,
+  fetchPostBySlug,
+  fetchAllPostSlugs,
   fetchSubscribers,
   fetchSubscription,
   fetchPublications,
@@ -54,6 +56,10 @@ export {
   fetchWebhooks,
   fetchSegments,
 } from './fetchers.js';
+
+// --- Metadata helpers ---
+export { generatePostMetadata } from './metadata.js';
+export type { PostMetadata } from './metadata.js';
 
 // --- New Endpoint Classes ---
 export { TiersEndpoint } from '../client/endpoints/tiers.js';

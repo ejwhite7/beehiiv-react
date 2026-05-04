@@ -12,7 +12,7 @@ import type { PublicationInfo } from '../../types/publication.js';
 import type { CustomFieldInfo } from '../../types/custom-field.js';
 import { promptForApiKey } from '../auth/api-key.js';
 import { runOAuthFlow } from '../auth/oauth.js';
-import { selectPublication, selectFeatures } from '../prompts/index.js';
+import { selectPublication, selectFeatures, promptForBlogConfig } from '../prompts/index.js';
 import { generateConfig } from '../generators/config.js';
 import { generateCustomFieldTypes } from '../generators/custom-fields.js';
 import { generateApiRoutes } from '../generators/api-routes.js';
@@ -20,6 +20,7 @@ import { generateServerActions } from '../generators/server-actions.js';
 import { generateSubscriberStatusHook } from '../generators/hooks.js';
 import { generateAnalytics } from '../generators/analytics.js';
 import { generateSubscribeComponents } from '../generators/subscribe-components.js';
+import { generateBlogPages } from '../generators/blog-pages.js';
 
 /** Options for the init command */
 export interface InitOptions {
@@ -27,6 +28,18 @@ export interface InitOptions {
   oauth?: boolean;
   /** Output directory for generated files (default: current directory) */
   outputDir?: string;
+  /**
+   * Opt-in: also scaffold blog reader pages (index, [slug], RSS, sitemap)
+   * under the configured route prefix. When omitted, no blog files are
+   * generated and the user is never prompted about them.
+   */
+  blog?: boolean;
+  /** Route prefix for the blog (no leading slash). Defaults to `"blog"`. */
+  blogRoute?: string;
+  /** Title for the blog. Defaults to the publication name. */
+  blogTitle?: string;
+  /** Description for the blog. */
+  blogDescription?: string;
 }
 
 /** Environment variable name for the OAuth client ID */
@@ -292,6 +305,45 @@ export async function runInit(options: InitOptions): Promise<void> {
     await generateServerActions({ outputDir });
     generatedFiles.push(
       path.join(outputDir, 'lib', 'beehiiv', 'actions.ts'),
+    );
+  }
+
+  // --- Optional: blog reader pages ---
+  // Only scaffolded when the caller explicitly opts in via `--blog`.
+  // No prompt is shown otherwise — keeps `init` non-invasive for users
+  // who want to host beehiiv content on a custom route or not at all.
+  if (options.blog) {
+    console.log('');
+    // If non-interactive flags were provided, skip the prompt entirely.
+    const fullyConfigured =
+      options.blogRoute !== undefined &&
+      options.blogTitle !== undefined &&
+      options.blogDescription !== undefined;
+    const blogConfig = fullyConfigured
+      ? {
+          routePrefix: options.blogRoute as string,
+          blogTitle: options.blogTitle as string,
+          blogDescription: options.blogDescription as string,
+        }
+      : await promptForBlogConfig({
+          routePrefix: options.blogRoute,
+          blogTitle: options.blogTitle ?? publication.name,
+          blogDescription:
+            options.blogDescription ??
+            `Latest posts from ${publication.name}.`,
+        });
+    await generateBlogPages({
+      outputDir,
+      publicationId: publication.id,
+      routePrefix: blogConfig.routePrefix,
+      blogTitle: blogConfig.blogTitle,
+      blogDescription: blogConfig.blogDescription,
+    });
+    generatedFiles.push(
+      path.join(outputDir, 'app', blogConfig.routePrefix, 'page.tsx'),
+      path.join(outputDir, 'app', blogConfig.routePrefix, '[slug]', 'page.tsx'),
+      path.join(outputDir, 'app', blogConfig.routePrefix, 'rss.xml', 'route.ts'),
+      path.join(outputDir, 'app', blogConfig.routePrefix, 'sitemap.ts'),
     );
   }
 

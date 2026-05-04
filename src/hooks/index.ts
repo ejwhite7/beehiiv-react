@@ -38,6 +38,12 @@ export type {
   UsePostReturn,
 } from './usePost.js';
 
+export { usePostBySlug } from './usePostBySlug.js';
+export type {
+  UsePostBySlugOptions,
+  UsePostBySlugReturn,
+} from './usePostBySlug.js';
+
 export { useSubscriberAccess } from './useSubscriberAccess.js';
 
 export { usePostAccess } from './usePostAccess.js';

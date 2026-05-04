@@ -17,6 +17,16 @@ export interface FeatureSelection {
   serverActions: boolean;
 }
 
+/** Configuration captured for the optional blog feature */
+export interface BlogConfig {
+  /** Route prefix without leading slash (e.g. "blog", "newsletter") */
+  routePrefix: string;
+  /** Title shown on the index page and in metadata */
+  blogTitle: string;
+  /** Description shown on the index page and in metadata */
+  blogDescription: string;
+}
+
 /**
  * Prompt the user to select a publication from a list.
  *
@@ -113,6 +123,47 @@ export async function selectFeatures(): Promise<FeatureSelection> {
     apiRoutes: features.includes('apiRoutes'),
     serverActions: features.includes('serverActions'),
   };
+}
+
+/**
+ * Prompt for the blog reader configuration (route prefix, title, description).
+ *
+ * @param defaults - Defaults to pre-fill (e.g. publication name)
+ */
+export async function promptForBlogConfig(defaults: {
+  routePrefix?: string;
+  blogTitle: string;
+  blogDescription?: string;
+}): Promise<BlogConfig> {
+  const { default: inquirer } = await import('inquirer');
+
+  const answers = await inquirer.prompt<BlogConfig>([
+    {
+      type: 'input',
+      name: 'routePrefix',
+      message: 'Route prefix for the blog (no leading slash):',
+      default: defaults.routePrefix ?? 'blog',
+      validate: (v: string) =>
+        /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(v.trim())
+          ? true
+          : 'Use lowercase letters, numbers, dashes (and optional /-separated segments).',
+      filter: (v: string) => v.trim().replace(/^\/+|\/+$/g, ''),
+    },
+    {
+      type: 'input',
+      name: 'blogTitle',
+      message: 'Blog title:',
+      default: defaults.blogTitle,
+    },
+    {
+      type: 'input',
+      name: 'blogDescription',
+      message: 'Blog description:',
+      default: defaults.blogDescription ?? '',
+    },
+  ]);
+
+  return answers;
 }
 
 /**

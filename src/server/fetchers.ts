@@ -76,6 +76,107 @@ export async function fetchPost(
 }
 
 /**
+ * Fetch a single post by its URL slug.
+ *
+ * The beehiiv v2 API does not expose a slug-based lookup endpoint, so this
+ * helper paginates through the publication's posts (filtered to `confirmed`
+ * status by default) and returns the first match. Once the post is found
+ * its full content is loaded via {@link fetchPost} so callers receive an
+ * expanded `content` field ready for `<PostContentRenderer>`.
+ *
+ * For sites with many posts this is an O(N/limit) operation. Cache the
+ * result aggressively (e.g. `unstable_cache` or ISR `revalidate`) — slugs
+ * are stable, so a long TTL is safe.
+ *
+ * @param client - An initialised {@link BeehiivClient}
+ * @param publicationId - The publication ID (starts with `"pub_"`)
+ * @param slug - The post slug as it appears in `PostInfo.slug`
+ * @param options - Optional pagination tuning and status filter
+ * @returns The matching {@link PostInfo} with expanded content, or `null` if none matches
+ *
+ * @example
+ * ```ts
+ * const post = await fetchPostBySlug(client, 'pub_abc', 'my-first-issue');
+ * if (!post) notFound();
+ * ```
+ */
+export async function fetchPostBySlug(
+  client: BeehiivClient,
+  publicationId: string,
+  slug: string,
+  options?: {
+    /** Page size used while scanning. @defaultValue 100 */
+    pageSize?: number;
+    /** Hard cap on pages scanned to avoid runaway requests. @defaultValue 20 */
+    maxPages?: number;
+    /** Status filter applied while scanning. @defaultValue 'confirmed' */
+    status?: ListPostsOptions['status'];
+  },
+): Promise<PostInfo | null> {
+  const pageSize = options?.pageSize ?? 100;
+  const maxPages = options?.maxPages ?? 20;
+  const status = options?.status ?? 'confirmed';
+
+  for (let page = 1; page <= maxPages; page++) {
+    const response = await client.posts.list(publicationId, {
+      page,
+      limit: pageSize,
+      status,
+      orderBy: 'publish_date',
+      direction: 'desc',
+    });
+    const items = response.data ?? [];
+    const match = items.find((p) => p.slug === slug);
+    if (match) {
+      return fetchPost(client, publicationId, match.id);
+    }
+    if (items.length < pageSize) break;
+    const totalPages = response.pagination?.total_pages;
+    if (totalPages != null && page >= totalPages) break;
+  }
+  return null;
+}
+
+/**
+ * Fetch every post slug for a publication.
+ *
+ * Designed for `generateStaticParams` in `app/blog/[slug]/page.tsx`.
+ * Paginates through all confirmed posts and returns their slugs.
+ *
+ * @param client - An initialised {@link BeehiivClient}
+ * @param publicationId - The publication ID
+ * @param options - Optional pagination tuning
+ * @returns Array of `{ slug }` objects ready to return from `generateStaticParams`
+ */
+export async function fetchAllPostSlugs(
+  client: BeehiivClient,
+  publicationId: string,
+  options?: { pageSize?: number; maxPages?: number },
+): Promise<{ slug: string }[]> {
+  const pageSize = options?.pageSize ?? 100;
+  const maxPages = options?.maxPages ?? 50;
+  const slugs: { slug: string }[] = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const response = await client.posts.list(publicationId, {
+      page,
+      limit: pageSize,
+      status: 'confirmed',
+      orderBy: 'publish_date',
+      direction: 'desc',
+    });
+    const items = response.data ?? [];
+    for (const p of items) {
+      if (p.slug) slugs.push({ slug: p.slug });
+    }
+    if (items.length < pageSize) break;
+    const totalPages = response.pagination?.total_pages;
+    if (totalPages != null && page >= totalPages) break;
+  }
+  return slugs;
+}
+
+/**
  * Fetch a paginated list of subscribers for a publication.
  *
  * Calls {@link BeehiivClient.subscriptions.list} and returns the unwrapped

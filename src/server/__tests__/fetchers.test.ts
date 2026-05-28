@@ -15,6 +15,9 @@ import type { BeehiivClient } from '../../client/index.js';
 import {
   fetchPosts,
   fetchPost,
+  fetchPostBySlug,
+  fetchAllPostSlugs,
+  fetchAllPosts,
   fetchSubscribers,
   fetchSubscription,
   fetchPublications,
@@ -22,6 +25,22 @@ import {
   fetchWebhooks,
   fetchSegments,
 } from '../fetchers.js';
+
+/** Build a mocked posts.list page response. */
+function postsPage(
+  data: Array<Record<string, unknown>>,
+  pagination: { page: number; total_pages: number },
+) {
+  return {
+    data,
+    pagination: {
+      page: pagination.page,
+      limit: 100,
+      total_results: data.length,
+      total_pages: pagination.total_pages,
+    },
+  } as never;
+}
 
 /**
  * Create a mock BeehiivClient with all endpoint namespaces stubbed.
@@ -123,6 +142,135 @@ describe('server fetchers', () => {
       expect(client.posts.get).toHaveBeenCalledWith('pub_abc', 'post_123', { expand: ['free_web_content', 'tags'] });
       expect(result).toEqual(post);
     });
+
+    it('should return null (not an empty array) when the response has no data', async () => {
+      vi.mocked(client.posts.get).mockResolvedValue({} as never);
+
+      const result = await fetchPost(client, 'pub_abc', 'post_missing');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  // ---------- fetchPostBySlug ----------
+
+  describe('fetchPostBySlug', () => {
+    it('finds a slug on a later page and loads its expanded content', async () => {
+      vi.mocked(client.posts.list)
+        .mockResolvedValueOnce(
+          postsPage(
+            Array.from({ length: 100 }, (_, i) => ({
+              id: `post_${i}`,
+              slug: `slug-${i}`,
+            })),
+            { page: 1, total_pages: 2 },
+          ),
+        )
+        .mockResolvedValueOnce(
+          postsPage([{ id: 'post_target', slug: 'wanted' }], {
+            page: 2,
+            total_pages: 2,
+          }),
+        );
+      const expanded = { id: 'post_target', slug: 'wanted', title: 'Found' };
+      vi.mocked(client.posts.get).mockResolvedValue({ data: expanded } as never);
+
+      const result = await fetchPostBySlug(client, 'pub_abc', 'wanted');
+
+      expect(client.posts.list).toHaveBeenCalledTimes(2);
+      expect(client.posts.get).toHaveBeenCalledWith('pub_abc', 'post_target', {
+        expand: ['free_web_content', 'tags'],
+      });
+      expect(result).toEqual(expanded);
+    });
+
+    it('returns null and stops scanning on a short (final) page when no match', async () => {
+      vi.mocked(client.posts.list).mockResolvedValueOnce(
+        postsPage([{ id: 'post_1', slug: 'other' }], { page: 1, total_pages: 1 }),
+      );
+
+      const result = await fetchPostBySlug(client, 'pub_abc', 'nope');
+
+      expect(result).toBeNull();
+      expect(client.posts.list).toHaveBeenCalledTimes(1);
+      expect(client.posts.get).not.toHaveBeenCalled();
+    });
+
+    it('stops early as soon as a match is found', async () => {
+      vi.mocked(client.posts.list).mockResolvedValue(
+        postsPage(
+          Array.from({ length: 100 }, (_, i) => ({
+            id: `post_${i}`,
+            slug: `slug-${i}`,
+          })),
+          { page: 1, total_pages: 5 },
+        ),
+      );
+      vi.mocked(client.posts.get).mockResolvedValue({
+        data: { id: 'post_3', slug: 'slug-3' },
+      } as never);
+
+      await fetchPostBySlug(client, 'pub_abc', 'slug-3');
+
+      // Match is on page 1 — must not request further pages.
+      expect(client.posts.list).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ---------- fetchAllPostSlugs / fetchAllPosts ----------
+
+  describe('fetchAllPostSlugs', () => {
+    it('paginates through all pages and collects slugs (skipping blanks)', async () => {
+      vi.mocked(client.posts.list)
+        .mockResolvedValueOnce(
+          postsPage(
+            Array.from({ length: 100 }, (_, i) => ({
+              id: `post_${i}`,
+              slug: `slug-${i}`,
+            })),
+            { page: 1, total_pages: 2 },
+          ),
+        )
+        .mockResolvedValueOnce(
+          postsPage(
+            [
+              { id: 'post_a', slug: 'a' },
+              { id: 'post_b' }, // no slug — skipped
+            ],
+            { page: 2, total_pages: 2 },
+          ),
+        );
+
+      const result = await fetchAllPostSlugs(client, 'pub_abc');
+
+      expect(client.posts.list).toHaveBeenCalledTimes(2);
+      expect(result).toHaveLength(101);
+      expect(result).toContainEqual({ slug: 'a' });
+      expect(result).not.toContainEqual({ slug: undefined });
+    });
+  });
+
+  describe('fetchAllPosts', () => {
+    it('returns every confirmed post across pages', async () => {
+      vi.mocked(client.posts.list)
+        .mockResolvedValueOnce(
+          postsPage(
+            Array.from({ length: 100 }, (_, i) => ({ id: `post_${i}` })),
+            { page: 1, total_pages: 2 },
+          ),
+        )
+        .mockResolvedValueOnce(
+          postsPage([{ id: 'post_last' }], { page: 2, total_pages: 2 }),
+        );
+
+      const result = await fetchAllPosts(client, 'pub_abc');
+
+      expect(result).toHaveLength(101);
+      expect(client.posts.list).toHaveBeenCalledWith(
+        'pub_abc',
+        expect.objectContaining({ status: 'confirmed', limit: 100 }),
+      );
+    });
   });
 
   // ---------- fetchSubscribers ----------
@@ -192,6 +340,14 @@ describe('server fetchers', () => {
       );
       expect(client.subscriptions.getByEmail).not.toHaveBeenCalled();
       expect(result).toEqual(sub);
+    });
+
+    it('returns null (not an empty array) when no subscriber is returned', async () => {
+      vi.mocked(client.subscriptions.getById).mockResolvedValue({} as never);
+
+      const result = await fetchSubscription(client, 'pub_abc', 'sub_missing');
+
+      expect(result).toBeNull();
     });
   });
 

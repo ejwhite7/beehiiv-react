@@ -28,6 +28,17 @@ export interface BlogConfig {
 }
 
 /**
+ * Valid blog route prefix: one or more `/`-separated segments of lowercase
+ * letters, digits, and dashes. No leading/trailing slashes.
+ */
+export const ROUTE_PREFIX_PATTERN = /^[a-z0-9-]+(\/[a-z0-9-]+)*$/;
+
+/** Trim whitespace and strip any leading/trailing slashes from a route prefix. */
+export function normalizeRoutePrefix(value: string): string {
+  return value.trim().replace(/^\/+|\/+$/g, '');
+}
+
+/**
  * Prompt the user to select a publication from a list.
  *
  * Displays an interactive list prompt showing each publication's name
@@ -144,10 +155,10 @@ export async function promptForBlogConfig(defaults: {
       message: 'Route prefix for the blog (no leading slash):',
       default: defaults.routePrefix ?? 'blog',
       validate: (v: string) =>
-        /^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(v.trim())
+        ROUTE_PREFIX_PATTERN.test(normalizeRoutePrefix(v))
           ? true
           : 'Use lowercase letters, numbers, dashes (and optional /-separated segments).',
-      filter: (v: string) => v.trim().replace(/^\/+|\/+$/g, ''),
+      filter: (v: string) => normalizeRoutePrefix(v),
     },
     {
       type: 'input',
@@ -164,6 +175,62 @@ export async function promptForBlogConfig(defaults: {
   ]);
 
   return answers;
+}
+
+/** Inputs to {@link resolveBlogConfig}. */
+export interface ResolveBlogConfigInput {
+  /** Route prefix from a CLI flag, if supplied. */
+  route?: string;
+  /** Blog title from a CLI flag, if supplied. */
+  title?: string;
+  /** Blog description from a CLI flag, if supplied. */
+  description?: string;
+  /** Publication name used as the default blog title / description subject. */
+  publicationName: string;
+  /**
+   * Skip prompts even when not every field is supplied, filling defaults for
+   * anything missing. (The `--yes` escape hatch.)
+   */
+  yes?: boolean;
+}
+
+/**
+ * Resolve the blog configuration for both `init --blog` and `add blog`.
+ *
+ * When every field is supplied via flags (or `yes` is set), the route prefix
+ * is normalized and validated and the config is returned without prompting —
+ * the same normalization/validation the interactive prompt applies, so the
+ * two entry points can never diverge. Otherwise the interactive prompt runs.
+ *
+ * @throws {Error} If a non-interactive route prefix fails validation.
+ */
+export async function resolveBlogConfig(
+  input: ResolveBlogConfigInput,
+): Promise<BlogConfig> {
+  const blogTitle = input.title ?? input.publicationName;
+  const blogDescription =
+    input.description ?? `Latest posts from ${input.publicationName}.`;
+
+  const fullyConfigured =
+    input.route !== undefined &&
+    input.title !== undefined &&
+    input.description !== undefined;
+
+  if (fullyConfigured || input.yes) {
+    const routePrefix = normalizeRoutePrefix(input.route ?? 'blog');
+    if (!ROUTE_PREFIX_PATTERN.test(routePrefix)) {
+      throw new Error(
+        `Invalid blog route "${input.route}". Use lowercase letters, numbers, dashes (and optional /-separated segments).`,
+      );
+    }
+    return { routePrefix, blogTitle, blogDescription };
+  }
+
+  return promptForBlogConfig({
+    routePrefix: input.route,
+    blogTitle,
+    blogDescription,
+  });
 }
 
 /**

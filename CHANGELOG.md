@@ -2,6 +2,25 @@
 
 All notable changes to `beehiiv-react` are documented in this file.
 
+## [0.6.1] - 2026-05-28
+
+### Fixed
+- **Generated blog post page now compiles and gates correctly** -- The `blog-post-page` template passed `post`/`subscription` props that do not exist on `GatedContent` (and omitted its required `audience`), so a scaffolded blog failed `next build`. The template now resolves access **server-side**: only `premium` posts are gated, `free`/`both` posts render for everyone, and the server-resolved viewer subscription is actually consumed. No client component or `BeehiivProvider` is required on the post page.
+- **`fetchPost` and `fetchSubscription` return `null` instead of `[]` when the API response has no `data`** -- The single-object server fetchers previously fell back to an empty array under a non-array return type, which defeated `if (!post) notFound()` guards (a truthy `[]`) and rendered a broken page instead of a 404. They now return `PostInfo | null` / `SubscriptionInfo | null`.
+- **Slug lookup no longer 404s posts in large publications** -- `fetchPostBySlug` and `fetchAllPostSlugs` shared no pagination code and had divergent page caps (`maxPages` 20 vs 50), so `generateStaticParams` could enumerate slugs the post page could not resolve. Both (plus the new `fetchAllPosts`) are now backed by a single `scanPosts` paginator with one consistent cap.
+- **Generated sitemap is no longer silently truncated** -- The sitemap fetched `limit: 1000`, which the beehiiv API caps at 100, so publications with more than 100 posts produced an incomplete sitemap. It now paginates through every confirmed post via `fetchAllPosts`.
+- **`usePostBySlug` `publicationId` override is honored** -- The generated posts route now reads `publicationId` from the query string for slug lookups, so the hook's per-call publication override is no longer ignored.
+- **`init --blog` route prefix is normalized and validated** -- The non-interactive flag path took the route prefix verbatim (e.g. `/Blog/` produced `app//Blog//page.tsx`). Both `init --blog` and `add blog` now share `resolveBlogConfig`, applying the same normalization/validation as the interactive prompt.
+
+### Added
+- **`fetchAllPosts(client, publicationId, options?)`** -- Paginating server fetcher (exported from `beehiiv-react/server`) that returns every confirmed post; used by the generated sitemap.
+
+### Performance
+- **Per-request slug-fetch deduplication** -- The blog post page memoizes the slug lookup with React `cache()` so `generateMetadata` and the page body share one fetch. The generated posts route wraps slug lookups in `unstable_cache` (positive and negative results), preventing repeated or missed slugs from rescanning the posts list on every request.
+
+### Internal
+- Extracted `src/cli/config.ts` (`readBeehiivConfig`) shared by the `sync` and `add blog` commands, replacing duplicated `beehiiv.config.ts` parsing.
+
 ## [0.4.4] - 2026-04-30
 
 ### Fixed

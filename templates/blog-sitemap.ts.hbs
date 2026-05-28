@@ -8,7 +8,7 @@
  * `robots.txt` or root sitemap index.
  */
 import type { MetadataRoute } from 'next';
-import { BeehiivClient, fetchPosts } from 'beehiiv-react/server';
+import { BeehiivClient, fetchAllPosts } from 'beehiiv-react/server';
 
 export const revalidate = 3600;
 
@@ -22,12 +22,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     publicationId: PUBLICATION_ID,
   });
 
-  const posts = await fetchPosts(client, PUBLICATION_ID, {
+  // Paginates through every confirmed post — the beehiiv list endpoint caps
+  // `limit` at 100 per request, so a single large `limit` would silently
+  // truncate the sitemap for publications with more than 100 posts.
+  const posts = await fetchAllPosts(client, PUBLICATION_ID, {
     status: 'confirmed',
-    audience: 'both',
-    orderBy: 'publish_date',
-    direction: 'desc',
-    limit: 1000,
   });
 
   const indexEntry: MetadataRoute.Sitemap[number] = {

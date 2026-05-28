@@ -71,6 +71,106 @@ describe('posts-route.ts.hbs', () => {
     expect(output).toContain("from 'beehiiv-react/server'");
     expect(output).not.toMatch(/from 'beehiiv-react'[^/]/);
   });
+
+  it('honours a publicationId query param on the slug branch', () => {
+    const template = compileTemplate('posts-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    // The slug lookup must read the per-request publicationId override, not
+    // only the build-time default.
+    expect(output).toContain("searchParams.get('publicationId')");
+  });
+
+  it('caches slug lookups to avoid rescanning on repeated/missed slugs', () => {
+    const template = compileTemplate('posts-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toContain("from 'next/cache'");
+    expect(output).toContain('unstable_cache');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// blog-post-page.tsx.hbs
+// ---------------------------------------------------------------------------
+
+describe('blog-post-page.tsx.hbs', () => {
+  const view = {
+    publicationId: 'pub_blog',
+    routePrefix: 'blog',
+    blogTitle: 'My Blog',
+    blogDescription: 'Posts',
+  };
+
+  it('generates the blog post detail page', () => {
+    const template = compileTemplate('blog-post-page.tsx.hbs');
+    expect(template(view)).toMatchSnapshot();
+  });
+
+  it('does not pass nonexistent props to GatedContent', () => {
+    const template = compileTemplate('blog-post-page.tsx.hbs');
+    const output = template(view);
+
+    // Regression: the previous version rendered <GatedContent post={post}
+    // subscription={subscription}> — props that do not exist on the
+    // component and omitted the required `audience`, so the generated page
+    // failed to type-check. Gating is now resolved server-side.
+    expect(output).not.toMatch(/<GatedContent/);
+    expect(output).not.toMatch(/subscription=\{subscription\}/);
+  });
+
+  it('gates only premium posts server-side and consumes the subscription', () => {
+    const template = compileTemplate('blog-post-page.tsx.hbs');
+    const output = template(view);
+
+    expect(output).toContain("post.audience !== 'premium'");
+    expect(output).toContain('getViewerSubscription');
+    expect(output).toContain('subscription?.tier');
+  });
+
+  it('memoises the slug fetch with React cache() to dedupe metadata + body', () => {
+    const template = compileTemplate('blog-post-page.tsx.hbs');
+    const output = template(view);
+
+    expect(output).toContain("import { cache } from 'react'");
+    expect(output).toContain('const getPost = cache(');
+  });
+
+  it('imports server helpers from beehiiv-react/server', () => {
+    const template = compileTemplate('blog-post-page.tsx.hbs');
+    const output = template(view);
+
+    expect(output).toContain("from 'beehiiv-react/server'");
+    expect(output).toContain('fetchPostBySlug');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// blog-sitemap.ts.hbs
+// ---------------------------------------------------------------------------
+
+describe('blog-sitemap.ts.hbs', () => {
+  const view = {
+    publicationId: 'pub_blog',
+    routePrefix: 'blog',
+    blogTitle: 'My Blog',
+    blogDescription: 'Posts',
+  };
+
+  it('generates the sitemap route', () => {
+    const template = compileTemplate('blog-sitemap.ts.hbs');
+    expect(template(view)).toMatchSnapshot();
+  });
+
+  it('paginates with fetchAllPosts instead of a single capped limit', () => {
+    const template = compileTemplate('blog-sitemap.ts.hbs');
+    const output = template(view);
+
+    // Regression: the previous version called fetchPosts({ limit: 1000 }),
+    // which the API silently caps at 100 — truncating large sitemaps.
+    expect(output).toContain('fetchAllPosts');
+    expect(output).not.toContain('limit: 1000');
+  });
 });
 
 // ---------------------------------------------------------------------------

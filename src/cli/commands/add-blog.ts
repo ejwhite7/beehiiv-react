@@ -12,10 +12,9 @@
  * @module cli/commands/add-blog
  */
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { promptForApiKey } from '../auth/api-key.js';
-import { selectPublication, promptForBlogConfig } from '../prompts/index.js';
+import { selectPublication, resolveBlogConfig } from '../prompts/index.js';
+import { readBeehiivConfig } from '../config.js';
 import { generateBlogPages } from '../generators/blog-pages.js';
 
 /** Options for the `add blog` command */
@@ -37,31 +36,6 @@ export interface AddBlogOptions {
 }
 
 /**
- * Read the publication ID from `beehiiv.config.ts` if it exists.
- *
- * Mirrors the parsing logic used by the `sync` command so we don't pull
- * in a TypeScript loader.
- */
-function readPublicationIdFromConfig(outputDir: string): string | null {
-  const configPath = path.join(outputDir, 'beehiiv.config.ts');
-  if (!fs.existsSync(configPath)) return null;
-  const content = fs.readFileSync(configPath, 'utf-8');
-  const match = content.match(/publicationId:\s*['"]([^'"]+)['"]/);
-  return match ? match[1] : null;
-}
-
-/**
- * Read the publication name from `beehiiv.config.ts` if available.
- */
-function readPublicationNameFromConfig(outputDir: string): string | null {
-  const configPath = path.join(outputDir, 'beehiiv.config.ts');
-  if (!fs.existsSync(configPath)) return null;
-  const content = fs.readFileSync(configPath, 'utf-8');
-  const match = content.match(/publicationName:\s*['"]([^'"]+)['"]/);
-  return match ? match[1] : null;
-}
-
-/**
  * Run the `beehiiv-react add blog` command.
  *
  * Resolution order for publication ID:
@@ -75,8 +49,9 @@ export async function runAddBlog(options: AddBlogOptions): Promise<void> {
   const outputDir = options.outputDir ?? '.';
 
   // --- Resolve publication ID + name ---
-  let publicationId = readPublicationIdFromConfig(outputDir);
-  let publicationName = readPublicationNameFromConfig(outputDir) ?? 'Newsletter';
+  const config = readBeehiivConfig(outputDir);
+  let publicationId = config.publicationId;
+  let publicationName = config.publicationName ?? 'Newsletter';
 
   if (!publicationId) {
     if (options.yes) {
@@ -102,25 +77,13 @@ export async function runAddBlog(options: AddBlogOptions): Promise<void> {
   }
 
   // --- Resolve blog config ---
-  const fullyConfigured =
-    options.route !== undefined &&
-    options.title !== undefined &&
-    options.description !== undefined;
-
-  const blogConfig =
-    fullyConfigured || options.yes
-      ? {
-          routePrefix: (options.route ?? 'blog').replace(/^\/+|\/+$/g, ''),
-          blogTitle: options.title ?? publicationName,
-          blogDescription:
-            options.description ?? `Latest posts from ${publicationName}.`,
-        }
-      : await promptForBlogConfig({
-          routePrefix: options.route,
-          blogTitle: options.title ?? publicationName,
-          blogDescription:
-            options.description ?? `Latest posts from ${publicationName}.`,
-        });
+  const blogConfig = await resolveBlogConfig({
+    route: options.route,
+    title: options.title,
+    description: options.description,
+    publicationName,
+    yes: options.yes,
+  });
 
   // --- Generate ---
   console.log(chalk.cyan('\nGenerating blog pages...\n'));

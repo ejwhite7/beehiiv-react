@@ -10,6 +10,7 @@ import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import type { CustomFieldInfo } from '../../types/custom-field.js';
 import { generateCustomFieldTypes } from '../generators/custom-fields.js';
+import { readBeehiivConfig } from '../config.js';
 
 /** Options for the sync command */
 export interface SyncOptions {
@@ -23,24 +24,11 @@ const BEEHIIV_API_BASE = 'https://api.beehiiv.com/v2';
 /**
  * Read the publication ID from the beehiiv config file.
  *
- * Parses the `beehiiv.config.ts` file to extract the `publicationId` value.
- * Falls back to reading `BEEHIIV_PUBLICATION_ID` from `.env.local`.
- *
  * @param outputDir - The directory containing beehiiv.config.ts
  * @returns The publication ID, or null if not found
  */
 function readPublicationId(outputDir: string): string | null {
-  const configPath = path.join(outputDir, 'beehiiv.config.ts');
-
-  if (fs.existsSync(configPath)) {
-    const content = fs.readFileSync(configPath, 'utf-8');
-    const match = content.match(/publicationId:\s*['"]([^'"]+)['"]/);
-    if (match) {
-      return match[1];
-    }
-  }
-
-  return null;
+  return readBeehiivConfig(outputDir).publicationId;
 }
 
 /**
@@ -50,17 +38,7 @@ function readPublicationId(outputDir: string): string | null {
  * @returns The publication name, or a fallback default
  */
 function readPublicationName(outputDir: string): string {
-  const configPath = path.join(outputDir, 'beehiiv.config.ts');
-
-  if (fs.existsSync(configPath)) {
-    const content = fs.readFileSync(configPath, 'utf-8');
-    const match = content.match(/publicationName:\s*['"]([^'"]+)['"]/);
-    if (match) {
-      return match[1];
-    }
-  }
-
-  return 'beehiiv Publication';
+  return readBeehiivConfig(outputDir).publicationName ?? 'beehiiv Publication';
 }
 
 /**

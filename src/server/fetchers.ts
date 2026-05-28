@@ -57,7 +57,8 @@ export async function fetchPosts(
  * @param client - An initialised {@link BeehiivClient}
  * @param publicationId - The publication ID (starts with `"pub_"`)
  * @param id - The post ID (starts with `"post_"`)
- * @returns The {@link PostInfo} for the requested post
+ * @returns The {@link PostInfo} for the requested post, or `null` if the
+ *   API response contains no post data
  *
  * @example
  * ```ts
@@ -68,11 +69,57 @@ export async function fetchPost(
   client: BeehiivClient,
   publicationId: string,
   id: string,
-): Promise<PostInfo> {
+): Promise<PostInfo | null> {
   const response = await client.posts.get(publicationId, id, {
     expand: ['free_web_content', 'tags'],
   });
-  return response.data ?? [];
+  return response.data ?? null;
+}
+
+/** Options shared by the post-list pagination helpers. */
+interface ScanPostsOptions {
+  /** Page size used while scanning. @defaultValue 100 */
+  pageSize?: number;
+  /** Hard cap on pages scanned to avoid runaway requests. @defaultValue 50 */
+  maxPages?: number;
+  /** Status filter applied while scanning. @defaultValue 'confirmed' */
+  status?: ListPostsOptions['status'];
+}
+
+/**
+ * Paginate through a publication's posts (newest first), invoking `visit`
+ * for each post. Return `true` from `visit` to stop scanning early.
+ *
+ * This is the single source of truth for list pagination so the slug
+ * lookup, slug enumeration, and full-post enumeration helpers can never
+ * drift on page size, page cap, or termination conditions.
+ */
+async function scanPosts(
+  client: BeehiivClient,
+  publicationId: string,
+  options: ScanPostsOptions | undefined,
+  visit: (post: PostInfo) => boolean | void,
+): Promise<void> {
+  const pageSize = options?.pageSize ?? 100;
+  const maxPages = options?.maxPages ?? 50;
+  const status = options?.status ?? 'confirmed';
+
+  for (let page = 1; page <= maxPages; page++) {
+    const response = await client.posts.list(publicationId, {
+      page,
+      limit: pageSize,
+      status,
+      orderBy: 'publish_date',
+      direction: 'desc',
+    });
+    const items = response.data ?? [];
+    for (const post of items) {
+      if (visit(post) === true) return;
+    }
+    if (items.length < pageSize) break;
+    const totalPages = response.pagination?.total_pages;
+    if (totalPages != null && page >= totalPages) break;
+  }
 }
 
 /**
@@ -104,37 +151,39 @@ export async function fetchPostBySlug(
   client: BeehiivClient,
   publicationId: string,
   slug: string,
-  options?: {
-    /** Page size used while scanning. @defaultValue 100 */
-    pageSize?: number;
-    /** Hard cap on pages scanned to avoid runaway requests. @defaultValue 20 */
-    maxPages?: number;
-    /** Status filter applied while scanning. @defaultValue 'confirmed' */
-    status?: ListPostsOptions['status'];
-  },
+  options?: ScanPostsOptions,
 ): Promise<PostInfo | null> {
-  const pageSize = options?.pageSize ?? 100;
-  const maxPages = options?.maxPages ?? 20;
-  const status = options?.status ?? 'confirmed';
+  let matchId: string | null = null;
+  await scanPosts(client, publicationId, options, (post) => {
+    if (post.slug !== slug) return false;
+    matchId = post.id;
+    return true;
+  });
+  return matchId ? fetchPost(client, publicationId, matchId) : null;
+}
 
-  for (let page = 1; page <= maxPages; page++) {
-    const response = await client.posts.list(publicationId, {
-      page,
-      limit: pageSize,
-      status,
-      orderBy: 'publish_date',
-      direction: 'desc',
-    });
-    const items = response.data ?? [];
-    const match = items.find((p) => p.slug === slug);
-    if (match) {
-      return fetchPost(client, publicationId, match.id);
-    }
-    if (items.length < pageSize) break;
-    const totalPages = response.pagination?.total_pages;
-    if (totalPages != null && page >= totalPages) break;
-  }
-  return null;
+/**
+ * Fetch every confirmed post for a publication (newest first).
+ *
+ * Paginates through the entire posts list and returns the full
+ * {@link PostInfo} records. Useful for building sitemaps or RSS feeds that
+ * must cover all published posts (not just the most recent page).
+ *
+ * @param client - An initialised {@link BeehiivClient}
+ * @param publicationId - The publication ID
+ * @param options - Optional pagination tuning / status filter
+ * @returns An array of {@link PostInfo} objects
+ */
+export async function fetchAllPosts(
+  client: BeehiivClient,
+  publicationId: string,
+  options?: ScanPostsOptions,
+): Promise<PostInfo[]> {
+  const posts: PostInfo[] = [];
+  await scanPosts(client, publicationId, options, (post) => {
+    posts.push(post);
+  });
+  return posts;
 }
 
 /**
@@ -151,28 +200,12 @@ export async function fetchPostBySlug(
 export async function fetchAllPostSlugs(
   client: BeehiivClient,
   publicationId: string,
-  options?: { pageSize?: number; maxPages?: number },
+  options?: ScanPostsOptions,
 ): Promise<{ slug: string }[]> {
-  const pageSize = options?.pageSize ?? 100;
-  const maxPages = options?.maxPages ?? 50;
   const slugs: { slug: string }[] = [];
-
-  for (let page = 1; page <= maxPages; page++) {
-    const response = await client.posts.list(publicationId, {
-      page,
-      limit: pageSize,
-      status: 'confirmed',
-      orderBy: 'publish_date',
-      direction: 'desc',
-    });
-    const items = response.data ?? [];
-    for (const p of items) {
-      if (p.slug) slugs.push({ slug: p.slug });
-    }
-    if (items.length < pageSize) break;
-    const totalPages = response.pagination?.total_pages;
-    if (totalPages != null && page >= totalPages) break;
-  }
+  await scanPosts(client, publicationId, options, (post) => {
+    if (post.slug) slugs.push({ slug: post.slug });
+  });
   return slugs;
 }
 
@@ -210,7 +243,8 @@ export async function fetchSubscribers(
  * @param client - An initialised {@link BeehiivClient}
  * @param publicationId - The publication ID (starts with `"pub_"`)
  * @param emailOrId - An email address or a subscription ID (starts with `"sub_"`)
- * @returns The {@link SubscriptionInfo} for the matched subscriber
+ * @returns The {@link SubscriptionInfo} for the matched subscriber, or `null`
+ *   if no matching subscriber is returned
  *
  * @example
  * ```ts
@@ -225,11 +259,11 @@ export async function fetchSubscription(
   client: BeehiivClient,
   publicationId: string,
   emailOrId: string,
-): Promise<SubscriptionInfo> {
+): Promise<SubscriptionInfo | null> {
   const response = emailOrId.includes('@')
     ? await client.subscriptions.getByEmail(publicationId, emailOrId)
     : await client.subscriptions.getById(publicationId, emailOrId);
-  return response.data ?? [];
+  return response.data ?? null;
 }
 
 /**

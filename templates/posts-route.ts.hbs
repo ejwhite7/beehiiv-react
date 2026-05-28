@@ -4,12 +4,29 @@
  * Located at: app/api/beehiiv/posts/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { BeehiivClient, fetchPostBySlug } from 'beehiiv-react/server';
+
+const DEFAULT_PUBLICATION_ID =
+  process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}';
 
 const client = new BeehiivClient({
   apiKey: process.env.BEEHIIV_API_KEY!,
-  publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
+  publicationId: DEFAULT_PUBLICATION_ID,
 });
+
+/**
+ * Slug lookup is an O(N/limit) scan of the posts list, so cache the result
+ * (including misses) per (publicationId, slug). This dedupes repeated
+ * requests and prevents unmatched slugs from re-scanning the list on every
+ * call — slugs are stable, so a short TTL is safe.
+ */
+const getPostBySlug = unstable_cache(
+  (publicationId: string, slug: string) =>
+    fetchPostBySlug(client, publicationId, slug),
+  ['beehiiv-post-by-slug'],
+  { revalidate: 300 },
+);
 
 /**
  * GET /api/beehiiv/posts
@@ -26,11 +43,9 @@ export async function GET(req: NextRequest) {
     // --- Slug lookup branch ---
     const slug = searchParams.get('slug');
     if (slug) {
-      const post = await fetchPostBySlug(
-        client,
-        process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
-        slug,
-      );
+      const publicationId =
+        searchParams.get('publicationId') ?? DEFAULT_PUBLICATION_ID;
+      const post = await getPostBySlug(publicationId, slug);
       return NextResponse.json({ data: post }, { status: 200 });
     }
 

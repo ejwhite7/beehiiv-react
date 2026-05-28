@@ -12,7 +12,7 @@ import type { PublicationInfo } from '../../types/publication.js';
 import type { CustomFieldInfo } from '../../types/custom-field.js';
 import { promptForApiKey } from '../auth/api-key.js';
 import { runOAuthFlow } from '../auth/oauth.js';
-import { selectPublication, selectFeatures, promptForBlogConfig } from '../prompts/index.js';
+import { selectPublication, selectFeatures, resolveBlogConfig } from '../prompts/index.js';
 import { generateConfig } from '../generators/config.js';
 import { generateCustomFieldTypes } from '../generators/custom-fields.js';
 import { generateApiRoutes } from '../generators/api-routes.js';
@@ -314,24 +314,15 @@ export async function runInit(options: InitOptions): Promise<void> {
   // who want to host beehiiv content on a custom route or not at all.
   if (options.blog) {
     console.log('');
-    // If non-interactive flags were provided, skip the prompt entirely.
-    const fullyConfigured =
-      options.blogRoute !== undefined &&
-      options.blogTitle !== undefined &&
-      options.blogDescription !== undefined;
-    const blogConfig = fullyConfigured
-      ? {
-          routePrefix: options.blogRoute as string,
-          blogTitle: options.blogTitle as string,
-          blogDescription: options.blogDescription as string,
-        }
-      : await promptForBlogConfig({
-          routePrefix: options.blogRoute,
-          blogTitle: options.blogTitle ?? publication.name,
-          blogDescription:
-            options.blogDescription ??
-            `Latest posts from ${publication.name}.`,
-        });
+    // Resolves to non-interactive when --blog-route/-title/-description are
+    // all supplied (route prefix is normalized + validated the same way as
+    // the interactive prompt); otherwise prompts.
+    const blogConfig = await resolveBlogConfig({
+      route: options.blogRoute,
+      title: options.blogTitle,
+      description: options.blogDescription,
+      publicationName: publication.name,
+    });
     await generateBlogPages({
       outputDir,
       publicationId: publication.id,

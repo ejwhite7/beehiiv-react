@@ -49,6 +49,7 @@ export {
   fetchPost,
   fetchPostBySlug,
   fetchAllPostSlugs,
+  fetchAllPosts,
   fetchSubscribers,
   fetchSubscription,
   fetchPublications,

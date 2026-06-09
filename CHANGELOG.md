@@ -2,6 +2,31 @@
 
 All notable changes to `beehiiv-react` are documented in this file.
 
+## [0.7.0] - 2026-06-09
+
+### Fixed
+- **`require('beehiiv-react')` no longer crashes; ESM consumers get the real ESM build** -- The `exports` map pointed `require` at `.cjs` files tsup never emits and `import` at the CJS `.js` build. `main`/`module`/`exports` now match the actual build output (`.js` = CJS, `.mjs` = ESM) with per-condition `types` entries.
+- **Posts with audience `'both'` are no longer denied to everyone** -- `canViewContent` had no `'both'` branch and fell through to `false`, locking every visible-to-all-subscribers post behind a denial in `GatedContent`, `PremiumContent`, `useSubscriberAccess`, and `usePostAccess`. `'both'` now grants access to any active subscriber.
+- **`useBulkUpdateJob` polling now actually stops on success** -- The terminal status was checked as `'completed'`, but the API reports `'complete'`. Also: the hook no longer reports `isPolling: true` when no `jobId` is provided, and changing `jobId` mid-flight can no longer drop a resolving fetch.
+- **Bulk subscription types match the beehiiv API** -- `BulkCreateSubscriptionsResponse` is `{ message, import_id }` (was six invented fields); `BulkUpdateStatusRequest` sends `new_status` (was `status`, which the API ignored); `bulkUpdateStatus` returns `void` per the API's 204 response; `bulkUpdateFields` uses `{ subscriptions: [...] }` / `{ data: { subscription_update_id } }`.
+- **TanStack Query cache collisions** -- `useSegmentsQuery` keyed every filter combination to one cache entry; webhook/segment/automation queries ignored the `publicationId` override in their keys. List and detail keys now include their inputs (bare `detail(id)` keys remain fuzzy-match prefixes of scoped keys, so existing invalidations keep working).
+- **`useSubscribe` returns a stable `subscribe` callback** -- Inline `options` objects no longer recreate `subscribe` every render; the latest `onSuccess`/`onError` are read from a ref, and resolving requests no longer set state after unmount.
+- **Generated server actions no longer ship an empty publication ID** -- the `init` flow now threads the selected publication into the server-action template (previously rendered `?? ''`).
+- **Generated code survives special characters** -- publication names and blog titles are escaped for TypeScript string-literal positions ("Acme & Co." no longer generated `'Acme &amp; Co.'`); the generated RSS feed runtime-escapes its title/description.
+- **OAuth callback server port race** -- the CLI bound a probe server to find a port, closed it, then re-bound, crashing with an unhandled `EADDRINUSE` if the port was claimed in between. It now binds port 0 directly and rejects cleanly on listen errors.
+- **`SubscriptionForm` numeric custom fields submit as numbers** (previously sent as strings); `getAudienceLabel` and `PostCard` audience labels corrected (`'all'` → "Everyone", `'both'` → "Members Only" — the pair was inverted in `PostCard`).
+- **`GatedContent`/`PremiumContent` re-fire `onAccessResolved`** when the subscriber identity props change (previously fired at most once per mount).
+
+### Changed
+- **BREAKING (types):** `BulkSubscriptionUpdateJob` now mirrors the API's Subscription Update object (`id`, `type`, `params`, `status`, `publication_id`, `failure_reason`, `completed`, `created`, `updated`, `error_log`); the invented `total`/`created`/`updated`/`failed` counters and `created_at`/`completed_at` fields are gone. `BulkSubscriptionUpdateJobStatus` uses `'complete'` (was `'completed'`). `BulkUpdateStatusResponse` was removed (the endpoint returns 204).
+- **`init` prompts before overwriting existing files** -- all generators now confirm before clobbering files you may have customized (`sync` still force-regenerates its types file).
+- **Generated subscribe GET route includes a security warning** -- the scaffolded `GET /api/beehiiv/subscribe?email=...` handler documents its subscriber-enumeration/PII risk and includes an example auth guard. Add an auth check or rate limiting before production.
+
+### Added
+- **`npm run test:pack` packaging smoke test** -- packs the tarball, installs it into a throwaway project, and verifies `require()`/`import` of all three entry points; runs in CI and `prepublishOnly` so a broken `exports` map can't ship again.
+- **`BulkSubscriptionUpdateJobType`**, **`BulkUpdateSubscriptionEntry`**, and **`BulkUpdateCustomFieldEntry`** types exported.
+- **Dev-only XSS warning in `PostContentRenderer`** when rendering HTML without a `sanitizeHtml` callback.
+
 ## [0.6.1] - 2026-05-28
 
 ### Fixed

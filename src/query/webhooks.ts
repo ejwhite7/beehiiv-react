@@ -116,7 +116,7 @@ export function useWebhooksQuery(
   const { publicationId, staleTime = 60_000, enabled = true } = options;
 
   return useQuery<WebhooksListResponse>({
-    queryKey: beehiivKeys.webhooks.list(),
+    queryKey: beehiivKeys.webhooks.list(publicationId ? { publicationId } : {}),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);
@@ -179,7 +179,7 @@ export function useWebhookQuery(
   const { publicationId, staleTime = 60_000, enabled = true } = options;
 
   return useQuery<WebhookDetailResponse>({
-    queryKey: beehiivKeys.webhooks.detail(id),
+    queryKey: beehiivKeys.webhooks.detail(id, publicationId ? { publicationId } : undefined),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);

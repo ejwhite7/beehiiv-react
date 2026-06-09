@@ -6,3 +6,10 @@ coverage/
 .env.local
 .DS_Store
 *.log
+
+# repowise API keys (local)
+.repowise/.env
+.claude
+.github
+.repowise
+.mcp.json

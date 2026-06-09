@@ -15,7 +15,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import Handlebars from 'handlebars';
-import { confirmOverwrite } from '../prompts/index.js';
+import { escapeTsString, writeFileWithConfirm } from './utils.js';
 
 /** Data required to generate the blog pages */
 export interface BlogPagesGeneratorData {
@@ -61,13 +61,16 @@ const TEMPLATES: Array<{ template: string; outputPath: string[] }> = [
 export async function generateBlogPages(
   data: BlogPagesGeneratorData,
 ): Promise<void> {
-  const { default: chalk } = await import('chalk');
-
   const view = {
     publicationId: data.publicationId,
     routePrefix: data.routePrefix,
+    // HTML-escaped by Handlebars — for JSX text positions
     blogTitle: data.blogTitle,
     blogDescription: data.blogDescription,
+    // Pre-escaped for single-quoted TS string literal positions,
+    // rendered with {{{...}}} in the templates
+    blogTitleTs: escapeTsString(data.blogTitle),
+    blogDescriptionTs: escapeTsString(data.blogDescription),
   };
 
   for (const entry of TEMPLATES) {
@@ -90,16 +93,6 @@ export async function generateBlogPages(
       ...entry.outputPath,
     );
 
-    if (fs.existsSync(outputPath)) {
-      const proceed = await confirmOverwrite(outputPath);
-      if (!proceed) {
-        console.log(chalk.yellow(`  Skipped ${outputPath}`));
-        continue;
-      }
-    }
-
-    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-    fs.writeFileSync(outputPath, output, 'utf-8');
-    console.log(chalk.green(`  Created ${outputPath}`));
+    await writeFileWithConfirm(outputPath, output);
   }
 }

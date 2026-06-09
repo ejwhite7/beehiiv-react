@@ -41,13 +41,10 @@ describe('BulkSubscriptionsEndpoint', () => {
 
   describe('create', () => {
     it('should POST to the bulk_subscriptions endpoint', async () => {
+      // Real API shape: { message, import_id } (per the OpenAPI spec)
       const responseData = {
-        job_id: 'job_001',
-        status: 'pending',
-        total: 2,
-        created: 0,
-        updated: 0,
-        failed: 0,
+        message: 'Bulk Subscription Create Request Sent.',
+        import_id: '00000000-0000-0000-0000-000000000001',
       };
       vi.mocked(mockHttp.post).mockResolvedValue(responseData);
 
@@ -70,12 +67,8 @@ describe('BulkSubscriptionsEndpoint', () => {
     it('should use default publicationId when body is passed directly', async () => {
       const endpointWithDefault = new BulkSubscriptionsEndpoint(mockHttp, 'pub_default');
       vi.mocked(mockHttp.post).mockResolvedValue({
-        job_id: 'job_002',
-        status: 'pending',
-        total: 1,
-        created: 0,
-        updated: 0,
-        failed: 0,
+        message: 'Bulk Subscription Create Request Sent.',
+        import_id: '00000000-0000-0000-0000-000000000002',
       });
 
       await endpointWithDefault.create({
@@ -113,7 +106,15 @@ describe('BulkSubscriptionUpdatesEndpoint', () => {
     it('should GET the bulk_subscription_updates endpoint without params', async () => {
       const responseData = {
         data: [
-          { id: 'job_1', status: 'completed', total: 10, created: 5, updated: 5, failed: 0, created_at: '2024-01-01T00:00:00Z', completed_at: '2024-01-01T00:01:00Z' },
+          {
+            id: 'job_1',
+            type: 'bulk',
+            status: 'complete',
+            publication_id: 'pub_123',
+            created: 1704067200,
+            updated: 1704067260,
+            completed: 1704067260,
+          },
         ],
       };
       vi.mocked(mockHttp.get).mockResolvedValue(responseData);
@@ -164,13 +165,12 @@ describe('BulkSubscriptionUpdatesEndpoint', () => {
       const responseData = {
         data: {
           id: 'job_abc',
-          status: 'completed',
-          total: 50,
-          created: 20,
-          updated: 30,
-          failed: 0,
-          created_at: '2024-01-01T00:00:00Z',
-          completed_at: '2024-01-01T00:05:00Z',
+          type: 'bulk',
+          status: 'complete',
+          publication_id: 'pub_123',
+          created: 1704067200,
+          updated: 1704067500,
+          completed: 1704067500,
         },
       };
       vi.mocked(mockHttp.get).mockResolvedValue(responseData);
@@ -186,7 +186,15 @@ describe('BulkSubscriptionUpdatesEndpoint', () => {
     it('should use default publicationId when called with one arg', async () => {
       const endpointWithDefault = new BulkSubscriptionUpdatesEndpoint(mockHttp, 'pub_default');
       vi.mocked(mockHttp.get).mockResolvedValue({
-        data: { id: 'job_abc', status: 'pending', total: 0, created: 0, updated: 0, failed: 0, created_at: '2024-01-01T00:00:00Z', completed_at: null },
+        data: {
+          id: 'job_abc',
+          type: 'status',
+          status: 'pending',
+          publication_id: 'pub_default',
+          created: 1704067200,
+          updated: null,
+          completed: null,
+        },
       });
 
       await endpointWithDefault.get('job_abc');
@@ -199,15 +207,17 @@ describe('BulkSubscriptionUpdatesEndpoint', () => {
 
   describe('bulkUpdateFields', () => {
     it('should PUT to the bulk_actions endpoint (verified against beehiiv docs)', async () => {
+      // Real API shape: { data: { subscription_update_id } } (per the OpenAPI spec)
       const responseData = {
-        job_id: 'job_fields_001',
-        status: 'pending',
+        data: { subscription_update_id: 'su_001' },
       };
       vi.mocked(mockHttp.put).mockResolvedValue(responseData);
 
       const body = {
-        subscription_ids: ['sub_1', 'sub_2'],
-        fields: { tier: 'premium' },
+        subscriptions: [
+          { subscription_id: 'sub_1', tier: 'premium' },
+          { subscription_id: 'sub_2', tier: 'premium' },
+        ],
       };
 
       const result = await endpoint.bulkUpdateFields('pub_123', body);
@@ -221,40 +231,49 @@ describe('BulkSubscriptionUpdatesEndpoint', () => {
 
     it('should use default publicationId when body is passed directly', async () => {
       const endpointWithDefault = new BulkSubscriptionUpdatesEndpoint(mockHttp, 'pub_default');
-      vi.mocked(mockHttp.put).mockResolvedValue({ job_id: 'job_f2', status: 'pending' });
+      vi.mocked(mockHttp.put).mockResolvedValue({
+        data: { subscription_update_id: 'su_002' },
+      });
 
       await endpointWithDefault.bulkUpdateFields({
-        subscription_ids: ['sub_3'],
-        fields: { company: 'Acme' },
+        subscriptions: [
+          {
+            subscription_id: 'sub_3',
+            custom_fields: [{ name: 'Company', value: 'Acme' }],
+          },
+        ],
       });
 
       expect(mockHttp.put).toHaveBeenCalledWith(
         '/publications/pub_default/subscriptions/bulk_actions',
-        { subscription_ids: ['sub_3'], fields: { company: 'Acme' } }
+        {
+          subscriptions: [
+            {
+              subscription_id: 'sub_3',
+              custom_fields: [{ name: 'Company', value: 'Acme' }],
+            },
+          ],
+        }
       );
     });
 
     it('should throw when no publicationId is available', async () => {
       await expect(
         endpoint.bulkUpdateFields({
-          subscription_ids: ['sub_1'],
-          fields: { tier: 'free' },
+          subscriptions: [{ subscription_id: 'sub_1', tier: 'free' }],
         })
       ).rejects.toThrow('publicationId is required');
     });
   });
 
   describe('bulkUpdateStatus', () => {
-    it('should PUT to the subscriptions endpoint (verified against beehiiv docs)', async () => {
-      const responseData = {
-        job_id: 'job_status_001',
-        status: 'pending',
-      };
-      vi.mocked(mockHttp.put).mockResolvedValue(responseData);
+    it('should PUT to the subscriptions endpoint and resolve void on 204 (verified against beehiiv docs)', async () => {
+      // The API returns 204 No Content; the HTTP client resolves undefined
+      vi.mocked(mockHttp.put).mockResolvedValue(undefined);
 
       const body = {
         subscription_ids: ['sub_1', 'sub_2'],
-        status: 'active' as const,
+        new_status: 'active' as const,
       };
 
       const result = await endpoint.bulkUpdateStatus('pub_123', body);
@@ -263,21 +282,21 @@ describe('BulkSubscriptionUpdatesEndpoint', () => {
         '/publications/pub_123/subscriptions',
         body
       );
-      expect(result).toEqual(responseData);
+      expect(result).toBeUndefined();
     });
 
     it('should use default publicationId when body is passed directly', async () => {
       const endpointWithDefault = new BulkSubscriptionUpdatesEndpoint(mockHttp, 'pub_default');
-      vi.mocked(mockHttp.put).mockResolvedValue({ job_id: 'job_s2', status: 'pending' });
+      vi.mocked(mockHttp.put).mockResolvedValue(undefined);
 
       await endpointWithDefault.bulkUpdateStatus({
         subscription_ids: ['sub_4'],
-        status: 'inactive',
+        new_status: 'inactive',
       });
 
       expect(mockHttp.put).toHaveBeenCalledWith(
         '/publications/pub_default/subscriptions',
-        { subscription_ids: ['sub_4'], status: 'inactive' }
+        { subscription_ids: ['sub_4'], new_status: 'inactive' }
       );
     });
 
@@ -285,7 +304,7 @@ describe('BulkSubscriptionUpdatesEndpoint', () => {
       await expect(
         endpoint.bulkUpdateStatus({
           subscription_ids: ['sub_1'],
-          status: 'active',
+          new_status: 'active',
         })
       ).rejects.toThrow('publicationId is required');
     });

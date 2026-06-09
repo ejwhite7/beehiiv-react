@@ -433,7 +433,14 @@ function renderCustomFieldInput(
           id={id}
           type="number"
           value={value !== undefined && value !== null ? String(value) : ''}
-          onChange={(e) => setField(field.key, e.target.value)}
+          onChange={(e) => {
+            // Store a real number so the API receives the correct type;
+            // keep the raw string when empty (controlled input) or
+            // non-numeric (so validation can report it).
+            const raw = e.target.value;
+            const num = Number(raw);
+            setField(field.key, raw === '' || Number.isNaN(num) ? raw : num);
+          }}
           placeholder={field.placeholder}
           step={field.kind === 'double' ? 'any' : '1'}
           className={inputClassName}

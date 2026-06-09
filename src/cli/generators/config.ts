@@ -8,6 +8,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import Handlebars from 'handlebars';
+import { escapeTsString, writeFileWithConfirm } from './utils.js';
 
 /** Data required to generate the config file */
 export interface ConfigGeneratorData {
@@ -39,8 +40,6 @@ export interface ConfigGeneratorData {
  * ```
  */
 export async function generateConfig(data: ConfigGeneratorData): Promise<void> {
-  const { default: chalk } = await import('chalk');
-
   const templatePath = path.resolve(
     __dirname,
     '..',
@@ -54,12 +53,11 @@ export async function generateConfig(data: ConfigGeneratorData): Promise<void> {
 
   const output = template({
     publicationId: data.publicationId,
-    publicationName: data.publicationName,
+    // Pre-escaped for a single-quoted TS string literal; the template
+    // renders it with {{{...}}} to bypass Handlebars HTML escaping.
+    publicationName: escapeTsString(data.publicationName),
   });
 
   const outputPath = path.join(data.outputDir, 'beehiiv.config.ts');
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, output, 'utf-8');
-
-  console.log(chalk.green(`  Created ${outputPath}`));
+  await writeFileWithConfirm(outputPath, output);
 }

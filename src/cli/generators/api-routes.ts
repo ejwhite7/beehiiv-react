@@ -8,6 +8,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import Handlebars from 'handlebars';
+import { writeFileWithConfirm } from './utils.js';
 
 /** Data required to generate the API routes */
 export interface ApiRouteGeneratorData {
@@ -113,8 +114,6 @@ const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
 export async function generateApiRoutes(
   data: ApiRouteGeneratorData,
 ): Promise<void> {
-  const { default: chalk } = await import('chalk');
-
   // Generate the subscribe route from template
   const templatePath = path.resolve(
     __dirname,
@@ -138,9 +137,7 @@ export async function generateApiRoutes(
     'subscribe',
     'route.ts',
   );
-  fs.mkdirSync(path.dirname(subscribePath), { recursive: true });
-  fs.writeFileSync(subscribePath, subscribeOutput, 'utf-8');
-  console.log(chalk.green(`  Created ${subscribePath}`));
+  await writeFileWithConfirm(subscribePath, subscribeOutput);
 
   // Generate the subscription/[id] route from inline template
   const subscriptionIdPath = path.join(
@@ -152,9 +149,7 @@ export async function generateApiRoutes(
     '[id]',
     'route.ts',
   );
-  fs.mkdirSync(path.dirname(subscriptionIdPath), { recursive: true });
-  fs.writeFileSync(subscriptionIdPath, SUBSCRIPTION_ID_ROUTE_TEMPLATE, 'utf-8');
-  console.log(chalk.green(`  Created ${subscriptionIdPath}`));
+  await writeFileWithConfirm(subscriptionIdPath, SUBSCRIPTION_ID_ROUTE_TEMPLATE);
 
   // Generate all template-based resource routes
   for (const route of TEMPLATE_ROUTES) {
@@ -180,9 +175,7 @@ export async function generateApiRoutes(
       ...route.outputPath,
       'route.ts',
     );
-    fs.mkdirSync(path.dirname(routePath), { recursive: true });
-    fs.writeFileSync(routePath, routeOutput, 'utf-8');
-    console.log(chalk.green(`  Created ${routePath}`));
+    await writeFileWithConfirm(routePath, routeOutput);
   }
 
 }

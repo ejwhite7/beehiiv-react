@@ -11,7 +11,6 @@ import type {
   BulkUpdateFieldsRequest,
   BulkUpdateFieldsResponse,
   BulkUpdateStatusRequest,
-  BulkUpdateStatusResponse,
 } from '../../types/bulk-subscriptions.js';
 import type { BeehiivHttpClient } from '../index.js';
 
@@ -46,14 +45,16 @@ export interface ListBulkUpdateJobsOptions {
  *
  * // Bulk update fields
  * await updates.bulkUpdateFields({
- *   subscription_ids: ['sub_1', 'sub_2'],
- *   fields: { tier: 'premium' },
+ *   subscriptions: [
+ *     { subscription_id: 'sub_1', tier: 'premium' },
+ *     { subscription_id: 'sub_2', custom_fields: [{ name: 'Plan', value: 'pro' }] },
+ *   ],
  * });
  *
- * // Bulk update status
+ * // Bulk update status (resolves with no value — the API returns 204)
  * await updates.bulkUpdateStatus({
  *   subscription_ids: ['sub_1', 'sub_2'],
- *   status: 'active',
+ *   new_status: 'active',
  * });
  * ```
  */
@@ -164,7 +165,7 @@ export class BulkSubscriptionUpdatesEndpoint {
    *
    * @param publicationIdOrBody - Either the publication ID (starts with "pub_") or the bulk update request body when using the default publication ID
    * @param body - The bulk update fields request body (when publicationId is passed explicitly)
-   * @returns A response containing the job ID and status
+   * @returns A response containing the subscription update job reference
    */
   async bulkUpdateFields(
     publicationIdOrBody: string | BulkUpdateFieldsRequest,
@@ -194,12 +195,12 @@ export class BulkSubscriptionUpdatesEndpoint {
    *
    * @param publicationIdOrBody - Either the publication ID (starts with "pub_") or the bulk status update request body when using the default publication ID
    * @param body - The bulk update status request body (when publicationId is passed explicitly)
-   * @returns A response containing the job ID and status
+   * @returns A promise that resolves with no value — the API returns 204 No Content
    */
   async bulkUpdateStatus(
     publicationIdOrBody: string | BulkUpdateStatusRequest,
     body?: BulkUpdateStatusRequest
-  ): Promise<BulkUpdateStatusResponse> {
+  ): Promise<void> {
     let publicationId: string;
     let requestBody: BulkUpdateStatusRequest;
 
@@ -211,7 +212,7 @@ export class BulkSubscriptionUpdatesEndpoint {
       requestBody = publicationIdOrBody;
     }
 
-    return this._http.put<BulkUpdateStatusResponse>(
+    await this._http.put<void>(
       `/publications/${publicationId}/subscriptions`,
       requestBody
     );

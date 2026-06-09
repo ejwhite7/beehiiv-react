@@ -7,7 +7,7 @@
  * @module hooks/useSubscribe
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { SubscriptionInfo } from '../types/subscription.js';
 import { useBeehiiv } from './useBeehiiv.js';
@@ -118,6 +118,21 @@ export function useSubscribe<TCustomFields = Record<string, unknown>>(
   const { apiUrl, publicationId } = useBeehiiv();
   const [state, setState] = useState<SubscribeState>(INITIAL_STATE);
 
+  // Keep the latest options in a ref so `subscribe` has a stable identity
+  // even when callers pass an inline options object on every render.
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+
+  // Track mount status so a request resolving after unmount does not
+  // update state or fire consumer callbacks.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   /**
    * Submit a subscription request to the beehiiv API proxy.
    *
@@ -154,16 +169,22 @@ export function useSubscribe<TCustomFields = Record<string, unknown>>(
         }
 
         const result = (await response.json()) as { data: SubscriptionInfo };
+        if (!mountedRef.current) {
+          return;
+        }
         setState({ isLoading: false, isSuccess: true, error: null });
-        options?.onSuccess?.(result.data);
+        optionsRef.current?.onSuccess?.(result.data);
       } catch (err: unknown) {
         const error =
           err instanceof Error ? err : new Error(String(err));
+        if (!mountedRef.current) {
+          return;
+        }
         setState({ isLoading: false, isSuccess: false, error });
-        options?.onError?.(error);
+        optionsRef.current?.onError?.(error);
       }
     },
-    [apiUrl, publicationId, options],
+    [apiUrl, publicationId],
   );
 
   /**

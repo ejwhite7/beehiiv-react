@@ -8,11 +8,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import Handlebars from 'handlebars';
+import { writeFileWithConfirm } from './utils.js';
 
 /** Data required to generate the server actions file */
 export interface ServerActionGeneratorData {
   /** The output directory to write the actions file to */
   outputDir: string;
+  /** The beehiiv publication ID baked into the generated client fallback */
+  publicationId: string;
 }
 
 /**
@@ -27,14 +30,12 @@ export interface ServerActionGeneratorData {
  *
  * @example
  * ```ts
- * await generateServerActions({ outputDir: '.' });
+ * await generateServerActions({ outputDir: '.', publicationId: 'pub_abc' });
  * ```
  */
 export async function generateServerActions(
   data: ServerActionGeneratorData,
 ): Promise<void> {
-  const { default: chalk } = await import('chalk');
-
   const templatePath = path.resolve(
     __dirname,
     '..',
@@ -45,7 +46,7 @@ export async function generateServerActions(
 
   const templateSource = fs.readFileSync(templatePath, 'utf-8');
   const template = Handlebars.compile(templateSource);
-  const output = template({});
+  const output = template({ publicationId: data.publicationId });
 
   const outputPath = path.join(
     data.outputDir,
@@ -53,8 +54,5 @@ export async function generateServerActions(
     'beehiiv',
     'actions.ts',
   );
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, output, 'utf-8');
-
-  console.log(chalk.green(`  Created ${outputPath}`));
+  await writeFileWithConfirm(outputPath, output);
 }

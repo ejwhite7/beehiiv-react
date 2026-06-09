@@ -15,8 +15,8 @@ const PUBLICATION_ID =
   process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}';
 
 export const metadata = {
-  title: '{{blogTitle}}',
-  description: '{{blogDescription}}',
+  title: '{{{blogTitleTs}}}',
+  description: '{{{blogDescriptionTs}}}',
 };
 
 export default async function BlogIndexPage() {

@@ -43,13 +43,12 @@ describe('useBulkUpdateJob', () => {
       json: async () => ({
         data: {
           id: 'job_001',
+          type: 'bulk',
           status: 'processing',
-          total: 10,
-          created: 3,
-          updated: 2,
-          failed: 0,
-          created_at: '2024-01-01T00:00:00Z',
-          completed_at: null,
+          publication_id: 'pub_test',
+          created: 1704067200,
+          updated: 1704067230,
+          completed: null,
         },
       }),
     });
@@ -83,29 +82,27 @@ describe('useBulkUpdateJob', () => {
         json: async () => ({
           data: {
             id: 'job_002',
+            type: 'bulk',
             status: 'processing',
-            total: 10,
-            created: 3,
-            updated: 2,
-            failed: 0,
-            created_at: '2024-01-01T00:00:00Z',
-            completed_at: null,
+            publication_id: 'pub_test',
+            created: 1704067200,
+            updated: 1704067230,
+            completed: null,
           },
         }),
       })
-      // Second poll: completed
+      // Second poll: complete
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           data: {
             id: 'job_002',
-            status: 'completed',
-            total: 10,
-            created: 5,
-            updated: 5,
-            failed: 0,
-            created_at: '2024-01-01T00:00:00Z',
-            completed_at: '2024-01-01T00:01:00Z',
+            type: 'bulk',
+            status: 'complete',
+            publication_id: 'pub_test',
+            created: 1704067200,
+            updated: 1704067260,
+            completed: 1704067260,
           },
         }),
       });
@@ -127,7 +124,7 @@ describe('useBulkUpdateJob', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.job?.status).toBe('completed');
+      expect(result.current.job?.status).toBe('complete');
     });
 
     expect(result.current.isPolling).toBe(false);
@@ -159,13 +156,14 @@ describe('useBulkUpdateJob', () => {
       json: async () => ({
         data: {
           id: 'job_fail',
+          type: 'status',
           status: 'failed',
-          total: 10,
-          created: 0,
-          updated: 0,
-          failed: 10,
-          created_at: '2024-01-01T00:00:00Z',
-          completed_at: '2024-01-01T00:00:30Z',
+          publication_id: 'pub_test',
+          failure_reason: 'All updates failed',
+          error_log: ['sub_1: not found'],
+          created: 1704067200,
+          updated: 1704067230,
+          completed: 1704067230,
         },
       }),
     });

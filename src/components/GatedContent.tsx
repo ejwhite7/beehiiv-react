@@ -82,8 +82,14 @@ export function GatedContent(props: GatedContentProps): React.JSX.Element {
 
   const { canView, isLoading } = accessResult;
 
-  // Track whether we've already fired the callback
+  // Track whether we've already fired the callback for the current
+  // subscriber identity. Reset when the identity changes so the callback
+  // fires once per resolution cycle rather than once per mount.
   const resolvedRef = useRef(false);
+
+  useEffect(() => {
+    resolvedRef.current = false;
+  }, [subscriberEmail, subscriberId]);
 
   useEffect(() => {
     if (!isLoading && !resolvedRef.current) {

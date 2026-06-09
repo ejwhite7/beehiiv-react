@@ -92,8 +92,13 @@ export function PremiumContent(props: PremiumContentProps): React.JSX.Element {
 
   const { canView, isLoading, tier, status } = accessResult;
 
-  // Fire the onAccessResolved callback once after first resolution
+  // Fire the onAccessResolved callback once per resolution cycle. Reset
+  // when the subscriber identity changes so a new resolution re-fires it.
   const resolvedRef = useRef(false);
+
+  useEffect(() => {
+    resolvedRef.current = false;
+  }, [subscriberEmail, subscriberId]);
 
   useEffect(() => {
     if (!isLoading && !resolvedRef.current) {

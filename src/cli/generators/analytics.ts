@@ -8,6 +8,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import Handlebars from 'handlebars';
+import { writeFileWithConfirm } from './utils.js';
 
 /** Data required to generate the analytics utility file */
 export interface AnalyticsGeneratorData {
@@ -28,8 +29,6 @@ export interface AnalyticsGeneratorData {
 export async function generateAnalytics(
   data: AnalyticsGeneratorData,
 ): Promise<void> {
-  const { default: chalk } = await import('chalk');
-
   const templatePath = path.resolve(
     __dirname,
     '..',
@@ -48,8 +47,5 @@ export async function generateAnalytics(
     'beehiiv',
     'analytics.ts',
   );
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, output, 'utf-8');
-
-  console.log(chalk.green(`  Created ${outputPath}`));
+  await writeFileWithConfirm(outputPath, output);
 }

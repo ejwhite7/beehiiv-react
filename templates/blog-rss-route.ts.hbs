@@ -10,6 +10,8 @@ export const revalidate = 600;
 const PUBLICATION_ID =
   process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+const BLOG_TITLE = '{{{blogTitleTs}}}';
+const BLOG_DESCRIPTION = '{{{blogDescriptionTs}}}';
 
 function escapeXml(value: string): string {
   return value
@@ -55,9 +57,9 @@ export async function GET(): Promise<Response> {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>{{blogTitle}}</title>
+    <title>${escapeXml(BLOG_TITLE)}</title>
     <link>${escapeXml(SITE_URL)}/{{routePrefix}}</link>
-    <description>{{blogDescription}}</description>
+    <description>${escapeXml(BLOG_DESCRIPTION)}</description>
     ${items}
   </channel>
 </rss>`;

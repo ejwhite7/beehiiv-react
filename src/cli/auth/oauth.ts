@@ -58,27 +58,6 @@ function computeCodeChallenge(verifier: string): string {
 }
 
 /**
- * Find a random available TCP port by binding to port 0.
- *
- * @returns A promise that resolves to an available port number
- */
-function findAvailablePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = http.createServer();
-    server.listen(0, () => {
-      const addr = server.address();
-      if (addr && typeof addr !== 'string') {
-        const port = addr.port;
-        server.close(() => resolve(port));
-      } else {
-        server.close(() => reject(new Error('Could not find available port')));
-      }
-    });
-    server.on('error', reject);
-  });
-}
-
-/**
  * Run the OAuth2 PKCE authorization code flow for beehiiv.
  *
  * This function:
@@ -113,21 +92,14 @@ export async function runOAuthFlow(
   const codeChallenge = computeCodeChallenge(codeVerifier);
   const state = generateRandomString(16);
 
-  const port = await findAvailablePort();
-  const redirectUri = `http://localhost:${port}/callback`;
-
-  const authorizationUrl = new URL(AUTHORIZE_URL);
-  authorizationUrl.searchParams.set('client_id', clientId);
-  authorizationUrl.searchParams.set('redirect_uri', redirectUri);
-  authorizationUrl.searchParams.set('response_type', 'code');
-  authorizationUrl.searchParams.set('scope', SCOPES);
-  authorizationUrl.searchParams.set('state', state);
-  authorizationUrl.searchParams.set('code_challenge', codeChallenge);
-  authorizationUrl.searchParams.set('code_challenge_method', 'S256');
-
   return new Promise<OAuthTokenResponse>((resolve, reject) => {
     // eslint-disable-next-line prefer-const
     let timeoutHandle: ReturnType<typeof setTimeout>;
+
+    // Assigned in the 'listening' callback, before any request can arrive.
+    // The server binds port 0 directly so the OS-assigned port is held from
+    // the moment it is known — no find-then-rebind race.
+    let redirectUri = '';
 
     const server = http.createServer(
       (req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -241,7 +213,34 @@ export async function runOAuthFlow(
       },
     );
 
-    server.listen(port, () => {
+    server.on('error', (err: Error) => {
+      clearTimeout(timeoutHandle);
+      server.close();
+      reject(
+        new Error(`Could not start the OAuth callback server: ${err.message}`),
+      );
+    });
+
+    server.listen(0, () => {
+      const addr = server.address();
+      if (!addr || typeof addr === 'string') {
+        clearTimeout(timeoutHandle);
+        server.close();
+        reject(new Error('Could not determine the OAuth callback port.'));
+        return;
+      }
+
+      redirectUri = `http://localhost:${addr.port}/callback`;
+
+      const authorizationUrl = new URL(AUTHORIZE_URL);
+      authorizationUrl.searchParams.set('client_id', clientId);
+      authorizationUrl.searchParams.set('redirect_uri', redirectUri);
+      authorizationUrl.searchParams.set('response_type', 'code');
+      authorizationUrl.searchParams.set('scope', SCOPES);
+      authorizationUrl.searchParams.set('state', state);
+      authorizationUrl.searchParams.set('code_challenge', codeChallenge);
+      authorizationUrl.searchParams.set('code_challenge_method', 'S256');
+
       console.log(
         chalk.cyan(
           '\nOpening your browser for beehiiv authorization...',

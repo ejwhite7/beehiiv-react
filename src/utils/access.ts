@@ -15,8 +15,11 @@ import type { PostAudience, SubscriptionTier, SubscriptionStatus } from '../type
  * Determines whether a subscriber can view content with the given audience setting.
  *
  * Rules:
- * - `PostAudience 'all'` — everyone can view (even non-subscribers).
+ * - `PostAudience 'all'` — everyone can view (even non-subscribers). This is
+ *   an SDK-only alias for public content; the beehiiv API never returns it.
  * - `PostAudience 'free'` — requires an **active** subscription (free or premium tier).
+ * - `PostAudience 'both'` — sent to both free and premium audiences; requires an
+ *   **active** subscription of either tier (same as `'free'`).
  * - `PostAudience 'premium'` — requires an **active premium** subscription only.
  *
  * A subscription is considered valid only when `status === 'active'`.
@@ -48,7 +51,9 @@ export function canViewContent(
   // Gated content requires an active subscription
   const isActive = status === 'active';
 
-  if (audience === 'free') {
+  // 'both' posts go to both the free and premium audiences, so any
+  // active subscriber can view them — same rule as 'free'.
+  if (audience === 'free' || audience === 'both') {
     return isActive;
   }
 
@@ -67,7 +72,8 @@ export function canViewContent(
  *
  * @example
  * ```ts
- * getAudienceLabel('all');     // 'Members Only'
+ * getAudienceLabel('all');     // 'Everyone'
+ * getAudienceLabel('both');    // 'Members Only'
  * getAudienceLabel('free');    // 'Free'
  * getAudienceLabel('premium'); // 'Premium'
  * ```
@@ -75,6 +81,8 @@ export function canViewContent(
 export function getAudienceLabel(audience: PostAudience): string {
   switch (audience) {
     case 'all':
+      return 'Everyone';
+    case 'both':
       return 'Members Only';
     case 'free':
       return 'Free';

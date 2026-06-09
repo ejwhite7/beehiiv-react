@@ -70,6 +70,28 @@ describe('canViewContent', () => {
     });
   });
 
+  describe('audience = "both"', () => {
+    it('returns true for active free subscriber', () => {
+      expect(canViewContent('free', 'active', 'both')).toBe(true);
+    });
+
+    it('returns true for active premium subscriber', () => {
+      expect(canViewContent('premium', 'active', 'both')).toBe(true);
+    });
+
+    it('returns false for inactive free subscriber', () => {
+      expect(canViewContent('free', 'inactive', 'both')).toBe(false);
+    });
+
+    it('returns false for pending subscriber', () => {
+      expect(canViewContent('free', 'pending', 'both')).toBe(false);
+    });
+
+    it('returns false for null tier and null status (non-subscriber)', () => {
+      expect(canViewContent(null, null, 'both')).toBe(false);
+    });
+  });
+
   describe('audience = "premium"', () => {
     it('returns true for active premium subscriber', () => {
       expect(canViewContent('premium', 'active', 'premium')).toBe(true);
@@ -102,8 +124,12 @@ describe('canViewContent', () => {
 });
 
 describe('getAudienceLabel', () => {
-  it('returns "Members Only" for "all"', () => {
-    expect(getAudienceLabel('all')).toBe('Members Only');
+  it('returns "Everyone" for "all"', () => {
+    expect(getAudienceLabel('all')).toBe('Everyone');
+  });
+
+  it('returns "Members Only" for "both"', () => {
+    expect(getAudienceLabel('both')).toBe('Members Only');
   });
 
   it('returns "Free" for "free"', () => {

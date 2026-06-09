@@ -110,8 +110,8 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
    * a new array literal on each render.
    */
   const expandKey = useMemo(
-    () => (expand ? JSON.stringify(expand) : ''),
-    [expand?.join(',')],
+    () => (expand && expand.length > 0 ? JSON.stringify(expand) : ''),
+    [expand],
   );
 
   const [posts, setPosts] = useState<PostInfo[]>([]);

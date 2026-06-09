@@ -9,6 +9,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import Handlebars from 'handlebars';
+import { writeFileWithConfirm } from './utils.js';
 import type { CustomFieldInfo, CustomFieldKind } from '../../types/custom-field.js';
 
 /** Data required to generate the custom field types file */
@@ -19,6 +20,8 @@ export interface CustomFieldGeneratorData {
   publicationName: string;
   /** The output directory to write the types file to */
   outputDir: string;
+  /** Skip the overwrite prompt (used by `sync`, whose job is regeneration) */
+  force?: boolean;
 }
 
 /** Extended field data with computed TypeScript type and camelCase name */
@@ -132,8 +135,6 @@ function mapKindToTsType(kind: CustomFieldKind, options?: string[]): string {
 export async function generateCustomFieldTypes(
   data: CustomFieldGeneratorData,
 ): Promise<void> {
-  const { default: chalk } = await import('chalk');
-
   const handlebarsInstance = Handlebars.create();
 
   handlebarsInstance.registerHelper('camelCase', (str: string) => {
@@ -183,8 +184,5 @@ export async function generateCustomFieldTypes(
     'beehiiv',
     'beehiiv-custom-fields.ts',
   );
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, output, 'utf-8');
-
-  console.log(chalk.green(`  Created ${outputPath}`));
+  await writeFileWithConfirm(outputPath, output, { force: data.force });
 }

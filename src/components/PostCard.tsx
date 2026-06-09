@@ -15,8 +15,8 @@ import type { PostInfo, PostAudience } from '../types/post.js';
 const AUDIENCE_LABELS: Record<PostAudience, string> = {
   free: 'Free',
   premium: 'Premium',
-  both: 'Everyone',
-  all: 'Members Only',
+  both: 'Members Only',
+  all: 'Everyone',
 };
 
 /**
@@ -154,11 +154,18 @@ export function PostCard(props: PostCardProps): React.JSX.Element {
     [post.audience],
   );
 
-  /** Pre-compute the formatted publish date */
-  const formattedPublishDate = useMemo(
-    () => (post.publish_date != null ? formatPublishDate(post.publish_date) : null),
+  /** Pre-compute the formatted publish date and its ISO equivalent */
+  const publishDate = useMemo(
+    () =>
+      post.publish_date != null
+        ? {
+            label: formatPublishDate(post.publish_date),
+            iso: new Date(post.publish_date * 1000).toISOString(),
+          }
+        : null,
     [post.publish_date],
   );
+  const formattedPublishDate = publishDate?.label ?? null;
 
   /**
    * Handle click events on the card.
@@ -254,11 +261,9 @@ export function PostCard(props: PostCardProps): React.JSX.Element {
       )}
 
       {/* Metadata */}
-      {showPublishDate && formattedPublishDate && (
+      {showPublishDate && publishDate && (
         <div className={metaClassName}>
-          <time dateTime={new Date((post.publish_date as number) * 1000).toISOString()}>
-            {formattedPublishDate}
-          </time>
+          <time dateTime={publishDate.iso}>{publishDate.label}</time>
         </div>
       )}
     </div>

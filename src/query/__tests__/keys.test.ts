@@ -140,12 +140,40 @@ describe('beehiivKeys', () => {
       expect(beehiivKeys.webhooks.all).toEqual(['beehiiv', 'webhooks']);
     });
 
-    it('.list() returns correct shape', () => {
+    it('.list() returns correct shape without options', () => {
       expect(beehiivKeys.webhooks.list()).toEqual([
         'beehiiv',
         'webhooks',
         'list',
+        {},
       ]);
+    });
+
+    it('.list(options) embeds the publication scope', () => {
+      expect(beehiivKeys.webhooks.list({ publicationId: 'pub_a' })).toEqual([
+        'beehiiv',
+        'webhooks',
+        'list',
+        { publicationId: 'pub_a' },
+      ]);
+    });
+
+    it('.list keys differ across publication scopes', () => {
+      expect(beehiivKeys.webhooks.list({ publicationId: 'pub_a' })).not.toEqual(
+        beehiivKeys.webhooks.list({ publicationId: 'pub_b' }),
+      );
+    });
+
+    it('.detail(id) stays a prefix of scoped detail keys', () => {
+      expect(beehiivKeys.webhooks.detail('ep_1')).toEqual([
+        'beehiiv',
+        'webhooks',
+        'detail',
+        'ep_1',
+      ]);
+      expect(
+        beehiivKeys.webhooks.detail('ep_1', { publicationId: 'pub_a' }),
+      ).toEqual(['beehiiv', 'webhooks', 'detail', 'ep_1', { publicationId: 'pub_a' }]);
     });
   });
 
@@ -157,12 +185,60 @@ describe('beehiivKeys', () => {
       expect(beehiivKeys.segments.all).toEqual(['beehiiv', 'segments']);
     });
 
-    it('.list() returns correct shape', () => {
+    it('.list() returns correct shape without options', () => {
       expect(beehiivKeys.segments.list()).toEqual([
         'beehiiv',
         'segments',
         'list',
+        {},
       ]);
+    });
+
+    it('.list(options) embeds filters so different filters get different keys', () => {
+      const dynamicKey = beehiivKeys.segments.list({ type: 'dynamic' });
+      const staticKey = beehiivKeys.segments.list({ type: 'static' });
+      expect(dynamicKey).toEqual([
+        'beehiiv',
+        'segments',
+        'list',
+        { type: 'dynamic' },
+      ]);
+      expect(dynamicKey).not.toEqual(staticKey);
+    });
+
+    it('.list(options) with equal filters produces equal keys', () => {
+      expect(beehiivKeys.segments.list({ type: 'dynamic', limit: 10 })).toEqual(
+        beehiivKeys.segments.list({ type: 'dynamic', limit: 10 }),
+      );
+    });
+
+    it('.detail and .results stay prefixes of their scoped keys', () => {
+      expect(beehiivKeys.segments.detail('seg_1')).toEqual([
+        'beehiiv',
+        'segments',
+        'detail',
+        'seg_1',
+      ]);
+      expect(
+        beehiivKeys.segments.detail('seg_1', { publicationId: 'pub_a' }),
+      ).toEqual(['beehiiv', 'segments', 'detail', 'seg_1', { publicationId: 'pub_a' }]);
+      expect(beehiivKeys.segments.results('seg_1')).toEqual([
+        'beehiiv',
+        'segments',
+        'results',
+        'seg_1',
+      ]);
+      expect(beehiivKeys.segments.results('seg_1', { page: 2 })).toEqual([
+        'beehiiv',
+        'segments',
+        'results',
+        'seg_1',
+        { page: 2 },
+      ]);
+      // Empty scope behaves like no scope
+      expect(beehiivKeys.segments.results('seg_1', {})).toEqual(
+        beehiivKeys.segments.results('seg_1'),
+      );
     });
   });
 
@@ -194,6 +270,29 @@ describe('beehiivKeys', () => {
         'list',
         { status: 'active' },
       ]);
+    });
+
+    it('.list(options) supports limit and publicationId so factory keys match hook keys', () => {
+      expect(
+        beehiivKeys.automations.list({ status: 'active', limit: 50, publicationId: 'pub_a' }),
+      ).toEqual([
+        'beehiiv',
+        'automations',
+        'list',
+        { status: 'active', limit: 50, publicationId: 'pub_a' },
+      ]);
+    });
+
+    it('.detail(id) stays a prefix of scoped detail keys', () => {
+      expect(beehiivKeys.automations.detail('aut_1')).toEqual([
+        'beehiiv',
+        'automations',
+        'detail',
+        'aut_1',
+      ]);
+      expect(
+        beehiivKeys.automations.detail('aut_1', { publicationId: 'pub_a' }),
+      ).toEqual(['beehiiv', 'automations', 'detail', 'aut_1', { publicationId: 'pub_a' }]);
     });
   });
 

@@ -256,11 +256,13 @@ When `beehiiv-react init --oauth` is used:
 | `npm run test:coverage` | Run vitest with V8 coverage |
 
 ### How tsup Works
-The `tsup.config.ts` defines four build entries:
-1. `src/index.ts` -> `dist/index.js` (ESM) + `dist/index.cjs` (CJS) + `dist/index.d.ts` (types)
-2. `src/query/index.ts` -> `dist/query/index.js` (ESM) + `dist/query/index.cjs` (CJS) + `dist/query/index.d.ts` (types)
-3. `src/server/index.ts` -> `dist/server/index.js` (ESM) + `dist/server/index.cjs` (CJS) + `dist/server/index.d.ts` (types)
+The `tsup.config.ts` defines four build entries (tsup's default extensions: `.js` = CJS, `.mjs` = ESM):
+1. `src/index.ts` -> `dist/index.js` (CJS) + `dist/index.mjs` (ESM) + `dist/index.d.ts`/`.d.mts` (types)
+2. `src/query/index.ts` -> `dist/query/index.js` (CJS) + `dist/query/index.mjs` (ESM) + `dist/query/index.d.ts`/`.d.mts` (types)
+3. `src/server/index.ts` -> `dist/server/index.js` (CJS) + `dist/server/index.mjs` (ESM) + `dist/server/index.d.ts`/`.d.mts` (types)
 4. `src/cli/index.ts` -> `dist/cli/index.js` (CJS with shebang)
+
+The `exports` map in `package.json` must match these extensions exactly: the `require` condition points at `.js` (CJS) and the `import` condition at `.mjs` (ESM), each with its matching `.d.ts`/`.d.mts` types entry. A mismatch here ships a broken package even though build and tests pass — verify with a `npm install <tarball>` + `require()`/`import()` smoke test when touching either file.
 
 React and react-dom are externalized from the library build. @tanstack/react-query is additionally externalized from the query build. CLI bundles all dependencies.
 

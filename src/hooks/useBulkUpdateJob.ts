@@ -2,7 +2,7 @@
  * Hook for polling a bulk subscription update job until completion.
  *
  * Periodically fetches the job status from the beehiiv API and stops
- * polling once the job reaches a terminal state ("completed" or "failed").
+ * polling once the job reaches a terminal state ("complete" or "failed").
  *
  * @module hooks/useBulkUpdateJob
  */
@@ -45,22 +45,29 @@ interface BulkUpdateJobState {
   error: Error | null;
 }
 
-/** Initial (idle) state before the first fetch */
-const INITIAL_STATE: BulkUpdateJobState = {
-  job: null,
-  isPolling: true,
-  error: null,
-};
+/**
+ * Builds the initial state for a polling cycle. `isPolling` is only
+ * `true` when there is actually a job to poll.
+ *
+ * @param jobId - The job ID about to be polled (may be empty)
+ */
+function initialState(jobId: string): BulkUpdateJobState {
+  return {
+    job: null,
+    isPolling: Boolean(jobId),
+    error: null,
+  };
+}
 
 /** Job statuses that indicate the job has finished processing */
 const TERMINAL_STATUSES = new Set<BulkSubscriptionUpdateJobStatus>([
-  'completed',
+  'complete',
   'failed',
 ]);
 
 /**
  * Hook that polls a bulk subscription update job until it reaches
- * a terminal status ("completed" or "failed").
+ * a terminal status ("complete" or "failed").
  *
  * Uses the nearest `<BeehiivProvider>` to resolve `apiUrl`, then fetches
  * `{apiUrl}/bulk_subscription_updates/{jobId}?publicationId={publicationId}`
@@ -89,7 +96,7 @@ const TERMINAL_STATUSES = new Set<BulkSubscriptionUpdateJobStatus>([
  *   return (
  *     <div>
  *       <p>Status: {job.status}</p>
- *       <p>Progress: {job.created + job.updated}/{job.total}</p>
+ *       {job.failure_reason && <p>Failed: {job.failure_reason}</p>}
  *       {isPolling && <p>Still processing...</p>}
  *     </div>
  *   );
@@ -102,7 +109,7 @@ export function useBulkUpdateJob(
   options?: UseBulkUpdateJobOptions,
 ): UseBulkUpdateJobReturn {
   const { apiUrl } = useBeehiiv();
-  const [state, setState] = useState<BulkUpdateJobState>(INITIAL_STATE);
+  const [state, setState] = useState<BulkUpdateJobState>(() => initialState(jobId));
 
   /** Resolved poll interval with default fallback */
   const pollInterval = options?.pollInterval ?? 2000;
@@ -110,16 +117,18 @@ export function useBulkUpdateJob(
   /** Ref to track the interval ID for cleanup */
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /** Ref to prevent state updates after unmount */
+  /** Ref to prevent state updates after unmount (mount-lifetime) */
   const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   /** Monotonically increasing fetch ID to discard stale responses */
   const fetchIdRef = useRef(0);
-
-  /** Reset state when jobId changes */
-  useEffect(() => {
-    setState({ job: null, isPolling: true, error: null });
-  }, [jobId]);
 
   /**
    * Fetch the current job status from the API.
@@ -154,7 +163,9 @@ export function useBulkUpdateJob(
       if (!mountedRef.current) return;
       if (currentFetchId !== fetchIdRef.current) return;
 
-      const isTerminal = TERMINAL_STATUSES.has(result.data.status);
+      const isTerminal =
+        result.data.status !== undefined &&
+        TERMINAL_STATUSES.has(result.data.status);
 
       setState({
         job: result.data,
@@ -183,24 +194,32 @@ export function useBulkUpdateJob(
   }, [apiUrl, publicationId, jobId]);
 
   /**
-   * Set up the polling interval on mount and clean up on unmount
-   * or when dependencies change.
+   * Set up the polling interval and clean up on unmount or when
+   * dependencies change. The state reset lives here (rather than in a
+   * separate jobId effect) so reset + interval setup happen atomically,
+   * with no window where an in-flight fetch can be silently dropped.
    */
   useEffect(() => {
-    mountedRef.current = true;
+    setState(initialState(jobId));
+
+    /* No job to poll — stay idle */
+    if (!jobId) {
+      return;
+    }
 
     /* Perform an immediate fetch, then set up the interval */
     void fetchJobStatus();
     intervalRef.current = setInterval(fetchJobStatus, pollInterval);
 
     return () => {
-      mountedRef.current = false;
+      /* Invalidate in-flight fetches for the old jobId */
+      fetchIdRef.current += 1;
       if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, [fetchJobStatus, pollInterval]);
+  }, [jobId, fetchJobStatus, pollInterval]);
 
   return {
     job: state.job,

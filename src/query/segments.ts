@@ -134,8 +134,15 @@ export function useSegmentsQuery(
     enabled = true,
   } = options;
 
+  const keyOptions = {
+    ...(type ? { type } : {}),
+    ...(status ? { status } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+    ...(publicationId ? { publicationId } : {}),
+  };
+
   return useQuery<SegmentsListResponse>({
-    queryKey: beehiivKeys.segments.list(),
+    queryKey: beehiivKeys.segments.list(keyOptions),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);
@@ -201,7 +208,7 @@ export function useSegmentQuery(
   const { publicationId, staleTime = 60_000, enabled = true } = options;
 
   return useQuery<SegmentDetailResponse>({
-    queryKey: beehiivKeys.segments.detail(id),
+    queryKey: beehiivKeys.segments.detail(id, publicationId ? { publicationId } : undefined),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);
@@ -271,8 +278,14 @@ export function useSegmentResultsQuery(
   const { apiUrl } = useBeehiivContext();
   const { publicationId, limit, page, staleTime = 60_000, enabled = true } = options;
 
+  const resultsScope = {
+    ...(publicationId ? { publicationId } : {}),
+    ...(limit !== undefined ? { limit } : {}),
+    ...(page !== undefined ? { page } : {}),
+  };
+
   return useQuery<SegmentResultsResponse>({
-    queryKey: beehiivKeys.segments.results(segmentId),
+    queryKey: beehiivKeys.segments.results(segmentId, resultsScope),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);

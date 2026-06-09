@@ -44,7 +44,23 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/** GET /api/beehiiv/subscribe?email=... — Look up a subscription by email */
+/**
+ * GET /api/beehiiv/subscribe?email=... — Look up a subscription by email
+ *
+ * ⚠️ SECURITY WARNING — READ BEFORE DEPLOYING TO PRODUCTION ⚠️
+ *
+ * As generated, this handler lets ANY visitor look up ANY email address
+ * and receive the full subscription record (status, tier, custom fields —
+ * potentially PII). That allows subscriber enumeration: an attacker can
+ * probe email addresses to learn who subscribes to your publication.
+ *
+ * Before production, protect this endpoint by at least one of:
+ *   - Restricting lookups to the authenticated user's own email via your
+ *     auth/session provider (see the TODO below)
+ *   - Adding rate limiting (e.g. Vercel WAF, upstash/ratelimit, middleware)
+ *   - Removing this GET handler if your app does not need client-side
+ *     subscription lookup
+ */
 export async function GET(req: NextRequest) {
   try {
     const email = req.nextUrl.searchParams.get('email');
@@ -55,6 +71,14 @@ export async function GET(req: NextRequest) {
         { status: 400 },
       );
     }
+
+    // TODO: add your auth check here so visitors can only look up their
+    // own subscription. Example with a session helper:
+    //
+    // const session = await getSession(req);
+    // if (!session || session.user.email !== email) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // }
 
     const subscription = await client.subscriptions.list({ email });
 

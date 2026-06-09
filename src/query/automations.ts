@@ -126,6 +126,7 @@ export function useAutomationsQuery(
   const keyOptions = {
     ...(status ? { status } : {}),
     ...(limit !== undefined ? { limit } : {}),
+    ...(publicationId ? { publicationId } : {}),
   };
 
   return useQuery<AutomationsListResponse>({
@@ -194,7 +195,7 @@ export function useAutomationQuery(
   const { publicationId, staleTime = 60_000, enabled = true } = options;
 
   return useQuery<AutomationDetailResponse>({
-    queryKey: beehiivKeys.automations.detail(id),
+    queryKey: beehiivKeys.automations.detail(id, publicationId ? { publicationId } : undefined),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);

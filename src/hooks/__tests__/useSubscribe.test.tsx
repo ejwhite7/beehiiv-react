@@ -58,6 +58,46 @@ describe('useSubscribe', () => {
     expect(result.current.error).toBeNull();
   });
 
+  it('keeps a stable subscribe identity across re-renders with inline options', () => {
+    const { result, rerender } = renderHook(
+      // A fresh options object every render, as callers typically write it
+      () => useSubscribe({ onSuccess: () => undefined }),
+      { wrapper: createWrapper() },
+    );
+
+    const firstSubscribe = result.current.subscribe;
+    rerender();
+    expect(result.current.subscribe).toBe(firstSubscribe);
+  });
+
+  it('invokes the latest onSuccess callback passed on a later render', async () => {
+    const firstOnSuccess = vi.fn();
+    const secondOnSuccess = vi.fn();
+
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: MOCK_SUBSCRIPTION }),
+    });
+
+    const { result, rerender } = renderHook(
+      ({ onSuccess }: { onSuccess: (s: unknown) => void }) =>
+        useSubscribe({ onSuccess }),
+      {
+        wrapper: createWrapper(),
+        initialProps: { onSuccess: firstOnSuccess },
+      },
+    );
+
+    rerender({ onSuccess: secondOnSuccess });
+
+    await act(async () => {
+      await result.current.subscribe({ email: 'user@example.com' });
+    });
+
+    expect(firstOnSuccess).not.toHaveBeenCalled();
+    expect(secondOnSuccess).toHaveBeenCalledWith(MOCK_SUBSCRIPTION);
+  });
+
   it('successfully subscribes and calls onSuccess', async () => {
     const onSuccess = vi.fn();
 

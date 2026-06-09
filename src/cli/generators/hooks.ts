@@ -8,6 +8,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import Handlebars from 'handlebars';
+import { writeFileWithConfirm } from './utils.js';
 
 /** Data required to generate the hooks file */
 export interface HookGeneratorData {
@@ -29,8 +30,6 @@ export interface HookGeneratorData {
 export async function generateSubscriberStatusHook(
   data: HookGeneratorData,
 ): Promise<void> {
-  const { default: chalk } = await import('chalk');
-
   const templatePath = path.resolve(
     __dirname,
     '..',
@@ -48,8 +47,5 @@ export async function generateSubscriberStatusHook(
     'hooks',
     'use-subscriber-status.ts',
   );
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, output, 'utf-8');
-
-  console.log(chalk.green(`  Created ${outputPath}`));
+  await writeFileWithConfirm(outputPath, output);
 }

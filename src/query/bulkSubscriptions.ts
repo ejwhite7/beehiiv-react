@@ -23,7 +23,6 @@ import type {
   BulkUpdateFieldsRequest,
   BulkUpdateFieldsResponse,
   BulkUpdateStatusRequest,
-  BulkUpdateStatusResponse,
 } from '../types/bulk-subscriptions.js';
 import type { AddTagsResponse } from '../client/endpoints/subscriptions.js';
 import { beehiivKeys } from './keys.js';
@@ -85,6 +84,11 @@ async function fetchJsonMutation<T>(
     throw new Error(message);
   }
 
+  /* Some endpoints (e.g. bulk status update) return 204 No Content */
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 }
 
@@ -124,7 +128,7 @@ export interface UseBulkSubscribeMutationOptions {
  * ```tsx
  * function BulkImportButton() {
  *   const mutation = useBulkSubscribeMutation({
- *     onSuccess: (res) => console.log(`Job ${res.job_id} started`),
+ *     onSuccess: (res) => console.log(`Import ${res.import_id} started`),
  *   });
  *
  *   return (
@@ -221,7 +225,8 @@ export interface UseBulkUpdateFieldsMutationOptions {
  * ```tsx
  * function BulkFieldUpdate() {
  *   const mutation = useBulkUpdateFieldsMutation({
- *     onSuccess: (res) => console.log(`Job ${res.job_id} started`),
+ *     onSuccess: (res) =>
+ *       console.log(`Update ${res.data.subscription_update_id} started`),
  *   });
  *
  *   return (
@@ -230,8 +235,10 @@ export interface UseBulkUpdateFieldsMutationOptions {
  *       onClick={() =>
  *         mutation.mutate({
  *           body: {
- *             subscription_ids: ['sub_1', 'sub_2'],
- *             fields: { tier: 'premium' },
+ *             subscriptions: [
+ *               { subscription_id: 'sub_1', tier: 'premium' },
+ *               { subscription_id: 'sub_2', tier: 'premium' },
+ *             ],
  *           },
  *         })
  *       }
@@ -297,7 +304,7 @@ export interface BulkUpdateStatusMutationVariables {
  */
 export interface UseBulkUpdateStatusMutationOptions {
   /** Callback fired after a successful bulk status update */
-  onSuccess?: (response: BulkUpdateStatusResponse) => void;
+  onSuccess?: () => void;
   /** Callback fired when the bulk status update request fails */
   onError?: (error: Error) => void;
 }
@@ -306,8 +313,9 @@ export interface UseBulkUpdateStatusMutationOptions {
  * Mutation hook for changing the status of multiple subscriptions at once.
  *
  * PUTs to `{apiUrl}/subscriptions` with an array of subscription IDs
- * and the new status. On success, the mutation automatically invalidates
- * all subscriber and bulk subscription update queries.
+ * and the new status. The API responds with 204 No Content, so the
+ * mutation resolves with no data. On success, the mutation automatically
+ * invalidates all subscriber and bulk subscription update queries.
  *
  * @param options - Optional `onSuccess` and `onError` callbacks
  * @returns A standard `UseMutationResult` for the bulk status update operation
@@ -316,7 +324,7 @@ export interface UseBulkUpdateStatusMutationOptions {
  * ```tsx
  * function BulkDeactivate() {
  *   const mutation = useBulkUpdateStatusMutation({
- *     onSuccess: (res) => console.log(`Job ${res.job_id} started`),
+ *     onSuccess: () => console.log('Bulk status update submitted'),
  *   });
  *
  *   return (
@@ -326,7 +334,7 @@ export interface UseBulkUpdateStatusMutationOptions {
  *         mutation.mutate({
  *           body: {
  *             subscription_ids: ['sub_1', 'sub_2'],
- *             status: 'inactive',
+ *             new_status: 'inactive',
  *           },
  *         })
  *       }
@@ -339,27 +347,19 @@ export interface UseBulkUpdateStatusMutationOptions {
  */
 export function useBulkUpdateStatusMutation(
   options?: UseBulkUpdateStatusMutationOptions,
-): UseMutationResult<
-  BulkUpdateStatusResponse,
-  Error,
-  BulkUpdateStatusMutationVariables
-> {
+): UseMutationResult<void, Error, BulkUpdateStatusMutationVariables> {
   const { apiUrl } = useBeehiivContext();
   const queryClient = useQueryClient();
 
-  return useMutation<
-    BulkUpdateStatusResponse,
-    Error,
-    BulkUpdateStatusMutationVariables
-  >({
+  return useMutation<void, Error, BulkUpdateStatusMutationVariables>({
     mutationFn: async (variables: BulkUpdateStatusMutationVariables) => {
-      return fetchJsonMutation<BulkUpdateStatusResponse>(
+      return fetchJsonMutation<void>(
         `${apiUrl}/subscriptions`,
         'PUT',
         variables.body,
       );
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       /* Invalidate subscriber and bulk update queries */
       void queryClient.invalidateQueries({
         queryKey: beehiivKeys.subscribers.all,
@@ -367,7 +367,7 @@ export function useBulkUpdateStatusMutation(
       void queryClient.invalidateQueries({
         queryKey: beehiivKeys.bulkSubscriptionUpdates.all,
       });
-      options?.onSuccess?.(data);
+      options?.onSuccess?.();
     },
     onError: (error) => {
       options?.onError?.(error);

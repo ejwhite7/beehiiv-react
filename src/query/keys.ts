@@ -47,6 +47,54 @@ export interface PublicationListKeyOptions {
 export interface AutomationListKeyOptions {
   /** Filter by automation status */
   status?: string;
+  /** Maximum results per page */
+  limit?: number;
+  /** Publication ID override (when not using the provider default) */
+  publicationId?: string;
+}
+
+/**
+ * Options used to scope a webhook list query.
+ */
+export interface WebhookListKeyOptions {
+  /** Maximum results per page */
+  limit?: number;
+  /** Publication ID override (when not using the provider default) */
+  publicationId?: string;
+}
+
+/**
+ * Options used to filter a paginated list of segments.
+ */
+export interface SegmentListKeyOptions {
+  /** Filter by segment type */
+  type?: string;
+  /** Filter by segment status */
+  status?: string;
+  /** Maximum results per page */
+  limit?: number;
+  /** Publication ID override (when not using the provider default) */
+  publicationId?: string;
+}
+
+/**
+ * Options used to scope a single-entity (detail) query.
+ */
+export interface DetailKeyOptions {
+  /** Publication ID override (when not using the provider default) */
+  publicationId?: string;
+}
+
+/**
+ * Options used to scope and paginate a segment results query.
+ */
+export interface SegmentResultsKeyOptions {
+  /** Publication ID override (when not using the provider default) */
+  publicationId?: string;
+  /** Maximum results per page */
+  limit?: number;
+  /** Page number to retrieve */
+  page?: number;
 }
 
 /**
@@ -196,21 +244,28 @@ export const beehiivKeys = {
     all: ['beehiiv', 'webhooks'] as const,
 
     /**
-     * Key for the full webhook list.
+     * Key for a filtered/scoped webhook list.
      *
+     * @param options - Optional filter/scope parameters
      * @returns A readonly query key tuple
      */
-    list: () =>
-      ['beehiiv', 'webhooks', 'list'] as const,
+    list: (options?: WebhookListKeyOptions) =>
+      ['beehiiv', 'webhooks', 'list', options ?? {}] as const,
 
     /**
      * Key for a single webhook by ID.
      *
+     * The scope element is only appended when a publication override is
+     * present, so `detail(id)` remains a fuzzy-match prefix of scoped keys.
+     *
      * @param id - The webhook endpoint identifier
+     * @param scope - Optional publication scope
      * @returns A readonly query key tuple
      */
-    detail: (id: string) =>
-      ['beehiiv', 'webhooks', 'detail', id] as const,
+    detail: (id: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'webhooks', 'detail', id, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'webhooks', 'detail', id] as const),
   },
 
   /**
@@ -221,30 +276,43 @@ export const beehiivKeys = {
     all: ['beehiiv', 'segments'] as const,
 
     /**
-     * Key for the full segment list.
+     * Key for a filtered/scoped segment list.
      *
+     * @param options - Optional filter/scope parameters
      * @returns A readonly query key tuple
      */
-    list: () =>
-      ['beehiiv', 'segments', 'list'] as const,
+    list: (options?: SegmentListKeyOptions) =>
+      ['beehiiv', 'segments', 'list', options ?? {}] as const,
 
     /**
      * Key for a single segment by ID.
      *
+     * The scope element is only appended when a publication override is
+     * present, so `detail(id)` remains a fuzzy-match prefix of scoped keys.
+     *
      * @param id - The segment identifier (starts with "seg_")
+     * @param scope - Optional publication scope
      * @returns A readonly query key tuple
      */
-    detail: (id: string) =>
-      ['beehiiv', 'segments', 'detail', id] as const,
+    detail: (id: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'segments', 'detail', id, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'segments', 'detail', id] as const),
 
     /**
      * Key for a segment's subscriber ID results.
      *
+     * The scope element is only appended when scope options are present,
+     * so `results(id)` remains a fuzzy-match prefix of scoped keys.
+     *
      * @param segmentId - The segment identifier (starts with "seg_")
+     * @param scope - Optional publication/pagination scope
      * @returns A readonly query key tuple
      */
-    results: (segmentId: string) =>
-      ['beehiiv', 'segments', 'results', segmentId] as const,
+    results: (segmentId: string, scope?: SegmentResultsKeyOptions) =>
+      scope && Object.keys(scope).length > 0
+        ? (['beehiiv', 'segments', 'results', segmentId, scope] as const)
+        : (['beehiiv', 'segments', 'results', segmentId] as const),
   },
 
   /**
@@ -266,11 +334,17 @@ export const beehiivKeys = {
     /**
      * Key for a single automation by ID.
      *
+     * The scope element is only appended when a publication override is
+     * present, so `detail(id)` remains a fuzzy-match prefix of scoped keys.
+     *
      * @param id - The automation identifier (starts with "aut_")
+     * @param scope - Optional publication scope
      * @returns A readonly query key tuple
      */
-    detail: (id: string) =>
-      ['beehiiv', 'automations', 'detail', id] as const,
+    detail: (id: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'automations', 'detail', id, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'automations', 'detail', id] as const),
   },
 
   /**

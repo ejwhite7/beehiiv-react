@@ -7,6 +7,8 @@
  * @module types/bulk-subscriptions
  */
 
+import type { CustomFieldValue } from './custom-field.js';
+
 // ---------------------------------------------------------------------------
 // Bulk Create Subscriptions
 // ---------------------------------------------------------------------------
@@ -27,7 +29,7 @@ export interface BulkCreateSubscriptionEntry {
   /** UTM campaign for attribution tracking */
   utm_campaign?: string;
   /** Custom field values to attach to the subscriber */
-  custom_fields?: Record<string, unknown>;
+  custom_fields?: CustomFieldValue[];
   /** Whether to send the publication's welcome email (default: true) */
   send_welcome_email?: boolean;
   /** Whether to reactivate an existing inactive subscription (default: false) */
@@ -47,22 +49,14 @@ export interface BulkCreateSubscriptionsRequest {
 /**
  * Response returned after submitting a bulk subscription creation request.
  *
- * The API processes the request asynchronously and returns a job ID
- * that can be polled for completion status.
+ * The API processes the request asynchronously and returns the ID of the
+ * import object created for the request.
  */
 export interface BulkCreateSubscriptionsResponse {
-  /** Unique identifier for the asynchronous bulk job */
-  job_id: string;
-  /** Current status of the bulk operation */
-  status: string;
-  /** Total number of subscriptions in the request */
-  total: number;
-  /** Number of subscriptions successfully created */
-  created: number;
-  /** Number of existing subscriptions that were updated */
-  updated: number;
-  /** Number of subscriptions that failed to process */
-  failed: number;
+  /** Human-readable result of the create request */
+  message: string;
+  /** The database ID of the import object created from the request */
+  import_id: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -73,37 +67,51 @@ export interface BulkCreateSubscriptionsResponse {
  * Possible states of a bulk subscription update job.
  *
  * Jobs transition through these states as the API processes the request:
- * `pending` -> `processing` -> `completed` | `failed`.
+ * `pending` -> `processing` -> `complete` | `failed`.
  */
 export type BulkSubscriptionUpdateJobStatus =
   | 'pending'
   | 'processing'
-  | 'completed'
+  | 'complete'
   | 'failed';
 
 /**
- * Represents a single bulk subscription update job.
+ * The kind of bulk update a job performs.
+ *
+ * `status` jobs come from the bulk status update endpoint; `bulk` jobs
+ * come from the bulk field update (bulk_actions) endpoint.
+ */
+export type BulkSubscriptionUpdateJobType = 'status' | 'bulk';
+
+/**
+ * Represents a single Subscription Update job.
  *
  * Returned by the list and get endpoints under
  * `/publications/{publicationId}/bulk_subscription_updates`.
+ * Mirrors the OpenAPI `BulkSubscriptionUpdates*ResponseData` schemas —
+ * every field is optional/nullable per the spec.
  */
 export interface BulkSubscriptionUpdateJob {
-  /** Unique identifier for the bulk update job */
-  id: string;
+  /** Unique identifier for the update object */
+  id?: string | null;
+  /** The type of update (status or bulk) */
+  type?: BulkSubscriptionUpdateJobType;
+  /** The parameters passed in for the update */
+  params?: string | null;
   /** Current processing status of the job */
-  status: BulkSubscriptionUpdateJobStatus;
-  /** Total number of subscriptions targeted by the job */
-  total: number;
-  /** Number of subscriptions successfully created */
-  created: number;
-  /** Number of subscriptions successfully updated */
-  updated: number;
-  /** Number of subscriptions that failed to process */
-  failed: number;
-  /** ISO 8601 timestamp when the job was created */
-  created_at: string;
-  /** ISO 8601 timestamp when the job completed (null if still processing) */
-  completed_at: string | null;
+  status?: BulkSubscriptionUpdateJobStatus;
+  /** The publication ID associated with this update */
+  publication_id?: string;
+  /** If the job as a whole fails, details the errors encountered */
+  failure_reason?: string | null;
+  /** Unix timestamp of the job's completion */
+  completed?: number | null;
+  /** Unix timestamp of the job's creation */
+  created?: number | null;
+  /** Unix timestamp of the job's last update */
+  updated?: number | null;
+  /** Errors encountered for individual updates within the job */
+  error_log?: string[] | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,25 +119,55 @@ export interface BulkSubscriptionUpdateJob {
 // ---------------------------------------------------------------------------
 
 /**
- * Request body for updating custom fields on multiple subscriptions at once.
+ * A custom field entry within a bulk subscription update.
+ *
+ * Setting `delete: true` removes the custom field entry from the
+ * subscription instead of updating its value.
+ */
+export interface BulkUpdateCustomFieldEntry {
+  /** The display name of the custom field */
+  name?: string | null;
+  /** The value to set for the custom field */
+  value?: CustomFieldValue['value'];
+  /** Whether to delete this custom field entry from the subscription */
+  delete?: boolean | null;
+}
+
+/**
+ * A single subscription entry within a bulk field update request.
+ */
+export interface BulkUpdateSubscriptionEntry {
+  /** The subscription ID to update */
+  subscription_id: string;
+  /** The tier to set on the subscription */
+  tier?: string;
+  /** The Stripe customer ID to set on the subscription */
+  stripe_customer_id?: string | null;
+  /** Whether to unsubscribe this subscription from the publication */
+  unsubscribe?: boolean | null;
+  /** Custom field updates to apply to the subscription */
+  custom_fields?: BulkUpdateCustomFieldEntry[] | null;
+}
+
+/**
+ * Request body for updating multiple subscriptions at once.
  *
  * Calls `PUT /publications/{publicationId}/subscriptions/bulk_actions`.
  */
 export interface BulkUpdateFieldsRequest {
-  /** Array of subscription IDs to update */
-  subscription_ids: string[];
-  /** Key-value map of fields to set on each subscription */
-  fields: Record<string, unknown>;
+  /** Array of per-subscription update entries */
+  subscriptions: BulkUpdateSubscriptionEntry[];
 }
 
 /**
  * Response returned after submitting a bulk field update request.
  */
 export interface BulkUpdateFieldsResponse {
-  /** Unique identifier for the asynchronous bulk job */
-  job_id: string;
-  /** Current status of the bulk operation */
-  status: string;
+  /** Wrapper object for the update job reference */
+  data: {
+    /** The ID of the Subscription Update object handling the update job */
+    subscription_update_id?: string | null;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -145,17 +183,7 @@ export interface BulkUpdateStatusRequest {
   /** Array of subscription IDs to update */
   subscription_ids: string[];
   /** The new status to apply to each subscription */
-  status: 'active' | 'inactive';
-}
-
-/**
- * Response returned after submitting a bulk status update request.
- */
-export interface BulkUpdateStatusResponse {
-  /** Unique identifier for the asynchronous bulk job */
-  job_id: string;
-  /** Current status of the bulk operation */
-  status: string;
+  new_status: 'active' | 'inactive';
 }
 
 // ---------------------------------------------------------------------------

@@ -97,6 +97,13 @@ This interactive wizard will:
 3. Fetch custom fields and generate TypeScript types
 4. Scaffold a `beehiiv.config.ts`, API routes, and server actions
 
+Re-running `init` prompts before overwriting any file you may have customized.
+
+> **Security note:** the generated `GET /api/beehiiv/subscribe` route looks up
+> subscriptions by email and, as scaffolded, is publicly accessible. Before
+> production, add an auth check or rate limiting (the generated file includes
+> a TODO with an example guard) so visitors can't enumerate your subscribers.
+
 ---
 
 ## CLI
@@ -360,7 +367,7 @@ import { usePosts, usePost } from 'beehiiv-react';
 
 // List posts — filter by audience and status
 const { posts, isLoading, hasMore, loadMore } = usePosts({
-  audience: 'free',   // 'free' | 'premium' | 'all'
+  audience: 'free',   // 'free' | 'premium' | 'both' | 'all'
   status: 'confirmed',
 });
 
@@ -427,8 +434,9 @@ const { canView, tier, isActive, isLoading } = useSubscriberAccess({
 
 The `canViewContent(tier, status, audience)` utility resolves subscriber access:
 
-- `'all'` audience: always accessible
+- `'all'` audience: always accessible (SDK-only alias for public content — the beehiiv API never returns it)
 - `'free'` audience: requires active subscription (any tier)
+- `'both'` audience: sent to both free and premium audiences — requires active subscription (any tier)
 - `'premium'` audience: requires active premium subscription
 
 ---
@@ -576,7 +584,8 @@ import { BeehiivClient } from 'beehiiv-react/server';
 
 const client = new BeehiivClient({ apiKey: '...', publicationId: '...' });
 
-const { data } = await client.bulkSubscriptions.create({
+// The API responds with { message, import_id }
+const { import_id } = await client.bulkSubscriptions.create({
   subscriptions: [
     { email: 'alice@example.com', utm_source: 'import' },
     { email: 'bob@example.com' },
@@ -587,16 +596,18 @@ const { data } = await client.bulkSubscriptions.create({
 ### Bulk Update Fields / Status (Server-Side)
 
 ```ts
-// Update custom fields in bulk
-await client.bulkSubscriptionUpdates.updateFields({
-  subscriber_ids: ['sub_1', 'sub_2'],
-  custom_fields: [{ name: 'plan', value: 'enterprise' }],
+// Update subscriptions in bulk — responds with { data: { subscription_update_id } }
+await client.bulkSubscriptionUpdates.bulkUpdateFields({
+  subscriptions: [
+    { subscription_id: 'sub_1', custom_fields: [{ name: 'plan', value: 'enterprise' }] },
+    { subscription_id: 'sub_2', tier: 'premium' },
+  ],
 });
 
-// Update subscription status in bulk
-await client.bulkSubscriptionUpdates.updateStatus({
-  subscriber_ids: ['sub_1', 'sub_2'],
-  status: 'active',
+// Update subscription status in bulk — the API responds with 204 No Content
+await client.bulkSubscriptionUpdates.bulkUpdateStatus({
+  subscription_ids: ['sub_1', 'sub_2'],
+  new_status: 'active',
 });
 ```
 
@@ -606,15 +617,18 @@ await client.bulkSubscriptionUpdates.updateStatus({
 import { useBulkUpdateJob } from 'beehiiv-react';
 
 function JobTracker({ jobId }: { jobId: string }) {
-  const { job, isComplete, progress } = useBulkUpdateJob({
-    jobId,
+  // Polls until the job status is 'complete' or 'failed'
+  const { job, isPolling, error } = useBulkUpdateJob('pub_abc', jobId, {
     pollInterval: 2000,
   });
+
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <div>
       <p>Status: {job?.status}</p>
-      <p>Progress: {Math.round(progress * 100)}%</p>
+      {job?.failure_reason && <p>Failed: {job.failure_reason}</p>}
+      {isPolling && <p>Still processing…</p>}
     </div>
   );
 }

@@ -23,24 +23,39 @@
     "access": "public",
     "provenance": true
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     },
     "./query": {
-      "types": "./dist/query/index.d.ts",
-      "import": "./dist/query/index.js",
-      "require": "./dist/query/index.cjs"
+      "import": {
+        "types": "./dist/query/index.d.mts",
+        "default": "./dist/query/index.mjs"
+      },
+      "require": {
+        "types": "./dist/query/index.d.ts",
+        "default": "./dist/query/index.js"
+      }
     },
     "./server": {
-      "types": "./dist/server/index.d.ts",
-      "import": "./dist/server/index.js",
-      "require": "./dist/server/index.cjs"
+      "import": {
+        "types": "./dist/server/index.d.mts",
+        "default": "./dist/server/index.mjs"
+      },
+      "require": {
+        "types": "./dist/server/index.d.ts",
+        "default": "./dist/server/index.js"
+      }
     }
   },
   "bin": {
@@ -58,9 +73,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "vitest run",
+    "test:pack": "node scripts/pack-smoke.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run build && npm run typecheck && npm run test",
+    "prepublishOnly": "npm run build && npm run typecheck && npm run test && npm run test:pack",
     "generate:types": "openapi-typescript src/types/beehiiv-api-spec.yaml -o src/types/beehiiv-api.generated.ts",
     "check:spec": "curl -sf https://files.buildwithfern.com/https://beehiiv.docs.buildwithfern.com/ce117ceb8170960e1daef3750597e88705645d547d7ee2fee49c5bebfd5c6b6d/assets/beehiiv-API-Specification.yaml -o /dev/null && echo \"beehiiv OpenAPI spec is available\" || (echo \"No beehiiv OpenAPI spec found\" && exit 1)"
   },

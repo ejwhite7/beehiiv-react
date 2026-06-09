@@ -164,6 +164,7 @@ export async function runSync(options: SyncOptions): Promise<void> {
     fields,
     publicationName,
     outputDir,
+    force: true,
   });
 
   // Report whether anything changed

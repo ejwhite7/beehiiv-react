@@ -10,6 +10,9 @@
 import React from 'react';
 import type { PostContent } from '../types/post.js';
 
+/** Module-level guard so the dev-only sanitization warning fires once per session. */
+let warnedAboutSanitization = false;
+
 /**
  * Props for the {@link PostContentRenderer} component.
  *
@@ -106,6 +109,15 @@ export function PostContentRenderer(props: PostContentRendererProps): React.JSX.
   // Get the raw HTML from the selected variant
   const rawHtml = tierData[variant] ?? '';
   const html = sanitizeHtml ? sanitizeHtml(rawHtml) : rawHtml;
+
+  if (process.env.NODE_ENV !== 'production' && !sanitizeHtml && rawHtml && !warnedAboutSanitization) {
+    warnedAboutSanitization = true;
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[beehiiv-react] PostContentRenderer is rendering API HTML without sanitization. ' +
+        'Pass a `sanitizeHtml` callback (e.g. DOMPurify.sanitize) to protect against XSS.',
+    );
+  }
 
   return (
     <div

@@ -101,8 +101,13 @@ describe('PostCard', () => {
       expect(screen.getByText('Premium')).toBeDefined();
     });
 
-    it('shows "Members Only" for all audience', () => {
+    it('shows "Everyone" for all audience', () => {
       render(<PostCard post={makePost({ audience: 'all' })} />);
+      expect(screen.getByText('Everyone')).toBeDefined();
+    });
+
+    it('shows "Members Only" for both audience', () => {
+      render(<PostCard post={makePost({ audience: 'both' })} />);
       expect(screen.getByText('Members Only')).toBeDefined();
     });
   });

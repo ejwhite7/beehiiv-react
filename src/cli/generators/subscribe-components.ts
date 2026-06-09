@@ -8,6 +8,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import Handlebars from 'handlebars';
+import { writeFileWithConfirm } from './utils.js';
 
 /** Data required to generate the subscribe component files */
 export interface SubscribeComponentsGeneratorData {
@@ -29,7 +30,6 @@ export interface SubscribeComponentsGeneratorData {
 export async function generateSubscribeComponents(
   data: SubscribeComponentsGeneratorData,
 ): Promise<void> {
-  const { default: chalk } = await import('chalk');
 
   const templates = [
     {
@@ -74,9 +74,6 @@ export async function generateSubscribeComponents(
     const template = Handlebars.compile(templateSource);
     const output = template({});
 
-    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-    fs.writeFileSync(outputPath, output, 'utf-8');
-
-    console.log(chalk.green(`  Created ${outputPath}`));
+    await writeFileWithConfirm(outputPath, output);
   }
 }

@@ -302,7 +302,7 @@ export async function runInit(options: InitOptions): Promise<void> {
   }
 
   if (features.serverActions) {
-    await generateServerActions({ outputDir });
+    await generateServerActions({ outputDir, publicationId: publication.id });
     generatedFiles.push(
       path.join(outputDir, 'lib', 'beehiiv', 'actions.ts'),
     );

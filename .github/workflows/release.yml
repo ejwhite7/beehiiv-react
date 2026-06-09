@@ -16,7 +16,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+      # Trusted publishing (OIDC) needs npm 11.5.1+; Node 20 bundles npm 10.
+      # No registry-url / auth token here: npm authenticates to npmjs.org via
+      # the workflow's OIDC identity, configured as a Trusted Publisher for
+      # this package (repo ejwhite7/beehiiv-react, workflow release.yml).
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
@@ -31,8 +35,6 @@ jobs:
             exit 1
           fi
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

@@ -198,3 +198,13 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: remove the request-generation effect cleanups and deferred-response tests, then revert Ralph state. No migration or persistent data change is involved.
 - BR-012 marked `passes: true`.
+
+## BR-013 iteration 1 - passed
+
+- Added synchronous positive-safe-integer validation for both requests-per-minute and maximum-concurrency scheduler limits.
+- Invalid zero, negative, fractional, non-finite, and unsafe-integer values now throw descriptive `RangeError` instances before a queue can be created.
+- Existing immediate dispatch, concurrency, spacing, rolling-window, error propagation, and FIFO coverage remains green.
+- Final evidence: lint passed, strict typecheck passed, 855 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: remove constructor validation and its invalid-input matrix, then revert Ralph state. No migration or persistent data change is involved.
+- BR-013 marked `passes: true`.

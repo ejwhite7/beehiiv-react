@@ -16,6 +16,30 @@ describe('RateLimiter', () => {
     vi.useRealTimers();
   });
 
+  it.each([0, -1, 1.5, Number.NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+    'rejects an invalid requestsPerMinute value synchronously: %s',
+    (requestsPerMinute) => {
+      expect(
+        () => new RateLimiter({ requestsPerMinute }),
+      ).toThrowError(
+        new RangeError(
+          'options.requestsPerMinute must be a positive safe integer',
+        ),
+      );
+    },
+  );
+
+  it.each([0, -1, 1.5, Number.NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
+    'rejects an invalid maxConcurrent value synchronously: %s',
+    (maxConcurrent) => {
+      expect(
+        () => new RateLimiter({ requestsPerMinute: 180, maxConcurrent }),
+      ).toThrowError(
+        new RangeError('options.maxConcurrent must be a positive safe integer'),
+      );
+    },
+  );
+
   it('should execute a single request immediately', async () => {
     const limiter = new RateLimiter({ requestsPerMinute: 60 });
     const fn = vi.fn().mockResolvedValue('result');

@@ -259,9 +259,13 @@
         "Invalid request and concurrency limits fail synchronously",
         "Valid rate and concurrency behavior remains covered"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "RateLimiter construction rejects zero, negative, fractional, non-finite, and unsafe-integer request and concurrency limits with synchronous RangeError failures.",
+        "Existing immediate dispatch, concurrency, spacing, rolling-window, error propagation, and FIFO tests remain green.",
+        "Full gate passed: lint, strict typecheck, 855 tests, dual ESM/CJS build, package dry-run, zero production vulnerabilities, and clean diff check."
+      ]
     },
     {
       "id": "BR-014",

@@ -145,6 +145,40 @@ describe('SubscriptionForm', () => {
 
       expect(mockSubscribe).toHaveBeenCalledWith(expect.objectContaining({ email: 'user@example.com' }));
     });
+
+    it('forwards the complete attribution and signup-control contract', async () => {
+      const user = userEvent.setup();
+      render(
+        <SubscriptionForm
+          utmSource="website"
+          utmMedium="cta"
+          utmChannel="web"
+          utmCampaign="launch"
+          utmTerm="newsletter"
+          utmContent="hero"
+          referringSite="https://example.com"
+          reactivateExisting
+          sendWelcomeEmail={false}
+        />,
+      );
+
+      await user.type(screen.getByLabelText('Email'), 'user@example.com');
+      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+
+      expect(mockSubscribe).toHaveBeenCalledWith({
+        email: 'user@example.com',
+        customFields: {},
+        utmSource: 'website',
+        utmMedium: 'cta',
+        utmChannel: 'web',
+        utmCampaign: 'launch',
+        utmTerm: 'newsletter',
+        utmContent: 'hero',
+        referringSite: 'https://example.com',
+        reactivateExisting: true,
+        sendWelcomeEmail: false,
+      });
+    });
   });
 
   // ---- Successful Submission ----

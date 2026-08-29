@@ -120,9 +120,15 @@
         "Reactivation, welcome email, and supported UTM fields are forwarded",
         "Form, hook, Query mutation, generated route, and client contract tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "Generated subscribe route validates and maps custom-field objects to Beehiiv name/value arrays",
+        "Form, useSubscribe, Query mutation, route, and Server Action forward the complete attribution and signup-control fields",
+        "Legacy reactivate input remains compatible while reactivateExisting is the explicit contract",
+        "Executed generated-route tests assert the exact Beehiiv client payload",
+        "Full gate passed: lint, typecheck, 816 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-007",

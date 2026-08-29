@@ -61,16 +61,24 @@ export interface SubscribeMutationVariables {
   customFields?: Record<string, unknown>;
   /** Whether to reactivate an existing inactive subscription */
   reactivate?: boolean;
+  /** Explicit alias for reactivating an existing inactive subscription */
+  reactivateExisting?: boolean;
+  /** Whether beehiiv should send its welcome email. Defaults to true. */
+  sendWelcomeEmail?: boolean;
   /** UTM source for attribution tracking */
   utmSource?: string;
   /** UTM medium for attribution tracking */
   utmMedium?: string;
+  /** UTM channel for attribution tracking */
+  utmChannel?: string;
   /** UTM campaign for attribution tracking */
   utmCampaign?: string;
   /** UTM term for attribution tracking */
   utmTerm?: string;
   /** UTM content for attribution tracking */
   utmContent?: string;
+  /** Referring site URL for attribution tracking */
+  referringSite?: string;
 }
 
 /**
@@ -126,12 +134,16 @@ export function useSubscribeMutation(
           publicationId,
           email: variables.email,
           customFields: variables.customFields,
-          reactivate: variables.reactivate,
+          reactivateExisting:
+            variables.reactivateExisting ?? variables.reactivate,
+          sendWelcomeEmail: variables.sendWelcomeEmail,
           utmSource: variables.utmSource,
           utmMedium: variables.utmMedium,
+          utmChannel: variables.utmChannel,
           utmCampaign: variables.utmCampaign,
           utmTerm: variables.utmTerm,
           utmContent: variables.utmContent,
+          referringSite: variables.referringSite,
         }),
       });
 

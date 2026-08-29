@@ -34,8 +34,11 @@ interface SubscribePayload {
   utmMedium?: string;
   utmChannel?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
   referringSite?: string;
   reactivateExisting?: boolean;
+  sendWelcomeEmail?: boolean;
 }
 
 /**
@@ -58,9 +61,11 @@ export async function subscribeAction(data: SubscribePayload) {
     utm_medium: data.utmMedium,
     utm_channel: data.utmChannel,
     utm_campaign: data.utmCampaign,
+    utm_term: data.utmTerm,
+    utm_content: data.utmContent,
     referring_site: data.referringSite,
     reactivate_existing: data.reactivateExisting,
-    send_welcome_email: true,
+    send_welcome_email: data.sendWelcomeEmail ?? true,
   });
 
   return response.data;

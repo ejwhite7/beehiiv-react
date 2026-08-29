@@ -20,6 +20,31 @@ const MAX_SIGNUPS_PER_MINUTE = 5;
 const MAX_TRACKED_CLIENTS = 10_000;
 const signupAttempts = new Map<string, number[]>();
 
+function toCustomFieldValues(
+  input: unknown,
+): CreateSubscriptionRequest['custom_fields'] | null | undefined {
+  if (input === undefined) return undefined;
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    return null;
+  }
+
+  const fields: NonNullable<CreateSubscriptionRequest['custom_fields']> = [];
+  for (const [name, value] of Object.entries(input)) {
+    const validValue =
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      (Array.isArray(value) &&
+        value.every((item) => typeof item === 'string'));
+    if (!validValue) return null;
+    fields.push({
+      name,
+      value: value as string | number | boolean | string[],
+    });
+  }
+  return fields;
+}
+
 /**
  * Basic per-instance abuse control for the intentionally public signup route.
  * Replace this with a durable distributed rate limiter and/or CAPTCHA check in
@@ -118,17 +143,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const customFields = toCustomFieldValues(body.customFields);
+    if (customFields === null) {
+      return NextResponse.json(
+        { error: 'Custom fields must contain supported scalar or string-list values.' },
+        { status: 400 },
+      );
+    }
+
     const subscriptionInput: CreateSubscriptionRequest = {
       email,
-      custom_fields: Array.isArray(body.customFields)
-        ? (body.customFields as CreateSubscriptionRequest['custom_fields'])
-        : undefined,
+      custom_fields: customFields,
       utm_source:
         typeof body.utmSource === 'string' ? body.utmSource : undefined,
       utm_medium:
         typeof body.utmMedium === 'string' ? body.utmMedium : undefined,
+      utm_channel:
+        typeof body.utmChannel === 'string' ? body.utmChannel : undefined,
       utm_campaign:
         typeof body.utmCampaign === 'string' ? body.utmCampaign : undefined,
+      utm_term:
+        typeof body.utmTerm === 'string' ? body.utmTerm : undefined,
+      utm_content:
+        typeof body.utmContent === 'string' ? body.utmContent : undefined,
+      referring_site:
+        typeof body.referringSite === 'string' ? body.referringSite : undefined,
       send_welcome_email:
         typeof body.sendWelcomeEmail === 'boolean'
           ? body.sendWelcomeEmail
@@ -136,7 +175,9 @@ export async function POST(req: NextRequest) {
       reactivate_existing:
         typeof body.reactivateExisting === 'boolean'
           ? body.reactivateExisting
-          : false,
+          : typeof body.reactivate === 'boolean'
+            ? body.reactivate
+            : false,
     };
     const subscription = await client.subscriptions.create(subscriptionInput);
 
@@ -236,8 +277,11 @@ interface SubscribePayload {
   utmMedium?: string;
   utmChannel?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
   referringSite?: string;
   reactivateExisting?: boolean;
+  sendWelcomeEmail?: boolean;
 }
 
 /**
@@ -260,9 +304,11 @@ export async function subscribeAction(data: SubscribePayload) {
     utm_medium: data.utmMedium,
     utm_channel: data.utmChannel,
     utm_campaign: data.utmCampaign,
+    utm_term: data.utmTerm,
+    utm_content: data.utmContent,
     referring_site: data.referringSite,
     reactivate_existing: data.reactivateExisting,
-    send_welcome_email: true,
+    send_welcome_email: data.sendWelcomeEmail ?? true,
   });
 
   return response.data;

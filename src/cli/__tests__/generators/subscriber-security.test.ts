@@ -302,7 +302,19 @@ describe('generated subscriber operation security', () => {
     expect(subscriptions.list).not.toHaveBeenCalled();
 
     const subscribeResponse = (await getAsyncExport(generatedSignupRoute, 'POST')(
-      publicSignupRequest({ email: 'reader@example.com' }),
+      publicSignupRequest({
+        email: 'reader@example.com',
+        customFields: { Company: 'Acme', Seats: 12, Topics: ['AI', 'Video'] },
+        reactivateExisting: true,
+        sendWelcomeEmail: false,
+        utmSource: 'website',
+        utmMedium: 'cta',
+        utmChannel: 'web',
+        utmCampaign: 'launch',
+        utmTerm: 'newsletter',
+        utmContent: 'hero',
+        referringSite: 'https://example.com',
+      }),
     )) as MockJsonResponse;
 
     expect(subscribeResponse.status).toBe(200);
@@ -310,8 +322,20 @@ describe('generated subscriber operation security', () => {
     expect(subscriptions.create).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'reader@example.com',
-        reactivate_existing: false,
-        send_welcome_email: true,
+        custom_fields: [
+          { name: 'Company', value: 'Acme' },
+          { name: 'Seats', value: 12 },
+          { name: 'Topics', value: ['AI', 'Video'] },
+        ],
+        reactivate_existing: true,
+        send_welcome_email: false,
+        utm_source: 'website',
+        utm_medium: 'cta',
+        utm_channel: 'web',
+        utm_campaign: 'launch',
+        utm_term: 'newsletter',
+        utm_content: 'hero',
+        referring_site: 'https://example.com',
       }),
     );
   });

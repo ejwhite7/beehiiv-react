@@ -182,7 +182,13 @@ describe('useSubscribeMutation', () => {
         customFields: { company: 'Acme' },
         utmSource: 'website',
         utmMedium: 'cta',
-        reactivate: true,
+        utmChannel: 'web',
+        utmCampaign: 'launch',
+        utmTerm: 'newsletter',
+        utmContent: 'hero',
+        referringSite: 'https://example.com',
+        reactivateExisting: true,
+        sendWelcomeEmail: false,
       });
     });
 
@@ -193,6 +199,12 @@ describe('useSubscribeMutation', () => {
     expect(body.customFields).toEqual({ company: 'Acme' });
     expect(body.utmSource).toBe('website');
     expect(body.utmMedium).toBe('cta');
-    expect(body.reactivate).toBe(true);
+    expect(body.utmChannel).toBe('web');
+    expect(body.utmCampaign).toBe('launch');
+    expect(body.utmTerm).toBe('newsletter');
+    expect(body.utmContent).toBe('hero');
+    expect(body.referringSite).toBe('https://example.com');
+    expect(body.reactivateExisting).toBe(true);
+    expect(body.sendWelcomeEmail).toBe(false);
   });
 });

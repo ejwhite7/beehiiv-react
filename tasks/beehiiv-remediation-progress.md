@@ -99,3 +99,15 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: restore the email GET handler to the subscribe template, remove the subscription root template/generator entry, revert nullable hook response types and contract tests. No migration or persistent data change is involved.
 - BR-005 marked `passes: true`.
+
+## BR-006 iteration 1 - passed
+
+- The generated subscribe route now validates custom-field values and converts the client object shape to Beehiiv's required `{ name, value }[]` wire format.
+- `SubscriptionForm`, `useSubscribe`, and the TanStack Query mutation now preserve UTM source, medium, channel, campaign, term, content, referring site, reactivation, and welcome-email controls.
+- `reactivateExisting` is the explicit field; the existing `reactivate` alias remains supported for compatibility.
+- Generated Server Actions now forward UTM term/content and caller-controlled welcome-email behavior while retaining the existing correct custom-field conversion.
+- Executable generated-route tests assert the exact client payload, including scalar/list custom fields and every supported attribution/control field; form, hook, Query, template, and endpoint tests also pass.
+- Final evidence: lint passed, strict typecheck passed, 816 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: revert the mutation field contracts, generated route conversion, Server Action fields, form propagation, tests/snapshots, and Ralph state. No migration or persistent data change is involved.
+- BR-006 marked `passes: true`.

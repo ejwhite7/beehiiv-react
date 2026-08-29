@@ -100,9 +100,15 @@
         "List and detail response envelopes match hook expectations",
         "Hook-to-generated-handler contract tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "Generated /subscribe is creation-only and /subscription handles fail-closed email lookup",
+        "Email and ID handlers both return one-record data envelopes, including null for no email match",
+        "React and TanStack Query hooks target the generated subscription root and ID paths",
+        "Executed generated-handler tests verify authorized email and ID envelope behavior",
+        "Full gate passed: lint, typecheck, 815 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-006",

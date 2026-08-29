@@ -90,6 +90,24 @@ describe('useSubscription', () => {
     );
   });
 
+  it('accepts the normalized null envelope when email has no match', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: null }),
+    });
+
+    const { result } = renderHook(
+      () => useSubscription({ email: 'missing@example.com' }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+    expect(result.current.subscription).toBeNull();
+    expect(result.current.error).toBeNull();
+  });
+
   it('skips fetch when enabled is false', () => {
     const { result } = renderHook(
       () => useSubscription({ email: 'user@example.com', enabled: false }),

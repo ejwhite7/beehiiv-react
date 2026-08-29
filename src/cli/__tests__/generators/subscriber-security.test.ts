@@ -171,7 +171,7 @@ describe('generated subscriber operation security', () => {
         'app',
         'api',
         'beehiiv',
-        'subscribe',
+        'subscription',
         'route.ts',
       ),
       'utf-8',
@@ -257,10 +257,21 @@ describe('generated subscriber operation security', () => {
     );
   });
 
-  it('executes the subscribe route, denying anonymous lookup while preserving public signup', async () => {
+  it('executes separate lookup and signup routes with matching contracts', async () => {
     await generateApiRoutes({ outputDir, publicationId: 'pub_security' });
 
-    const route = fs.readFileSync(
+    const lookupRoute = fs.readFileSync(
+      path.join(
+        outputDir,
+        'app',
+        'api',
+        'beehiiv',
+        'subscription',
+        'route.ts',
+      ),
+      'utf-8',
+    );
+    const signupRoute = fs.readFileSync(
       path.join(
         outputDir,
         'app',
@@ -272,12 +283,15 @@ describe('generated subscriber operation security', () => {
       'utf-8',
     );
     const { requireMap, subscriptions } = createRuntimeMocks();
-    const generatedRoute = executeGeneratedModule(route, requireMap);
+    const generatedLookupRoute = executeGeneratedModule(lookupRoute, requireMap);
+    const generatedSignupRoute = executeGeneratedModule(signupRoute, requireMap);
     const request = {
-      nextUrl: new URL('https://example.test/api/beehiiv/subscribe?email=victim%40example.com'),
+      nextUrl: new URL(
+        'https://example.test/api/beehiiv/subscription?email=victim%40example.com',
+      ),
     };
 
-    const lookupResponse = (await getAsyncExport(generatedRoute, 'GET')(
+    const lookupResponse = (await getAsyncExport(generatedLookupRoute, 'GET')(
       request,
     )) as MockJsonResponse;
 
@@ -287,7 +301,7 @@ describe('generated subscriber operation security', () => {
     });
     expect(subscriptions.list).not.toHaveBeenCalled();
 
-    const subscribeResponse = (await getAsyncExport(generatedRoute, 'POST')(
+    const subscribeResponse = (await getAsyncExport(generatedSignupRoute, 'POST')(
       publicSignupRequest({ email: 'reader@example.com' }),
     )) as MockJsonResponse;
 
@@ -300,6 +314,59 @@ describe('generated subscriber operation security', () => {
         send_welcome_email: true,
       }),
     );
+  });
+
+  it('normalizes authorized email and ID lookups to one-record envelopes', async () => {
+    await generateApiRoutes({ outputDir, publicationId: 'pub_security' });
+    const emailRoute = fs
+      .readFileSync(
+        path.join(
+          outputDir,
+          'app',
+          'api',
+          'beehiiv',
+          'subscription',
+          'route.ts',
+        ),
+        'utf-8',
+      )
+      .replace('return false;', 'return true;');
+    const idRoute = fs
+      .readFileSync(
+        path.join(
+          outputDir,
+          'app',
+          'api',
+          'beehiiv',
+          'subscription',
+          '[id]',
+          'route.ts',
+        ),
+        'utf-8',
+      )
+      .replace('return false;', 'return true;');
+    const { requireMap, subscriptions } = createRuntimeMocks();
+    subscriptions.list.mockResolvedValueOnce({
+      data: [{ id: 'sub_by_email', email: 'reader@example.com' }],
+    });
+
+    const emailResponse = (await getAsyncExport(
+      executeGeneratedModule(emailRoute, requireMap),
+      'GET',
+    )({
+      nextUrl: new URL(
+        'https://example.test/api/beehiiv/subscription?email=reader%40example.com',
+      ),
+    })) as MockJsonResponse;
+    const idResponse = (await getAsyncExport(
+      executeGeneratedModule(idRoute, requireMap),
+      'GET',
+    )({}, { params: Promise.resolve({ id: 'sub_existing' }) })) as MockJsonResponse;
+
+    expect(emailResponse.body).toMatchObject({
+      data: { id: 'sub_by_email', email: 'reader@example.com' },
+    });
+    expect(idResponse.body).toMatchObject({ data: { id: 'sub_existing' } });
   });
 
   it('bounds public signup bodies and rate limits repeated attempts', async () => {

@@ -169,16 +169,12 @@ describe('api-route.ts.hbs', () => {
     expect(output).toMatchSnapshot();
   });
 
-  it('includes the public POST and fail-closed GET handlers', () => {
+  it('includes only the public POST handler', () => {
     const template = compileTemplate('api-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
     expect(output).toContain('export async function POST');
-    expect(output).toContain('export async function GET');
-    expect(output).toMatch(
-      /async function isSubscriberLookupAuthorized[\s\S]*?return false;/,
-    );
-    expect(output).toContain("{ error: 'Unauthorized' }, { status: 401 }");
+    expect(output).not.toContain('export async function GET');
     expect(output).toContain('BeehiivClient');
     expect(output).toContain('BEEHIIV_API_KEY');
     expect(output).toContain('BEEHIIV_PUBLICATION_ID');
@@ -218,7 +214,7 @@ describe('api-route.ts.hbs', () => {
   });
 
   it('denies anonymous lookup before validation or subscriber enumeration', () => {
-    const template = compileTemplate('api-route.ts.hbs');
+    const template = compileTemplate('subscription-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
     const authorization = output.indexOf(

@@ -325,7 +325,7 @@ export interface UseSubscriptionQueryOptions {
 
 /** Response shape returned by the subscription endpoint. */
 interface SubscriptionDetailResponse {
-  data: SubscriptionInfo;
+  data: SubscriptionInfo | null;
 }
 
 /**
@@ -345,7 +345,7 @@ interface SubscriptionDetailResponse {
  * ```tsx
  * function Profile({ email }: { email: string }) {
  *   const { data } = useSubscriptionQuery(email);
- *   return <p>Status: {data?.data.status}</p>;
+ *   return <p>Status: {data?.data?.status}</p>;
  * }
  * ```
  */

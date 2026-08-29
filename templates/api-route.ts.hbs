@@ -52,20 +52,6 @@ async function isPublicSubscriptionAllowed(
   return true;
 }
 
-/**
- * Authorize access to subscriber data.
- *
- * This deliberately denies every request. Replace the body with a server-side
- * session and ownership check before enabling subscriber lookup. Never trust
- * the requested email address as proof of identity.
- */
-async function isSubscriberLookupAuthorized(
-  _req: NextRequest,
-  _email: string | null,
-): Promise<boolean> {
-  return false;
-}
-
 /** POST /api/beehiiv/subscribe — Create a new subscription */
 export async function POST(req: NextRequest) {
   try {
@@ -155,35 +141,6 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Subscription failed';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-/**
- * GET /api/beehiiv/subscribe?email=... — Look up a subscription by email.
- * Fails closed until isSubscriberLookupAuthorized is implemented above.
- */
-export async function GET(req: NextRequest) {
-  try {
-    const email = req.nextUrl.searchParams.get('email');
-
-    if (!(await isSubscriberLookupAuthorized(req, email))) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!email) {
-      return NextResponse.json(
-        { error: 'The "email" query parameter is required.' },
-        { status: 400 },
-      );
-    }
-
-    const subscription = await client.subscriptions.list({ email });
-
-    return NextResponse.json(subscription, { status: 200 });
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to fetch subscription';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

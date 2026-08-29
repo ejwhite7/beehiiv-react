@@ -87,3 +87,15 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: revert the public subscribe abuse controls, bulk authorization/validation, server type export, associated tests/snapshot, and Ralph state. No migration or persistent data change is involved.
 - BR-018 marked `passes: true`.
+
+## BR-005 iteration 1 - passed
+
+- Split the generated route responsibilities: `/subscribe` now handles public creation only, while `/subscription` handles fail-closed email lookup alongside the existing `/subscription/[id]` route.
+- Email lookup unwraps the list response to `{ data: SubscriptionInfo | null }`; ID lookup already returns the same one-record envelope.
+- `useSubscription` and `useSubscriptionQuery` both target the generated email/ID URLs and now type the nullable no-match envelope correctly.
+- Executable generated-module tests enable the authorization stubs in isolation and verify successful email and ID lookup envelopes; hook tests verify both URLs and null results.
+- The new `subscription-route.ts.hbs` is included in generated output and the published template package.
+- Final evidence: lint passed, strict typecheck passed, 815 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: restore the email GET handler to the subscribe template, remove the subscription root template/generator entry, revert nullable hook response types and contract tests. No migration or persistent data change is involved.
+- BR-005 marked `passes: true`.

@@ -101,6 +101,7 @@ export async function DELETE(
  * Each entry maps a template file name to its output directory path segment(s).
  */
 const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
+  { template: 'subscription-route.ts.hbs', outputPath: ['subscription'] },
   { template: 'posts-route.ts.hbs', outputPath: ['posts'] },
   { template: 'authors-route.ts.hbs', outputPath: ['authors'] },
   { template: 'tiers-route.ts.hbs', outputPath: ['tiers'] },
@@ -114,9 +115,10 @@ const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
  * Creates route files for:
  * 1. `{outputDir}/app/api/beehiiv/subscribe/route.ts` - POST endpoint for
  *    creating new subscriptions (from the `api-route.ts.hbs` template)
- * 2. `{outputDir}/app/api/beehiiv/subscription/[id]/route.ts` - fail-closed GET
- *    and DELETE endpoints (from inline template)
- * 3. `{outputDir}/app/api/beehiiv/posts/route.ts` - Posts list + detail
+ * 2. `{outputDir}/app/api/beehiiv/subscription/route.ts` - fail-closed email lookup
+ * 3. `{outputDir}/app/api/beehiiv/subscription/[id]/route.ts` - fail-closed ID
+ *    lookup and DELETE endpoints
+ * 4. `{outputDir}/app/api/beehiiv/posts/route.ts` - Posts list + detail
  * 4. `{outputDir}/app/api/beehiiv/authors/route.ts` - Authors list + detail
  * 5. `{outputDir}/app/api/beehiiv/tiers/route.ts` - Tiers list + detail
  * 6. `{outputDir}/app/api/beehiiv/engagements/route.ts` - Engagement metrics

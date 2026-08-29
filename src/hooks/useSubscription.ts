@@ -123,7 +123,9 @@ export function useSubscription(
         throw new Error(message);
       }
 
-      const result = (await response.json()) as { data: SubscriptionInfo };
+      const result = (await response.json()) as {
+        data: SubscriptionInfo | null;
+      };
 
       // Only update state if this is still the latest request
       if (currentFetchId === fetchIdRef.current) {

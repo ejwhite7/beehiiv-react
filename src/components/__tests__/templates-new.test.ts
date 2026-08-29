@@ -72,21 +72,35 @@ describe('posts-route.ts.hbs', () => {
     expect(output).not.toMatch(/from 'beehiiv-react'[^/]/);
   });
 
-  it('honours a publicationId query param on the slug branch', () => {
+  it('rejects caller-controlled publication and visibility parameters', () => {
     const template = compileTemplate('posts-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
-    // The slug lookup must read the per-request publicationId override, not
-    // only the build-time default.
-    expect(output).toContain("searchParams.get('publicationId')");
+    expect(output).toContain("'publicationId'");
+    expect(output).toContain("'status'");
+    expect(output).toContain("'audience'");
+    expect(output).toContain("'expand[]'");
+    expect(output).toContain("{ error: 'Unsupported public posts query' }");
+    expect(output).not.toContain("searchParams.get('publicationId')");
+    expect(output).not.toContain("searchParams.getAll('expand[]')");
   });
 
-  it('caches slug lookups to avoid rescanning on repeated/missed slugs', () => {
+  it('hard-codes confirmed free post filters', () => {
     const template = compileTemplate('posts-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
-    expect(output).toContain("from 'next/cache'");
-    expect(output).toContain('unstable_cache');
+    expect(output).toContain("status: 'confirmed'");
+    expect(output).toContain("audience: 'free'");
+  });
+
+  it('does not cache authorization-sensitive slug results', () => {
+    const template = compileTemplate('posts-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).not.toContain("from 'next/cache'");
+    expect(output).not.toContain('unstable_cache');
+    expect(output).toContain("post?.status === 'confirmed'");
+    expect(output).toContain("post.audience === 'free'");
   });
 });
 

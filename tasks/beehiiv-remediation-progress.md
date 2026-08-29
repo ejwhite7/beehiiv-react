@@ -37,3 +37,16 @@ Append-only execution ledger for the Ralph remediation loop.
 - Final evidence: lint passed, strict typecheck passed, 614 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
 - Rollback: revert the two subscriber templates, API route generator, associated tests/snapshot, and remove the behavioral security test. No migration or persistent data change is involved.
 - BR-001 marked `passes: true`.
+
+## BR-002 iteration 1 - passed
+
+- The generated public posts route rejects caller-controlled publication IDs, status, audience, and expansion parameters before any Beehiiv call.
+- Public list and slug requests are restricted to the configured publication and fixed `confirmed` plus `free` filters.
+- An adversarial pass found that cached slug results could outlive an audience/status change. Authorization-sensitive slug caching was removed.
+- Response-side guards filter inconsistent upstream list data and convert unexpected draft or premium slug records to `null`.
+- The shared slug scanner now supports an explicit audience filter without changing default behavior for existing callers.
+- Executable VM tests cover draft, premium, arbitrary expansion, camel-case and snake-case publication override probes; they also verify safe requests and inconsistent upstream responses.
+- Final evidence: lint passed, strict typecheck passed, 627 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: revert the posts route template, scanner audience option, and associated tests/snapshot. No migration or persistent data change is involved.
+- BR-002 marked `passes: true`.

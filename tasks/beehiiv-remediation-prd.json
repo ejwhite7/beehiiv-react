@@ -41,9 +41,15 @@
         "Draft, premium expansion, arbitrary expansion, and publication override probes fail",
         "Security regression tests cover the public route"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "Generated public route rejects caller-controlled status, audience, expansion, and publication parameters before Beehiiv calls",
+        "List and slug lookups use the configured publication with confirmed and free filters",
+        "Response-side guards remove unexpected draft or premium records, and authorization-sensitive slug results are not cached",
+        "Executable generated-route tests cover unsafe probes, upstream inconsistencies, and safe list/detail behavior",
+        "Full gate passed: lint, typecheck, 627 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-003",

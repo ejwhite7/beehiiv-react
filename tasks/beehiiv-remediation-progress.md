@@ -232,3 +232,13 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and query-bundle unused-import warnings remain assigned to BR-016.
 - Rollback: remove overload declarations, runtime guards, contract matrices, and Ralph state. No migration or persistent data change is involved.
 - BR-019 marked `passes: true`.
+
+## BR-015 iteration 1 - passed
+
+- Upgraded `vitest` and `@vitest/coverage-v8` together from 1.6.1 to 4.1.11, replacing the vulnerable Vite/Vite Node dependency chain.
+- The complete development audit fell from 2 critical, 1 high, and 2 moderate findings to one low-severity transitive esbuild development-server finding.
+- `npm audit fix` confirms there is no dependency-compatible automatic resolution for that remaining low finding; production dependencies continue to report zero vulnerabilities.
+- All 857 tests pass on Vitest 4 without behavioral changes. The new Vite config-loader warning and pre-existing React/build warnings remain assigned to BR-016.
+- Final evidence: lint passed, strict typecheck passed, 857 tests passed, build passed, package smoke passed, all four generated fixture builds passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Rollback: restore the prior Vitest and coverage versions plus lockfile, then revert Ralph state. No migration or persistent data change is involved.
+- BR-015 marked `passes: true`.

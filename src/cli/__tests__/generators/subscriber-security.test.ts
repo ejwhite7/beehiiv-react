@@ -98,6 +98,9 @@ function getAsyncExport(
 }
 
 function createRuntimeMocks() {
+  const bulkSubscriptions = {
+    create: vi.fn().mockResolvedValue({ data: { id: 'bulk_created' } }),
+  };
   const subscriptions = {
     create: vi.fn().mockResolvedValue({ data: { id: 'sub_created' } }),
     delete: vi.fn().mockResolvedValue(undefined),
@@ -115,6 +118,7 @@ function createRuntimeMocks() {
   );
 
   class MockBeehiivClient {
+    readonly bulkSubscriptions = bulkSubscriptions;
     readonly subscriptions = subscriptions;
   }
 
@@ -127,7 +131,19 @@ function createRuntimeMocks() {
       'beehiiv-react/server': { BeehiivClient: MockBeehiivClient },
       'next/server': { NextResponse: { json } },
     },
+    bulkSubscriptions,
     subscriptions,
+  };
+}
+
+function publicSignupRequest(body: unknown, ip = '203.0.113.10') {
+  const rawBody = JSON.stringify(body);
+  return {
+    headers: new Headers({
+      'content-length': String(rawBody.length),
+      'x-forwarded-for': ip,
+    }),
+    text: async () => rawBody,
   };
 }
 
@@ -271,9 +287,9 @@ describe('generated subscriber operation security', () => {
     });
     expect(subscriptions.list).not.toHaveBeenCalled();
 
-    const subscribeResponse = (await getAsyncExport(generatedRoute, 'POST')({
-      json: async () => ({ email: 'reader@example.com' }),
-    })) as MockJsonResponse;
+    const subscribeResponse = (await getAsyncExport(generatedRoute, 'POST')(
+      publicSignupRequest({ email: 'reader@example.com' }),
+    )) as MockJsonResponse;
 
     expect(subscribeResponse.status).toBe(200);
     expect(subscriptions.create).toHaveBeenCalledOnce();
@@ -284,6 +300,85 @@ describe('generated subscriber operation security', () => {
         send_welcome_email: true,
       }),
     );
+  });
+
+  it('bounds public signup bodies and rate limits repeated attempts', async () => {
+    await generateApiRoutes({ outputDir, publicationId: 'pub_security' });
+    const route = fs.readFileSync(
+      path.join(
+        outputDir,
+        'app',
+        'api',
+        'beehiiv',
+        'subscribe',
+        'route.ts',
+      ),
+      'utf-8',
+    );
+    const { requireMap, subscriptions } = createRuntimeMocks();
+    const generatedRoute = executeGeneratedModule(route, requireMap);
+    const post = getAsyncExport(generatedRoute, 'POST');
+
+    const oversizedResponse = (await post({
+      headers: new Headers({ 'content-length': '16385' }),
+      text: async () => {
+        throw new Error('oversized request body must not be read');
+      },
+    })) as MockJsonResponse;
+    expect(oversizedResponse.status).toBe(413);
+    expect(subscriptions.create).not.toHaveBeenCalled();
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const response = (await post(
+        publicSignupRequest(
+          { email: `reader-${attempt}@example.com` },
+          '203.0.113.20',
+        ),
+      )) as MockJsonResponse;
+      expect(response.status).toBe(200);
+    }
+    const limitedResponse = (await post(
+      publicSignupRequest(
+        { email: 'reader-limited@example.com' },
+        '203.0.113.20',
+      ),
+    )) as MockJsonResponse;
+    expect(limitedResponse.status).toBe(429);
+    expect(subscriptions.create).toHaveBeenCalledTimes(5);
+  });
+
+  it('denies anonymous bulk creation before reading or forwarding input', async () => {
+    await generateApiRoutes({ outputDir, publicationId: 'pub_security' });
+    const route = fs.readFileSync(
+      path.join(
+        outputDir,
+        'app',
+        'api',
+        'beehiiv',
+        'bulk-subscriptions',
+        'route.ts',
+      ),
+      'utf-8',
+    );
+    const { bulkSubscriptions, requireMap } = createRuntimeMocks();
+    const generatedRoute = executeGeneratedModule(route, requireMap);
+    const json = vi.fn().mockRejectedValue(
+      new Error('unauthorized request body must not be read'),
+    );
+
+    const response = (await getAsyncExport(generatedRoute, 'POST')({ json })) as
+      MockJsonResponse;
+
+    expect(route).toMatch(
+      /async function isBulkSubscriptionCreationAuthorized[\s\S]*?return false;/,
+    );
+    expect(route.indexOf('isBulkSubscriptionCreationAuthorized(req)')).toBeLessThan(
+      route.indexOf('await req.json()'),
+    );
+    expect(route).toContain('body.subscriptions.length > 100');
+    expect(response.status).toBe(401);
+    expect(json).not.toHaveBeenCalled();
+    expect(bulkSubscriptions.create).not.toHaveBeenCalled();
   });
 
   it('executes the subscription ID route and denies anonymous lookup and deletion before API calls', async () => {

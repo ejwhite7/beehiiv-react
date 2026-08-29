@@ -25,6 +25,7 @@
 // beehiiv API. Re-exported here so server code can import it without
 // pulling in the client-side "use client" entry point.
 export { BeehiivClient } from '../client/index.js';
+export type { CreateSubscriptionRequest } from '../types/subscription.js';
 
 // --- Endpoint Classes ---
 // Standalone endpoint classes for advanced usage patterns where consumers

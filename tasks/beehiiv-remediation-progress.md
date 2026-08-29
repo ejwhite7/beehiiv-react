@@ -75,3 +75,15 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: revert the shared policy flag/signature, PostInfo field, hook/component propagation, server export, generated templates, and tests/snapshots. No migration or persistent data change is involved.
 - BR-004 marked `passes: true`.
+
+## BR-018 iteration 1 - passed
+
+- Bulk subscription creation now has a deny-by-default administrator authorization hook and checks it before request-body parsing or Beehiiv access.
+- Authorized bulk input is constrained to 1 through 100 entries.
+- The intentionally public single-subscribe route rejects declared or parsed bodies above 16 KiB and validates trimmed email syntax and the 254-character limit.
+- Added a basic five-attempts-per-minute client limiter, a 10,000-client memory bound, `Retry-After`, and an explicit hook boundary for replacing the per-instance control with durable distributed rate limiting or CAPTCHA.
+- Executable generated-route tests prove oversized bodies are not read, the sixth same-client signup is rejected without a Beehiiv call, and anonymous bulk bodies are not read or forwarded.
+- Final evidence: lint passed, strict typecheck passed, 813 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: revert the public subscribe abuse controls, bulk authorization/validation, server type export, associated tests/snapshot, and Ralph state. No migration or persistent data change is involved.
+- BR-018 marked `passes: true`.

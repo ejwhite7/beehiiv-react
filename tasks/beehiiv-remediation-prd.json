@@ -277,9 +277,15 @@
         "Public single-subscribe input is bounded and supports an explicit application abuse-control hook",
         "Regression tests cover bulk abuse, oversized inputs, and bypass attempts"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "Generated bulk subscription creation denies by default before reading the request body",
+        "Public signup caps request bodies, validates bounded email input, and limits attempts per client",
+        "The in-memory limiter has a bounded client tracker and an explicit server-side replacement hook",
+        "Behavioral generated-route tests cover anonymous bulk input, oversized bodies, repeated attempts, and Beehiiv call suppression",
+        "Full gate passed: lint, typecheck, 813 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-019",

@@ -200,6 +200,23 @@ describe('api-route.ts.hbs', () => {
     expect(output).not.toContain('{ data: subscription }');
   });
 
+  it('bounds public input and invokes the abuse-control hook before create', () => {
+    const template = compileTemplate('api-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    const abuseCheck = output.indexOf(
+      'if (!(await isPublicSubscriptionAllowed(req, email)))',
+    );
+    expect(output).toContain('MAX_SIGNUP_BODY_BYTES');
+    expect(output).toContain('MAX_SIGNUPS_PER_MINUTE');
+    expect(output).toContain('MAX_TRACKED_CLIENTS');
+    expect(output).toContain("{ status: 429, headers: { 'Retry-After': '60' } }");
+    expect(abuseCheck).toBeGreaterThan(-1);
+    expect(output.indexOf('client.subscriptions.create')).toBeGreaterThan(
+      abuseCheck,
+    );
+  });
+
   it('denies anonymous lookup before validation or subscriber enumeration', () => {
     const template = compileTemplate('api-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });

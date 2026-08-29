@@ -90,7 +90,7 @@ function executeRoute(templateName?: string) {
   const generatedModule = { exports: {} as GeneratedModule };
   const modules: Readonly<Record<string, unknown>> = {
     'beehiiv-react/server': {
-      BeehiivClient: MockBeehiivClient,
+      createBeehiivClient: () => new MockBeehiivClient(),
       canViewContent,
       fetchPostBySlug,
     },

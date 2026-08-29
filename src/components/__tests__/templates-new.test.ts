@@ -53,8 +53,8 @@ describe('posts-route.ts.hbs', () => {
     expect(output).not.toContain('cursor');
     expect(output).toContain('client.posts.list');
     expect(output).toContain('pagination');
-    expect(output).toContain('BeehiivClient');
-    expect(output).toContain('BEEHIIV_API_KEY');
+    expect(output).toContain('createBeehiivClient');
+    expect(output).not.toContain('BEEHIIV_API_KEY');
   });
 
   it('embeds the publication ID', () => {
@@ -64,7 +64,7 @@ describe('posts-route.ts.hbs', () => {
     expect(output).toContain('pub_loadmore');
   });
 
-  it('imports BeehiivClient from beehiiv-react/server', () => {
+  it('imports the shared server client factory', () => {
     const template = compileTemplate('posts-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 

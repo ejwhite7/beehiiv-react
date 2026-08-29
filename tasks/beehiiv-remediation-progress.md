@@ -136,3 +136,16 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: remove the author/tier detail templates and generator entries, restore list/detail query multiplexing and top-level pagination reads, restore the underscore bulk URL, and revert tests/Ralph state. No migration or persistent data change is involved.
 - BR-008 marked `passes: true`.
+
+## BR-009 iteration 1 - passed
+
+- `createBeehiivClient` now resolves explicit credentials first, then `BEEHIIV_API_KEY`, then the `BEEHIIV_ACCESS_TOKEN` written by OAuth init.
+- Exported the shared resolver from `beehiiv-react/server` and moved every generated route, Server Action, and blog artifact onto the shared client factory.
+- Verified that an OAuth-only environment sends the stored access token as the Beehiiv Authorization bearer credential.
+- Added an end-to-end OAuth init smoke that authenticates, fetches publications and fields, generates routes/actions/blog files, and verifies `.env.local` plus every generated server import.
+- The first smoke run exposed invalid Handlebars parsing of JSX inline-style braces in the blog index. The template now uses typed style constants and the complete OAuth scaffold succeeds.
+- Updated executable route mocks and template snapshots for the shared factory contract.
+- Final evidence: lint passed, strict typecheck passed, 826 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: restore direct `BeehiivClient` construction in generated templates, remove OAuth fallback/resolver and the scaffold smoke, restore prior snapshots/mocks, and revert Ralph state. No migration or persistent data change is involved.
+- BR-009 marked `passes: true`.

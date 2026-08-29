@@ -69,7 +69,7 @@ function executeGeneratedRoute(
     require: (specifier: string) => {
       if (specifier === 'next/server') return { NextResponse: { json } };
       if (specifier === 'beehiiv-react/server') {
-        return { BeehiivClient: beehiivClient };
+        return { createBeehiivClient: () => new beehiivClient() };
       }
       throw new Error(`Unexpected generated module import: ${specifier}`);
     },

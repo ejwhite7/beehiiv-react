@@ -4,10 +4,9 @@
  * Located at: app/api/beehiiv/tiers/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react/server';
+import { createBeehiivClient } from 'beehiiv-react/server';
 
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
 });
 

@@ -41,7 +41,7 @@ exports[`blog-post-page.tsx.hbs > generates the blog post detail page 1`] = `
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import {
-  BeehiivClient,
+  createBeehiivClient,
   fetchPostBySlug,
   fetchAllPostSlugs,
   generatePostMetadata,
@@ -57,8 +57,7 @@ const PUBLICATION_ID =
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 function getClient() {
-  return new BeehiivClient({
-    apiKey: process.env.BEEHIIV_API_KEY!,
+  return createBeehiivClient({
     publicationId: PUBLICATION_ID,
   });
 }
@@ -167,7 +166,7 @@ exports[`blog-sitemap.ts.hbs > generates the sitemap route 1`] = `
  * \`robots.txt\` or root sitemap index.
  */
 import type { MetadataRoute } from 'next';
-import { BeehiivClient, fetchAllPosts } from 'beehiiv-react/server';
+import { createBeehiivClient, fetchAllPosts } from 'beehiiv-react/server';
 
 export const revalidate = 3600;
 
@@ -176,8 +175,7 @@ const PUBLICATION_ID =
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const client = new BeehiivClient({
-    apiKey: process.env.BEEHIIV_API_KEY!,
+  const client = createBeehiivClient({
     publicationId: PUBLICATION_ID,
   });
 
@@ -217,7 +215,7 @@ exports[`posts-route.ts.hbs > generates a valid Next.js posts API route 1`] = `
  */
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  BeehiivClient,
+  createBeehiivClient,
   canViewContent,
   fetchPostBySlug,
 } from 'beehiiv-react/server';
@@ -225,8 +223,7 @@ import {
 const DEFAULT_PUBLICATION_ID =
   process.env.BEEHIIV_PUBLICATION_ID ?? 'pub_posts123';
 
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: DEFAULT_PUBLICATION_ID,
 });
 

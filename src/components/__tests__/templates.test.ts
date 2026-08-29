@@ -175,12 +175,12 @@ describe('api-route.ts.hbs', () => {
 
     expect(output).toContain('export async function POST');
     expect(output).not.toContain('export async function GET');
-    expect(output).toContain('BeehiivClient');
-    expect(output).toContain('BEEHIIV_API_KEY');
+    expect(output).toContain('createBeehiivClient');
+    expect(output).not.toContain('BEEHIIV_API_KEY');
     expect(output).toContain('BEEHIIV_PUBLICATION_ID');
   });
 
-  it('imports BeehiivClient from beehiiv-react/server', () => {
+  it('imports the shared server client factory', () => {
     const template = compileTemplate('api-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
@@ -253,8 +253,8 @@ describe('server-action.ts.hbs', () => {
     expect(output).toContain('subscribeAction');
     expect(output).toContain('unsubscribeAction');
     expect(output).toContain('enrichSubscriptionAction');
-    expect(output).toContain('BeehiivClient');
-    expect(output).toContain('BEEHIIV_API_KEY');
+    expect(output).toContain('createBeehiivClient');
+    expect(output).not.toContain('BEEHIIV_API_KEY');
   });
 
   it('fails existing-subscriber mutations closed before calling beehiiv', () => {
@@ -280,7 +280,7 @@ describe('server-action.ts.hbs', () => {
     expect(deletion).toBeGreaterThan(deleteAuthorization);
   });
 
-  it('imports BeehiivClient from beehiiv-react/server', () => {
+  it('imports the shared server client factory', () => {
     const template = compileTemplate('server-action.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 

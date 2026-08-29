@@ -29,15 +29,14 @@ const SUBSCRIPTION_ID_ROUTE_TEMPLATE = `/**
  * Located at: app/api/beehiiv/subscription/[id]/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react/server';
+import { createBeehiivClient } from 'beehiiv-react/server';
 import beehiivConfig from '@/beehiiv.config';
 
 /**
- * Initialize the beehiiv client using the server-side API key.
- * BEEHIIV_API_KEY must never be exposed to the client.
+ * Initialize the beehiiv client using a server-side API key or OAuth token.
+ * Credentials must never be exposed to the client.
  */
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: beehiivConfig.publicationId,
 });
 

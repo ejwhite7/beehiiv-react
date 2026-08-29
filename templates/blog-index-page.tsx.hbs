@@ -6,7 +6,7 @@
  * Edit freely; re-running `beehiiv-react init` will prompt before overwriting.
  */
 import Link from 'next/link';
-import { BeehiivClient, fetchPosts } from 'beehiiv-react/server';
+import { createBeehiivClient, fetchPosts } from 'beehiiv-react/server';
 import { PostCard } from 'beehiiv-react';
 
 export const revalidate = 300;
@@ -20,10 +20,11 @@ export const metadata = {
 };
 
 export default async function BlogIndexPage() {
-  const client = new BeehiivClient({
-    apiKey: process.env.BEEHIIV_API_KEY!,
+  const client = createBeehiivClient({
     publicationId: PUBLICATION_ID,
   });
+  const listStyle = { listStyle: 'none', padding: 0 } as const;
+  const linkStyle = { textDecoration: 'none', color: 'inherit' } as const;
 
   const posts = await fetchPosts(client, PUBLICATION_ID, {
     status: 'confirmed',
@@ -40,10 +41,10 @@ export default async function BlogIndexPage() {
         <p>{{blogDescription}}</p>
       </header>
 
-      <ul className="beehiiv-blog-list" style={{ listStyle: 'none', padding: 0 }}>
+      <ul className="beehiiv-blog-list" style={listStyle}>
         {posts.map((post) => (
           <li key={post.id}>
-            <Link href={`/{{routePrefix}}/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link href={`/{{routePrefix}}/${post.slug}`} style={linkStyle}>
               <PostCard post={post} />
             </Link>
           </li>

@@ -10,7 +10,7 @@
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import {
-  BeehiivClient,
+  createBeehiivClient,
   fetchPostBySlug,
   fetchAllPostSlugs,
   generatePostMetadata,
@@ -26,8 +26,7 @@ const PUBLICATION_ID =
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 function getClient() {
-  return new BeehiivClient({
-    apiKey: process.env.BEEHIIV_API_KEY!,
+  return createBeehiivClient({
     publicationId: PUBLICATION_ID,
   });
 }

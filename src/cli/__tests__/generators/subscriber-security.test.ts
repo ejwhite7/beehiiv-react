@@ -128,7 +128,9 @@ function createRuntimeMocks() {
         __esModule: true,
         default: { publicationId: 'pub_security' },
       },
-      'beehiiv-react/server': { BeehiivClient: MockBeehiivClient },
+      'beehiiv-react/server': {
+        createBeehiivClient: () => new MockBeehiivClient(),
+      },
       'next/server': { NextResponse: { json } },
     },
     bulkSubscriptions,

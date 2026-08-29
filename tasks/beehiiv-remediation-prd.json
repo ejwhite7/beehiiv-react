@@ -181,9 +181,16 @@
         "Credential selection is shared by generated server code",
         "OAuth-mode scaffold smoke tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "createBeehiivClient resolves BEEHIIV_ACCESS_TOKEN when no API key is configured",
+        "OAuth access tokens are verified as the actual Beehiiv Bearer header",
+        "All generated routes, actions, and blog files use the shared credential-aware server factory",
+        "OAuth init smoke generates every selected feature and persists BEEHIIV_ACCESS_TOKEN",
+        "OAuth scaffold smoke exposed and fixed invalid Handlebars parsing in the blog index template",
+        "Full gate passed: lint, typecheck, 826 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-010",

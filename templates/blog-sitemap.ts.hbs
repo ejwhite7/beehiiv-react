@@ -8,7 +8,7 @@
  * `robots.txt` or root sitemap index.
  */
 import type { MetadataRoute } from 'next';
-import { BeehiivClient, fetchAllPosts } from 'beehiiv-react/server';
+import { createBeehiivClient, fetchAllPosts } from 'beehiiv-react/server';
 
 export const revalidate = 3600;
 
@@ -17,8 +17,7 @@ const PUBLICATION_ID =
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const client = new BeehiivClient({
-    apiKey: process.env.BEEHIIV_API_KEY!,
+  const client = createBeehiivClient({
     publicationId: PUBLICATION_ID,
   });
 

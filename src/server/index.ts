@@ -38,9 +38,8 @@ export { AutomationsEndpoint } from '../client/endpoints/automations.js';
 export { ReferralsEndpoint } from '../client/endpoints/referrals.js';
 
 // --- Server Helpers ---
-// Factory function that reads BEEHIIV_API_KEY from process.env and returns
-// a fully configured BeehiivClient instance.
-export { createBeehiivClient } from './client.js';
+// Shared credential resolver and client factory for API-key and OAuth modes.
+export { createBeehiivClient, resolveBeehiivAuthToken } from './client.js';
 
 // --- Data Fetchers ---
 // Pure async functions that accept a BeehiivClient and return unwrapped

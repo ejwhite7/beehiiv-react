@@ -162,3 +162,15 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: restore unconditional subscribe component generation and the action-only CTA template, remove the feature matrix, restore snapshots, and revert Ralph state. No migration or persistent data change is involved.
 - BR-010 marked `passes: true`.
+
+## BR-020 iteration 1 - passed
+
+- `usePostAccess` now records the post ID associated with resolved data and requires it to match the current request before granting access.
+- Starting a new request clears prior post data and its grant; failures also clear both rather than leaving an earlier public post authorized.
+- Disabled mode and empty post IDs invalidate in-flight work, clear post state, and always deny access.
+- Effect cleanup advances the fetch generation so stale responses cannot update state after an ID, enabled-state, or lifecycle change.
+- Added hook regressions for successful resolution, empty responses, a failure after a prior grant, disablement, empty IDs, and an old success racing a newer empty result.
+- Final evidence: lint passed, strict typecheck passed, 836 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: remove resolved-post identity tracking and the hook regressions, restore the prior effect and state retention behavior, and revert Ralph state. No migration or persistent data change is involved.
+- BR-020 marked `passes: true`.

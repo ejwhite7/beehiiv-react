@@ -349,9 +349,15 @@
         "Missing, failed, disabled, or stale post fetches never produce an access grant",
         "Post access error and empty-state regression tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "Access grants are tied to the currently requested post ID",
+        "Post data and grants clear immediately on ID changes, failures, disablement, and empty IDs",
+        "Effect cleanup invalidates in-flight requests before stale responses can update state",
+        "Regressions cover successful grants, empty responses, failures after grants, disabled and empty IDs, and stale success races",
+        "Full gate passed: lint, typecheck, 836 tests, build, package smoke, and production audit"
+      ]
     }
   ]
 }

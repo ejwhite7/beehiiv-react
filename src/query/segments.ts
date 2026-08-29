@@ -124,7 +124,7 @@ interface SegmentsListResponse {
 export function useSegmentsQuery(
   options: UseSegmentsQueryOptions = {},
 ): UseQueryResult<SegmentsListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
     publicationId,
     type,
@@ -133,12 +133,13 @@ export function useSegmentsQuery(
     staleTime = 60_000,
     enabled = true,
   } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   const keyOptions = {
     ...(type ? { type } : {}),
     ...(status ? { status } : {}),
     ...(limit !== undefined ? { limit } : {}),
-    ...(publicationId ? { publicationId } : {}),
+    publicationId: resolvedPublicationId,
   };
 
   return useQuery<SegmentsListResponse>({
@@ -204,11 +205,14 @@ export function useSegmentQuery(
   id: string,
   options: UseSegmentQueryOptions = {},
 ): UseQueryResult<SegmentDetailResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<SegmentDetailResponse>({
-    queryKey: beehiivKeys.segments.detail(id, publicationId ? { publicationId } : undefined),
+    queryKey: beehiivKeys.segments.detail(id, {
+      publicationId: resolvedPublicationId,
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);
@@ -275,11 +279,12 @@ export function useSegmentResultsQuery(
   segmentId: string,
   options: UseSegmentResultsQueryOptions = {},
 ): UseQueryResult<SegmentResultsResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, limit, page, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   const resultsScope = {
-    ...(publicationId ? { publicationId } : {}),
+    publicationId: resolvedPublicationId,
     ...(limit !== undefined ? { limit } : {}),
     ...(page !== undefined ? { page } : {}),
   };

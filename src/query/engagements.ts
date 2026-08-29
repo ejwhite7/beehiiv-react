@@ -119,7 +119,7 @@ interface EngagementsResponse {
 export function useEngagementsQuery(
   options: UseEngagementsQueryOptions,
 ): UseQueryResult<EngagementsResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
     publicationId,
     start_date,
@@ -128,9 +128,15 @@ export function useEngagementsQuery(
     staleTime = 60_000,
     enabled = true,
   } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<EngagementsResponse>({
-    queryKey: beehiivKeys.engagements.list({ start_date, end_date }),
+    queryKey: beehiivKeys.engagements.list({
+      publicationId: resolvedPublicationId,
+      start_date,
+      end_date,
+      ...(expand && expand.length > 0 ? { expand } : {}),
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);

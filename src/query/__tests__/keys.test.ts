@@ -6,6 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { QueryClient } from '@tanstack/react-query';
 
 import { beehiivKeys } from '../keys.js';
 
@@ -315,6 +316,62 @@ describe('beehiivKeys', () => {
         'subscriberStats',
         'sub_xyz',
       ]);
+    });
+  });
+
+  describe('publication isolation', () => {
+    it('separates every publication-scoped resource key', () => {
+      const keysFor = (publicationId: string) => [
+        beehiivKeys.posts.list({ publicationId }),
+        beehiivKeys.posts.detail('post_1', { publicationId }),
+        beehiivKeys.subscribers.list({ publicationId }),
+        beehiivKeys.subscriptions.detail('sub_1', { publicationId }),
+        beehiivKeys.customFields.list({ publicationId }),
+        beehiivKeys.webhooks.list({ publicationId }),
+        beehiivKeys.webhooks.detail('webhook_1', { publicationId }),
+        beehiivKeys.segments.list({ publicationId }),
+        beehiivKeys.segments.detail('segment_1', { publicationId }),
+        beehiivKeys.segments.results('segment_1', { publicationId }),
+        beehiivKeys.automations.list({ publicationId }),
+        beehiivKeys.automations.detail('automation_1', { publicationId }),
+        beehiivKeys.referrals.program({ publicationId }),
+        beehiivKeys.referrals.subscriberStats('sub_1', { publicationId }),
+        beehiivKeys.tiers.list({ publicationId }),
+        beehiivKeys.tiers.detail('tier_1', { publicationId }),
+        beehiivKeys.authors.list({ publicationId }),
+        beehiivKeys.authors.detail('author_1', { publicationId }),
+        beehiivKeys.bulkSubscriptions.detail('bulk_1', { publicationId }),
+        beehiivKeys.bulkSubscriptionUpdates.list({ publicationId }),
+        beehiivKeys.bulkSubscriptionUpdates.detail('update_1', {
+          publicationId,
+        }),
+        beehiivKeys.engagements.list({ publicationId }),
+      ];
+
+      const publicationA = keysFor('pub_a');
+      const publicationB = keysFor('pub_b');
+
+      expect(publicationA).toHaveLength(publicationB.length);
+      publicationA.forEach((key, index) => {
+        expect(key).not.toEqual(publicationB[index]);
+        expect(JSON.stringify(key)).toContain('pub_a');
+        expect(JSON.stringify(publicationB[index])).toContain('pub_b');
+      });
+    });
+
+    it('keeps broad mutation invalidation effective for scoped keys', async () => {
+      const queryClient = new QueryClient();
+      const keyA = beehiivKeys.subscribers.list({ publicationId: 'pub_a' });
+      const keyB = beehiivKeys.subscribers.list({ publicationId: 'pub_b' });
+      queryClient.setQueryData(keyA, { data: ['a'] });
+      queryClient.setQueryData(keyB, { data: ['b'] });
+
+      await queryClient.invalidateQueries({
+        queryKey: beehiivKeys.subscribers.all,
+      });
+
+      expect(queryClient.getQueryState(keyA)?.isInvalidated).toBe(true);
+      expect(queryClient.getQueryState(keyB)?.isInvalidated).toBe(true);
     });
   });
 });

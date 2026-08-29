@@ -132,15 +132,17 @@ interface AuthorsListResponse {
 export function useAuthorsQuery(
   options: UseAuthorsQueryOptions = {},
 ): UseQueryResult<AuthorsListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
     publicationId,
     limit,
     staleTime = 60_000,
     enabled = true,
   } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   const keyOptions = {
+    publicationId: resolvedPublicationId,
     ...(limit !== undefined ? { limit } : {}),
   };
 
@@ -212,11 +214,14 @@ export function useAuthorQuery(
   id: string,
   options: UseAuthorQueryOptions = {},
 ): UseQueryResult<AuthorDetailResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<AuthorDetailResponse>({
-    queryKey: beehiivKeys.authors.detail(id),
+    queryKey: beehiivKeys.authors.detail(id, {
+      publicationId: resolvedPublicationId,
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);

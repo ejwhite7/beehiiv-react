@@ -114,7 +114,7 @@ interface AutomationsListResponse {
 export function useAutomationsQuery(
   options: UseAutomationsQueryOptions = {},
 ): UseQueryResult<AutomationsListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
     publicationId,
     status,
@@ -122,11 +122,12 @@ export function useAutomationsQuery(
     staleTime = 60_000,
     enabled = true,
   } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   const keyOptions = {
     ...(status ? { status } : {}),
     ...(limit !== undefined ? { limit } : {}),
-    ...(publicationId ? { publicationId } : {}),
+    publicationId: resolvedPublicationId,
   };
 
   return useQuery<AutomationsListResponse>({
@@ -191,11 +192,14 @@ export function useAutomationQuery(
   id: string,
   options: UseAutomationQueryOptions = {},
 ): UseQueryResult<AutomationDetailResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<AutomationDetailResponse>({
-    queryKey: beehiivKeys.automations.detail(id, publicationId ? { publicationId } : undefined),
+    queryKey: beehiivKeys.automations.detail(id, {
+      publicationId: resolvedPublicationId,
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);

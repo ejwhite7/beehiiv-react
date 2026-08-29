@@ -108,11 +108,14 @@ interface ReferralProgramResponse {
 export function useReferralsQuery(
   options: UseReferralsQueryOptions = {},
 ): UseQueryResult<ReferralProgramResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<ReferralProgramResponse>({
-    queryKey: beehiivKeys.referrals.program(),
+    queryKey: beehiivKeys.referrals.program({
+      publicationId: resolvedPublicationId,
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);

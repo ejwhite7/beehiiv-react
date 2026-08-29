@@ -174,3 +174,17 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: remove resolved-post identity tracking and the hook regressions, restore the prior effect and state retention behavior, and revert Ralph state. No migration or persistent data change is involved.
 - BR-020 marked `passes: true`.
+
+## BR-011 iteration 1 - passed
+
+- Every publication-scoped TanStack Query hook now resolves `options.publicationId ?? context.publicationId` and includes that value in its cache key.
+- Extended scoped keys across posts, subscribers, subscription lookups, custom fields, webhooks, segments, automations, referrals, tiers, authors, bulk creation/update jobs, and engagements; the account-wide publications list remains intentionally unscoped.
+- Preserved entity-root prefixes, so existing broad mutation invalidation continues to match all filtered and publication-scoped descendants.
+- Added a key-factory matrix proving all scoped resources differ between `pub_a` and `pub_b` and retain the publication value.
+- Added a shared-QueryClient integration regression proving the same post ID under two provider publications performs two fetches and retains two independent cache entries.
+- Verified root subscriber invalidation marks both publication caches invalidated.
+- Added missing post and engagement expansion filters to their keys to prevent adjacent same-publication collisions.
+- Final evidence: lint passed, strict typecheck passed, 839 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: remove publication scope from key options and hook call sites, restore unscoped detail/list factories, remove cross-publication tests, and revert Ralph state. No migration or persistent data change is involved.
+- BR-011 marked `passes: true`.

@@ -126,7 +126,7 @@ interface TiersListResponse {
 export function useTiersQuery(
   options: UseTiersQueryOptions = {},
 ): UseQueryResult<TiersListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
     publicationId,
     type,
@@ -135,8 +135,10 @@ export function useTiersQuery(
     staleTime = 60_000,
     enabled = true,
   } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   const keyOptions = {
+    publicationId: resolvedPublicationId,
     ...(type ? { type } : {}),
     ...(active !== undefined ? { active } : {}),
     ...(limit !== undefined ? { limit } : {}),
@@ -205,11 +207,14 @@ export function useTierQuery(
   id: string,
   options: UseTierQueryOptions = {},
 ): UseQueryResult<TierDetailResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<TierDetailResponse>({
-    queryKey: beehiivKeys.tiers.detail(id),
+    queryKey: beehiivKeys.tiers.detail(id, {
+      publicationId: resolvedPublicationId,
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);
@@ -427,7 +432,9 @@ export function useUpdateTierMutation(
       });
       // Also invalidate the specific tier detail query
       void queryClient.invalidateQueries({
-        queryKey: beehiivKeys.tiers.detail(variables.tierId),
+        queryKey: beehiivKeys.tiers.detail(variables.tierId, {
+          publicationId: variables.publicationId,
+        }),
       });
       options?.onSuccess?.(data);
     },

@@ -130,7 +130,7 @@ interface PostsListResponse {
 export function usePostsQuery(
   options: UsePostsQueryOptions = {},
 ): UseQueryResult<PostsListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
     publicationId,
     status,
@@ -140,8 +140,10 @@ export function usePostsQuery(
     staleTime = 60_000,
     enabled = true,
   } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   const keyOptions = {
+    publicationId: resolvedPublicationId,
     ...(status ? { status } : {}),
     ...(audience ? { audience } : {}),
     ...(limit !== undefined ? { limit } : {}),
@@ -216,11 +218,14 @@ export function usePostQuery(
   id: string,
   options: UsePostQueryOptions = {},
 ): UseQueryResult<PostDetailResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<PostDetailResponse>({
-    queryKey: beehiivKeys.posts.detail(id),
+    queryKey: beehiivKeys.posts.detail(id, {
+      publicationId: resolvedPublicationId,
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);
@@ -282,10 +287,11 @@ interface SubscribersListResponse {
 export function useSubscribersQuery(
   options: UseSubscribersQueryOptions = {},
 ): UseQueryResult<SubscribersListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId } = useBeehiivContext();
   const { email, status, limit, staleTime = 60_000, enabled = true } = options;
 
   const keyOptions = {
+    publicationId,
     ...(email ? { email } : {}),
     ...(status ? { status } : {}),
     ...(limit !== undefined ? { limit } : {}),
@@ -353,11 +359,11 @@ export function useSubscriptionQuery(
   emailOrId: string,
   options: UseSubscriptionQueryOptions = {},
 ): UseQueryResult<SubscriptionDetailResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId } = useBeehiivContext();
   const { staleTime = 60_000, enabled = true } = options;
 
   return useQuery<SubscriptionDetailResponse>({
-    queryKey: beehiivKeys.subscriptions.detail(emailOrId),
+    queryKey: beehiivKeys.subscriptions.detail(emailOrId, { publicationId }),
     queryFn: () => {
       const isId = emailOrId.startsWith('sub_');
       const url = isId
@@ -411,11 +417,11 @@ interface CustomFieldsListResponse {
 export function useCustomFieldsQuery(
   options: UseCustomFieldsQueryOptions = {},
 ): UseQueryResult<CustomFieldsListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId } = useBeehiivContext();
   const { staleTime = 60_000, enabled = true } = options;
 
   return useQuery<CustomFieldsListResponse>({
-    queryKey: beehiivKeys.customFields.list(),
+    queryKey: beehiivKeys.customFields.list({ publicationId }),
     queryFn: () =>
       fetchJson<CustomFieldsListResponse>(`${apiUrl}/custom-fields`),
     staleTime,

@@ -222,9 +222,16 @@
         "Cross-publication cache tests pass",
         "Mutation invalidation remains correct"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "All publication-scoped Query hooks include the resolved provider or option publication ID in their cache key",
+        "Scoped key coverage includes posts, subscribers, subscriptions, fields, webhooks, segments, automations, referrals, tiers, authors, bulk jobs, and engagements",
+        "A shared QueryClient fetches and retains separate results for the same post ID under two publication providers",
+        "Entity-root mutation invalidation still invalidates scoped caches for every publication",
+        "Post and engagement expansion filters are also represented in keys",
+        "Full gate passed: lint, typecheck, 839 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-012",

@@ -194,4 +194,69 @@ describe('generated resource route contracts', () => {
       active: false,
     });
   });
+
+  it('denies engagement analytics before reading input or calling Beehiiv', async () => {
+    await generateApiRoutes({ outputDir, publicationId: 'pub_test' });
+    const get = vi.fn();
+    class MockBeehiivClient {
+      readonly engagements = { get };
+    }
+    const source = fs.readFileSync(
+      path.join(outputDir, 'app/api/beehiiv/engagements/route.ts'),
+      'utf8',
+    );
+    const response = await getHandler(
+      executeGeneratedRoute(source, MockBeehiivClient),
+    )({});
+
+    expect(response).toEqual({ body: { error: 'Unauthorized' }, status: 401 });
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it('keeps authorized engagement requests server-scoped and validates expansions', async () => {
+    await generateApiRoutes({ outputDir, publicationId: 'pub_test' });
+    const get = vi.fn().mockResolvedValue({ data: [{ date: '2024-01-01' }] });
+    class MockBeehiivClient {
+      readonly engagements = { get };
+    }
+    const generatedSource = fs.readFileSync(
+      path.join(outputDir, 'app/api/beehiiv/engagements/route.ts'),
+      'utf8',
+    );
+    const source = generatedSource.replace(
+      /async function isEngagementAnalyticsAuthorized\([\s\S]*?\)\s*:\s*Promise<boolean>\s*\{\s*return false;\s*\}/,
+      'async function isEngagementAnalyticsAuthorized(): Promise<boolean> { return true; }',
+    );
+    expect(source).not.toBe(generatedSource);
+    const handler = getHandler(executeGeneratedRoute(source, MockBeehiivClient));
+
+    const success = await handler({
+      nextUrl: new URL(
+        'https://example.test/engagements?start_date=2024-01-01&end_date=2024-01-31&expand%5B%5D=stats',
+      ),
+    });
+    expect(success.status).toBe(200);
+    expect(get).toHaveBeenCalledWith({
+      start_date: '2024-01-01',
+      end_date: '2024-01-31',
+      expand: ['stats'],
+    });
+
+    get.mockClear();
+    const override = await handler({
+      nextUrl: new URL(
+        'https://example.test/engagements?publicationId=pub_attacker&start_date=2024-01-01&end_date=2024-01-31',
+      ),
+    });
+    expect(override.status).toBe(400);
+    expect(get).not.toHaveBeenCalled();
+
+    const unsupportedExpansion = await handler({
+      nextUrl: new URL(
+        'https://example.test/engagements?start_date=2024-01-01&end_date=2024-01-31&expand%5B%5D=private',
+      ),
+    });
+    expect(unsupportedExpansion.status).toBe(400);
+    expect(get).not.toHaveBeenCalled();
+  });
 });

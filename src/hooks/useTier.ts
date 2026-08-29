@@ -23,6 +23,7 @@ export interface UseTierOptions {
    * Override the publication ID from the provider context.
    * When omitted the value from the nearest `<BeehiivProvider>` is used.
    */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
   /**
    * Whether the fetch should run automatically.
@@ -71,7 +72,7 @@ export interface UseTierReturn {
  */
 export function useTier(options: UseTierOptions): UseTierReturn {
   const { apiUrl } = useBeehiiv();
-  const { id, publicationId, enabled = true } = options;
+  const { id, enabled = true } = options;
 
   const [tier, setTier] = useState<Tier | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -86,13 +87,8 @@ export function useTier(options: UseTierOptions): UseTierReturn {
    * @returns The fully-qualified URL string
    */
   const buildUrl = useCallback((): string => {
-    const params = new URLSearchParams();
-    if (publicationId) {
-      params.set('publicationId', publicationId);
-    }
-    const query = params.toString();
-    return `${apiUrl}/tiers/${encodeURIComponent(id)}${query ? `?${query}` : ''}`;
-  }, [apiUrl, id, publicationId]);
+    return `${apiUrl}/tiers/${encodeURIComponent(id)}`;
+  }, [apiUrl, id]);
 
   /**
    * Execute the fetch request for the tier.

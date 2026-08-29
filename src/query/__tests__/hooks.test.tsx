@@ -79,7 +79,12 @@ const MOCK_POSTS = {
       created_at: 1700000000,
     },
   ],
-  pagination: { next_cursor: null, has_more: false },
+  pagination: {
+    page: 1,
+    limit: 10,
+    total_results: 1,
+    total_pages: 1,
+  },
 };
 
 const MOCK_POST_DETAIL = {
@@ -157,24 +162,28 @@ describe('usePostsQuery', () => {
     expect(result.current.data?.data[0].id).toBe('post_001');
   });
 
-  it('passes filter params as query string', async () => {
+  it('forwards limit but suppresses restricted public-route parameters', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => MOCK_POSTS,
     });
 
     renderHook(
-      () => usePostsQuery({ status: 'confirmed', audience: 'premium', limit: 5 }),
+      () =>
+        usePostsQuery({
+          publicationId: 'pub_attacker',
+          status: 'draft',
+          audience: 'premium',
+          expand: ['premium_web_content'],
+          limit: 5,
+        }),
       { wrapper: createWrapper() },
     );
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
 
     const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
-    expect(url).toContain('/api/beehiiv/posts');
-    expect(url).toContain('status=confirmed');
-    expect(url).toContain('audience=premium');
-    expect(url).toContain('limit=5');
+    expect(url).toBe('/api/beehiiv/posts?limit=5');
   });
 
   it('does not fetch when enabled is false', async () => {
@@ -212,6 +221,23 @@ describe('usePostQuery', () => {
 
     const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(url).toBe('/api/beehiiv/posts/post_001');
+  });
+
+  it('does not forward a caller-controlled publication override', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => MOCK_POST_DETAIL,
+    });
+
+    renderHook(
+      () => usePostQuery('post_001', { publicationId: 'pub_attacker' }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledOnce());
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/beehiiv/posts/post_001',
+    );
   });
 
   it('does not reuse cached post data across provider publications', async () => {

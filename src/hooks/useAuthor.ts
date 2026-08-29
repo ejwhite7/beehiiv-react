@@ -24,6 +24,7 @@ export interface UseAuthorOptions {
    * Override the publication ID from the provider context.
    * When omitted the value from the nearest `<BeehiivProvider>` is used.
    */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
 
   /**
@@ -76,7 +77,7 @@ export interface UseAuthorReturn {
  */
 export function useAuthor(options: UseAuthorOptions): UseAuthorReturn {
   const { apiUrl } = useBeehiiv();
-  const { id, publicationId, enabled = true } = options;
+  const { id, enabled = true } = options;
 
   const [author, setAuthor] = useState<Author | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -91,13 +92,8 @@ export function useAuthor(options: UseAuthorOptions): UseAuthorReturn {
    * @returns The fully-qualified URL string targeting the author resource
    */
   const buildUrl = useCallback((): string => {
-    const params = new URLSearchParams();
-    if (publicationId) {
-      params.set('publicationId', publicationId);
-    }
-    const query = params.toString();
-    return `${apiUrl}/authors/${encodeURIComponent(id)}${query ? `?${query}` : ''}`;
-  }, [apiUrl, id, publicationId]);
+    return `${apiUrl}/authors/${encodeURIComponent(id)}`;
+  }, [apiUrl, id]);
 
   /**
    * Execute the fetch request for the author.

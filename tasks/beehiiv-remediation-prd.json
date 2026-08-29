@@ -325,15 +325,20 @@
       "id": "BR-017",
       "priority": 5,
       "title": "Complete residual defect discovery and production audit",
-      "dependsOn": ["BR-001", "BR-002", "BR-003", "BR-004", "BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010", "BR-011", "BR-012", "BR-013", "BR-014", "BR-015", "BR-016", "BR-018", "BR-019", "BR-020", "BR-021"],
+      "dependsOn": ["BR-001", "BR-002", "BR-003", "BR-004", "BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010", "BR-011", "BR-012", "BR-013", "BR-014", "BR-015", "BR-016", "BR-018", "BR-019", "BR-020", "BR-021", "BR-022", "BR-023", "BR-024", "BR-025", "BR-026", "BR-027"],
       "acceptanceCriteria": [
         "Full release, generated project, security, contract, race, packaging, and audit gates pass",
         "Independent adversarial review finds no unresolved defect",
         "Every newly discovered defect is appended as a failing story before completion"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "A fresh adversarial audit covered every changed production file and every CLI-generated route, including authorization ordering, server-owned publication scope, HTML sinks, request races, cache keys, endpoint signatures, package exports, and documentation contracts.",
+        "All six residual defects discovered during the final loop were appended as BR-022 through BR-027 before implementation and now pass their acceptance criteria.",
+        "Final release gate passed: lint, strict typecheck, 872 tests across 65 files, warning-free dual ESM/CJS build, packed CJS/ESM smoke, four strict generated Next.js production builds, zero production vulnerabilities, and clean diff check.",
+        "The complete development audit has one low-severity transitive esbuild dev-server advisory with no dependency-compatible automatic resolution; there are no moderate, high, or critical findings and no production findings."
+      ]
     },
     {
       "id": "BR-018",
@@ -410,6 +415,115 @@
         "The publicationId option remains deprecated for source compatibility and documents the server-owned publication boundary.",
         "Hook regressions cover a successful encoded slug lookup and suppression of an attacker-controlled override; the generated route security suite confirms matching slug and override behavior.",
         "Full gate passed: lint, strict typecheck, 859 tests, warning-free dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
+    },
+    {
+      "id": "BR-022",
+      "priority": 1,
+      "title": "Secure generated engagement analytics",
+      "dependsOn": ["BR-001", "BR-008"],
+      "acceptanceCriteria": [
+        "Generated engagement metrics deny anonymous requests before validation or Beehiiv access",
+        "Caller-controlled publication overrides are not forwarded and supported expansion parameters remain aligned",
+        "Executable generated-route and hook contract regressions cover the protected boundary"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generated engagement analytics deny by default before reading query input or calling Beehiiv.",
+        "Authorized behavior rejects publication overrides and unsupported expansions while forwarding the supported stats expansion.",
+        "Core and TanStack Query adapters retain deprecated overrides for source compatibility but neither forwards nor caches under them.",
+        "Executable generated-route, core-hook, and Query regressions pass within the complete 872-test production gate."
+      ]
+    },
+    {
+      "id": "BR-023",
+      "priority": 4,
+      "title": "Retire the misleading SubscriptionForm publication override",
+      "dependsOn": ["BR-006", "BR-016"],
+      "acceptanceCriteria": [
+        "SubscriptionForm no longer documents its ignored publicationId prop as a functional override",
+        "The source-compatible deprecated property points consumers to BeehiivProvider and the server-owned publication boundary",
+        "Documentation, typecheck, and component regressions pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "SubscriptionForm.publicationId is explicitly deprecated and documented as source-compatibility-only.",
+        "The component example now places publicationId on BeehiivProvider, matching actual runtime behavior and the server-owned publication boundary.",
+        "Strict typecheck, component regressions, documentation checks, and the full release gate pass."
+      ]
+    },
+    {
+      "id": "BR-024",
+      "priority": 2,
+      "title": "Align post-list adapters with the secured public route",
+      "dependsOn": ["BR-002", "BR-007", "BR-011"],
+      "acceptanceCriteria": [
+        "React and Query post-list adapters never forward restricted publication, visibility, or expansion parameters",
+        "Deprecated options remain source-compatible and Query exposes the generated route's offset pagination shape",
+        "Hook, Query, cache-scope, and generated-route regressions cover the aligned public contract"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "usePosts and usePostsQuery forward only public-route-supported pagination input and suppress publication, status, audience, and expansion overrides.",
+        "Deprecated options remain type-compatible and direct consumers to authenticated detail routes for expanded content.",
+        "The Query response now exposes offset pagination matching the generated handler; hook, Query, cache, and generated-route tests pass."
+      ]
+    },
+    {
+      "id": "BR-025",
+      "priority": 2,
+      "title": "Align Query post detail with the secured route",
+      "dependsOn": ["BR-007", "BR-011"],
+      "acceptanceCriteria": [
+        "usePostQuery never forwards a caller-controlled publication override",
+        "Post detail cache scope follows BeehiivProvider rather than the deprecated override option",
+        "Query and generated-route regressions cover override suppression and cross-provider isolation"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "usePostQuery constructs only the encoded provider-scoped detail URL and never forwards publicationId.",
+        "Its cache key uses BeehiivProvider publication scope rather than the deprecated override option.",
+        "Override suppression, cross-provider isolation, and generated detail-route regressions pass."
+      ]
+    },
+    {
+      "id": "BR-026",
+      "priority": 3,
+      "title": "Align generated author and tier adapter scope",
+      "dependsOn": ["BR-008", "BR-011"],
+      "acceptanceCriteria": [
+        "Author and tier React and Query reads never forward caller-controlled publication overrides to generated routes",
+        "Deprecated override options remain source-compatible while Query caches use BeehiivProvider scope",
+        "List and detail regressions cover both resources and both adapter families"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Author and tier list/detail React hooks no longer forward caller-controlled publication overrides.",
+        "Equivalent TanStack Query adapters use BeehiivProvider cache scope and server-scoped URLs while retaining deprecated properties for source compatibility.",
+        "Eight focused list/detail regressions cover both resources and adapter families; generated route contracts and the full gate pass."
+      ]
+    },
+    {
+      "id": "BR-027",
+      "priority": 3,
+      "title": "Stabilize the compile-contract gate",
+      "dependsOn": ["BR-019"],
+      "acceptanceCriteria": [
+        "The real strict TypeScript compile-fail fixture remains enforced",
+        "The heavyweight compiler subprocess has an explicit bounded timeout suitable for full-suite contention",
+        "Repeated focused and full-suite executions pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "The test still launches real strict TypeScript against the complete compile-fail fixture.",
+        "Only the heavyweight compiler test receives an explicit 15-second upper bound, avoiding full-suite contention against Vitest's unrelated 5-second default.",
+        "Two consecutive focused executions and the complete 872-test suite pass."
       ]
     }
   ]

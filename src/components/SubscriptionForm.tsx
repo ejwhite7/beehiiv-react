@@ -37,7 +37,11 @@ export interface CustomFieldConfig {
  *   Defaults to `Record<string, unknown>`.
  */
 export interface SubscriptionFormProps<TCustomFields = Record<string, unknown>> {
-  /** The publication ID. Can be inferred from BeehiivProvider context. */
+  /**
+   * Retained for source compatibility. SubscriptionForm always uses the
+   * nearest BeehiivProvider, and generated routes own publication scope.
+   * @deprecated Configure publicationId on BeehiivProvider instead.
+   */
   publicationId?: string;
 
   /** Custom field configuration. When provided, the form renders inputs for each field. */
@@ -207,11 +211,12 @@ function validateCustomFields(
  * @example
  * ```tsx
  * // Basic usage
- * <SubscriptionForm
- *   publicationId="pub_xxxxx"
- *   submitLabel="Join Newsletter"
- *   utmSource="website"
- * />
+ * <BeehiivProvider publicationId="pub_xxxxx">
+ *   <SubscriptionForm
+ *     submitLabel="Join Newsletter"
+ *     utmSource="website"
+ *   />
+ * </BeehiivProvider>
  *
  * // With custom fields
  * <SubscriptionForm

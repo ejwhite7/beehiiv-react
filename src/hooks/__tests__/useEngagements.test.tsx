@@ -228,7 +228,7 @@ describe('useEngagements', () => {
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('forwards publicationId as query param when provided', async () => {
+  it('does not forward a caller-controlled publication override', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ data: [] }),
@@ -250,6 +250,9 @@ describe('useEngagements', () => {
 
     const calledUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
       .calls[0][0] as string;
-    expect(calledUrl).toContain('publicationId=pub_override');
+    expect(calledUrl).not.toContain('publicationId');
+    expect(calledUrl).toBe(
+      '/api/beehiiv/engagements?start_date=2024-01-01&end_date=2024-01-31',
+    );
   });
 });

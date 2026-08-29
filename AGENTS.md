@@ -16,7 +16,7 @@ npm test
 ```bash
 npm run lint       # ESLint
 npm run typecheck  # tsc --noEmit (strict)
-npm test           # vitest — 859 tests must pass
+npm test           # vitest — 872 tests must pass
 npm run build      # tsup dual ESM+CJS build
 ```
 
@@ -42,7 +42,7 @@ and then `src/index.ts`.
 - `react` and `react-dom` must stay in `peerDependencies`.
 - All hooks use `useBeehiiv()` for `apiUrl` and `fetchIdRef` for stale-response protection.
 - All new exports must be registered in `src/types/index.ts` AND `src/index.ts`.
-- New features require tests. Do not reduce the 859-test baseline without justification.
+- New features require tests. Do not reduce the 872-test baseline without justification.
 - `chalk`, `ora`, `open` are ESM-only — dynamic `import()` inside functions only.
 - Endpoint constructors accept optional `defaultPublicationId`; methods support dual signatures.
 - Generated templates import `BeehiivClient` from `beehiiv-react/server`, not `beehiiv-react`.

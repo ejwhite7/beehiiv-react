@@ -541,7 +541,7 @@ All steps must pass for the CI to be green. The `prepublishOnly` script also run
 
 ## Current Test Summary
 
-**859 tests passing** across 62 test files, including endpoint, hook, component,
+**872 tests passing** across 65 test files, including endpoint, hook, component,
 query-cache, generated-route security, scaffold, packaging, and compile-fail
 contract coverage. Representative suites include:
 

@@ -71,7 +71,11 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 /** Options for {@link useEngagementsQuery}. */
 export interface UseEngagementsQueryOptions {
-  /** Override the publication ID from the provider context */
+  /**
+   * Retained for source compatibility. The generated proxy is scoped to its
+   * server-configured publication and ignores caller-controlled overrides.
+   * @deprecated Configure the publication in the server-side proxy instead.
+   */
   publicationId?: string;
   /** Start date for the engagement data range (ISO 8601 date string) */
   start_date: string;
@@ -121,25 +125,21 @@ export function useEngagementsQuery(
 ): UseQueryResult<EngagementsResponse> {
   const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
-    publicationId,
     start_date,
     end_date,
     expand,
     staleTime = 60_000,
     enabled = true,
   } = options;
-  const resolvedPublicationId = publicationId ?? contextPublicationId;
-
   return useQuery<EngagementsResponse>({
     queryKey: beehiivKeys.engagements.list({
-      publicationId: resolvedPublicationId,
+      publicationId: contextPublicationId,
       start_date,
       end_date,
       ...(expand && expand.length > 0 ? { expand } : {}),
     }),
     queryFn: () => {
       const params = new URLSearchParams();
-      if (publicationId) params.set('publicationId', publicationId);
       params.set('start_date', start_date);
       params.set('end_date', end_date);
       if (expand) {

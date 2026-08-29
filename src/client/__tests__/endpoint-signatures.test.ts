@@ -33,30 +33,34 @@ function unsafeCall(method: unknown, ...args: unknown[]): Promise<unknown> {
 }
 
 describe('dual-signature payload contracts', () => {
-  it('compile-fail fixtures reject every missing explicit-publication payload', () => {
-    const tsc = path.resolve('node_modules/typescript/bin/tsc');
-    const fixture = path.resolve('test-d/dual-signatures.ts');
+  it(
+    'compile-fail fixtures reject every missing explicit-publication payload',
+    () => {
+      const tsc = path.resolve('node_modules/typescript/bin/tsc');
+      const fixture = path.resolve('test-d/dual-signatures.ts');
 
-    expect(() =>
-      execFileSync(
-        process.execPath,
-        [
-          tsc,
-          '--noEmit',
-          '--strict',
-          '--skipLibCheck',
-          '--target',
-          'ES2020',
-          '--module',
-          'NodeNext',
-          '--moduleResolution',
-          'NodeNext',
-          fixture,
-        ],
-        { encoding: 'utf8', stdio: 'pipe' },
-      ),
-    ).not.toThrow();
-  });
+      expect(() =>
+        execFileSync(
+          process.execPath,
+          [
+            tsc,
+            '--noEmit',
+            '--strict',
+            '--skipLibCheck',
+            '--target',
+            'ES2020',
+            '--module',
+            'NodeNext',
+            '--moduleResolution',
+            'NodeNext',
+            fixture,
+          ],
+          { encoding: 'utf8', stdio: 'pipe' },
+        ),
+      ).not.toThrow();
+    },
+    15_000,
+  );
 
   it('malformed JavaScript calls fail clearly before reaching HTTP', async () => {
     const http = createMockHttpClient();

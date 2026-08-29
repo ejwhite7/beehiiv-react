@@ -1,9 +1,9 @@
 /**
- * Tests for the usePosts hook expand parameter and load-more content rendering.
+ * Tests for deprecated expansion suppression and load-more state merging.
  *
  * Validates that:
- * - The expand parameter is forwarded as expand[] query params on all fetches
- * - Load-more (paginated) requests include the expand parameter
+ * - The public route never receives expansion parameters
+ * - Load-more requests retain the same restricted boundary
  * - Posts from all pages retain their content field after state merge
  *
  * This test file specifically targets the bug where "Load More" would load
@@ -115,7 +115,7 @@ const MOCK_PAGE_2_WITH_CONTENT = {
   },
 };
 
-describe('usePosts expand parameter', () => {
+describe('usePosts deprecated expand parameter', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn() as ReturnType<typeof vi.fn>);
   });
@@ -124,7 +124,7 @@ describe('usePosts expand parameter', () => {
     vi.restoreAllMocks();
   });
 
-  it('includes expand[] in the initial fetch URL when expand option is provided', async () => {
+  it('does not include expand[] in the initial public fetch URL', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => MOCK_PAGE_1_WITH_CONTENT,
@@ -141,10 +141,10 @@ describe('usePosts expand parameter', () => {
 
     const calledUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
       .calls[0][0] as string;
-    expect(calledUrl).toContain('expand%5B%5D=free_web_content');
+    expect(calledUrl).toBe('/api/beehiiv/posts?page=1');
   });
 
-  it('includes expand[] in load-more (page 2) fetch URL', async () => {
+  it('does not include expand[] in the load-more public URL', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
         ok: true,
@@ -169,11 +169,11 @@ describe('usePosts expand parameter', () => {
       await result.current.loadMore();
     });
 
-    /* Verify the second fetch (load-more) also includes expand[] */
+    /* Verify the second fetch also preserves the restricted public contract. */
     const secondCallUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
       .calls[1][0] as string;
     expect(secondCallUrl).toContain('page=2');
-    expect(secondCallUrl).toContain('expand%5B%5D=free_web_content');
+    expect(secondCallUrl).not.toContain('expand');
   });
 
   it('retains content on all posts after load-more merges pages', async () => {
@@ -214,7 +214,7 @@ describe('usePosts expand parameter', () => {
     expect(result.current.posts[3].content?.free.web).toBe('<p>Fourth post content</p>');
   });
 
-  it('supports multiple expand fields on all fetches', async () => {
+  it('suppresses multiple expand fields on all public fetches', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
         ok: true,
@@ -234,22 +234,20 @@ describe('usePosts expand parameter', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    /* Verify first fetch includes both expand params */
+    /* Verify the first fetch excludes both restricted expansion params. */
     const firstCallUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
       .calls[0][0] as string;
-    expect(firstCallUrl).toContain('expand%5B%5D=free_web_content');
-    expect(firstCallUrl).toContain('expand%5B%5D=free_rss_content');
+    expect(firstCallUrl).not.toContain('expand');
 
     /* Load more */
     await act(async () => {
       await result.current.loadMore();
     });
 
-    /* Verify second fetch also includes both expand params */
+    /* Verify the load-more fetch preserves the same boundary. */
     const secondCallUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
       .calls[1][0] as string;
-    expect(secondCallUrl).toContain('expand%5B%5D=free_web_content');
-    expect(secondCallUrl).toContain('expand%5B%5D=free_rss_content');
+    expect(secondCallUrl).not.toContain('expand');
   });
 
   it('retains tags on all posts after load-more merges pages', async () => {

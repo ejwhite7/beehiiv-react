@@ -25,6 +25,7 @@ export interface UseAuthorsOptions {
    * Override the publication ID from the provider context.
    * When omitted the value from the nearest `<BeehiivProvider>` is used.
    */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
 
   /** Maximum number of results to return per page */
@@ -94,7 +95,7 @@ export interface UseAuthorsReturn {
  */
 export function useAuthors(options: UseAuthorsOptions = {}): UseAuthorsReturn {
   const { apiUrl } = useBeehiiv();
-  const { publicationId, limit, enabled = true } = options;
+  const { limit, enabled = true } = options;
 
   const [authors, setAuthors] = useState<Author[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -116,9 +117,6 @@ export function useAuthors(options: UseAuthorsOptions = {}): UseAuthorsReturn {
   const buildUrl = useCallback(
     (page: number): string => {
       const params = new URLSearchParams();
-      if (publicationId) {
-        params.set('publicationId', publicationId);
-      }
       if (limit !== undefined) {
         params.set('limit', String(limit));
       }
@@ -126,7 +124,7 @@ export function useAuthors(options: UseAuthorsOptions = {}): UseAuthorsReturn {
       const query = params.toString();
       return `${apiUrl}/authors${query ? `?${query}` : ''}`;
     },
-    [apiUrl, publicationId, limit],
+    [apiUrl, limit],
   );
 
   /**

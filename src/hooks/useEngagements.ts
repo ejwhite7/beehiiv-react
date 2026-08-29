@@ -17,8 +17,9 @@ import { useBeehiiv } from './useBeehiiv.js';
  */
 export interface UseEngagementsOptions {
   /**
-   * Override the publication ID from the provider context.
-   * When omitted the value from the nearest `<BeehiivProvider>` is used.
+   * Retained for source compatibility. The generated proxy is scoped to its
+   * server-configured publication and ignores caller-controlled overrides.
+   * @deprecated Configure the publication in the server-side proxy instead.
    */
   publicationId?: string;
   /** Start date for the engagement data range (ISO 8601 date string, e.g. "2024-01-01") */
@@ -85,7 +86,6 @@ export interface UseEngagementsReturn {
 export function useEngagements(options: UseEngagementsOptions): UseEngagementsReturn {
   const { apiUrl } = useBeehiiv();
   const {
-    publicationId,
     start_date,
     end_date,
     expand,
@@ -114,9 +114,6 @@ export function useEngagements(options: UseEngagementsOptions): UseEngagementsRe
    */
   const buildUrl = useCallback((): string => {
     const params = new URLSearchParams();
-    if (publicationId) {
-      params.set('publicationId', publicationId);
-    }
     params.set('start_date', start_date);
     params.set('end_date', end_date);
     if (expand) {
@@ -126,7 +123,7 @@ export function useEngagements(options: UseEngagementsOptions): UseEngagementsRe
     }
     const query = params.toString();
     return `${apiUrl}/engagements${query ? `?${query}` : ''}`;
-  }, [apiUrl, publicationId, start_date, end_date, expandKey]);
+  }, [apiUrl, start_date, end_date, expandKey]);
 
   /**
    * Execute the fetch request for engagement metrics.

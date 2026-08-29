@@ -79,7 +79,7 @@ async function fetchJson<T>(url: string): Promise<T> {
  * Filter / pagination options for {@link useAuthorsQuery}.
  */
 export interface UseAuthorsQueryOptions {
-  /** Override the publication ID from the provider context */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
 
   /** Maximum number of results to return per page */
@@ -133,16 +133,10 @@ export function useAuthorsQuery(
   options: UseAuthorsQueryOptions = {},
 ): UseQueryResult<AuthorsListResponse> {
   const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
-  const {
-    publicationId,
-    limit,
-    staleTime = 60_000,
-    enabled = true,
-  } = options;
-  const resolvedPublicationId = publicationId ?? contextPublicationId;
+  const { limit, staleTime = 60_000, enabled = true } = options;
 
   const keyOptions = {
-    publicationId: resolvedPublicationId,
+    publicationId: contextPublicationId,
     ...(limit !== undefined ? { limit } : {}),
   };
 
@@ -150,7 +144,6 @@ export function useAuthorsQuery(
     queryKey: beehiivKeys.authors.list(keyOptions),
     queryFn: () => {
       const params = new URLSearchParams();
-      if (publicationId) params.set('publicationId', publicationId);
       if (limit !== undefined) params.set('limit', String(limit));
       const query = params.toString();
       return fetchJson<AuthorsListResponse>(
@@ -170,7 +163,7 @@ export function useAuthorsQuery(
  * Options for {@link useAuthorQuery}.
  */
 export interface UseAuthorQueryOptions {
-  /** Override the publication ID from the provider context */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
 
   /**
@@ -215,19 +208,15 @@ export function useAuthorQuery(
   options: UseAuthorQueryOptions = {},
 ): UseQueryResult<AuthorDetailResponse> {
   const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
-  const { publicationId, staleTime = 60_000, enabled = true } = options;
-  const resolvedPublicationId = publicationId ?? contextPublicationId;
+  const { staleTime = 60_000, enabled = true } = options;
 
   return useQuery<AuthorDetailResponse>({
     queryKey: beehiivKeys.authors.detail(id, {
-      publicationId: resolvedPublicationId,
+      publicationId: contextPublicationId,
     }),
     queryFn: () => {
-      const params = new URLSearchParams();
-      if (publicationId) params.set('publicationId', publicationId);
-      const query = params.toString();
       return fetchJson<AuthorDetailResponse>(
-        `${apiUrl}/authors/${encodeURIComponent(id)}${query ? `?${query}` : ''}`,
+        `${apiUrl}/authors/${encodeURIComponent(id)}`,
       );
     },
     staleTime,

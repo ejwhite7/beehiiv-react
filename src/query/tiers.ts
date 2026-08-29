@@ -82,7 +82,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 /** Filter / pagination options for {@link useTiersQuery}. */
 export interface UseTiersQueryOptions {
-  /** Override the publication ID from the provider context */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
   /** Filter tiers by type (free or premium) */
   type?: TierType;
@@ -128,17 +128,14 @@ export function useTiersQuery(
 ): UseQueryResult<TiersListResponse> {
   const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
-    publicationId,
     type,
     active,
     limit,
     staleTime = 60_000,
     enabled = true,
   } = options;
-  const resolvedPublicationId = publicationId ?? contextPublicationId;
-
   const keyOptions = {
-    publicationId: resolvedPublicationId,
+    publicationId: contextPublicationId,
     ...(type ? { type } : {}),
     ...(active !== undefined ? { active } : {}),
     ...(limit !== undefined ? { limit } : {}),
@@ -148,7 +145,6 @@ export function useTiersQuery(
     queryKey: beehiivKeys.tiers.list(keyOptions),
     queryFn: () => {
       const params = new URLSearchParams();
-      if (publicationId) params.set('publicationId', publicationId);
       if (type) params.set('type', type);
       if (active !== undefined) params.set('active', String(active));
       if (limit !== undefined) params.set('limit', String(limit));
@@ -168,7 +164,7 @@ export function useTiersQuery(
 
 /** Options for {@link useTierQuery}. */
 export interface UseTierQueryOptions {
-  /** Override the publication ID from the provider context */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
   /**
    * Stale time in milliseconds before a background re-fetch is triggered.
@@ -208,19 +204,15 @@ export function useTierQuery(
   options: UseTierQueryOptions = {},
 ): UseQueryResult<TierDetailResponse> {
   const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
-  const { publicationId, staleTime = 60_000, enabled = true } = options;
-  const resolvedPublicationId = publicationId ?? contextPublicationId;
+  const { staleTime = 60_000, enabled = true } = options;
 
   return useQuery<TierDetailResponse>({
     queryKey: beehiivKeys.tiers.detail(id, {
-      publicationId: resolvedPublicationId,
+      publicationId: contextPublicationId,
     }),
     queryFn: () => {
-      const params = new URLSearchParams();
-      if (publicationId) params.set('publicationId', publicationId);
-      const query = params.toString();
       return fetchJson<TierDetailResponse>(
-        `${apiUrl}/tiers/${encodeURIComponent(id)}${query ? `?${query}` : ''}`,
+        `${apiUrl}/tiers/${encodeURIComponent(id)}`,
       );
     },
     staleTime,

@@ -268,3 +268,52 @@ Append-only execution ledger for the Ralph remediation loop.
 - Full evidence: lint passed, strict typecheck passed, 859 tests passed, warning-free build passed, package smoke passed, all four generated fixture builds passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
 - Rollback: restore publication override forwarding, remove the hook regression suite, and revert Ralph state. No migration or persistent data change is involved.
 - BR-021 marked `passes: true`.
+
+## BR-017 residual audit - discovery 1
+
+- The fresh cross-route authorization audit found that the generated engagement analytics endpoint returned publication metrics without any application authorization check.
+- The hook also forwarded a caller-controlled publication override even though generated routes must remain scoped to the server-configured publication.
+- Appended BR-022 as failing and added it to BR-017 dependencies before implementation.
+
+## BR-017 residual audit - discovery 2
+
+- The public component contract review found that `SubscriptionForm.publicationId` has always been ignored even though its JSDoc and example implied it could override provider context.
+- Appended BR-023 as failing and added it to BR-017 dependencies before changing the public documentation contract.
+
+## BR-017 residual audit - discovery 3
+
+- The post-list adapter scan found that `usePosts` and `usePostsQuery` still forwarded publication, visibility, and expansion inputs that the secured public posts route rejects by design.
+- The Query adapter also exposed cursor pagination even though the generated posts route returns offset pagination.
+- Appended BR-024 as failing and added it to BR-017 dependencies before implementation.
+
+## BR-017 residual audit - discovery 4
+
+- The final post-family scan found that `usePostQuery` still forwarded and cached under a caller publication override rejected by the secured generated detail route.
+- Appended BR-025 as failing and added it to BR-017 dependencies before implementation.
+
+## BR-017 residual audit - discovery 5
+
+- The exhaustive generated-route inventory found the same silent publication-override mismatch in author and tier list/detail React and Query adapters.
+- Appended BR-026 as failing and added it to BR-017 dependencies before implementation.
+
+## BR-017 full-gate discovery 1
+
+- The strict compile-contract subprocess took 6.2 seconds under full-suite contention and exceeded Vitest's unrelated 5-second default despite passing in focused runs.
+- Appended BR-027 as failing and added it to BR-017 dependencies before assigning the heavyweight compiler test an explicit bounded timeout.
+
+## BR-022 through BR-027 - passed
+
+- Engagement analytics now deny by default before validation or Beehiiv access; authorized behavior stays server-scoped and validates the only supported expansion.
+- Core and Query post adapters now match the generated public list/detail routes, suppress restricted parameters, use provider cache scope, and expose offset pagination.
+- Author and tier list/detail adapters now match their server-scoped generated routes across both React and TanStack Query.
+- `SubscriptionForm.publicationId` remains source-compatible but is accurately deprecated, and its example uses `BeehiivProvider`.
+- The real strict TypeScript contract fixture has a test-local 15-second bound and passed twice in isolation plus in the full suite.
+- BR-022, BR-023, BR-024, BR-025, BR-026, and BR-027 marked `passes: true`.
+
+## BR-017 final audit - passed
+
+- Re-reviewed every production change and generated route for authorization ordering, publication scope, unsafe HTML, stale requests, cache isolation, runtime/type contracts, package exports, and documentation drift.
+- Every residual defect discovered during the audit was appended to the Ralph ledger before remediation; no failing or blocked story remains.
+- Final evidence: lint passed, strict typecheck passed, 872 tests across 65 files passed, the dual ESM/CJS build produced zero stderr, packed CJS/ESM imports passed, all four generated Next.js 15.5.24 fixtures typechecked and production-built, the production audit reported zero vulnerabilities, and `git diff --check` passed.
+- The complete development audit contains one low-severity transitive esbuild dev-server advisory with no compatible automatic fix; it does not ship in production, and no moderate, high, or critical findings remain.
+- BR-017 marked `passes: true`; the Ralph loop is complete.

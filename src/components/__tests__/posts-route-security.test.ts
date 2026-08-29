@@ -18,15 +18,15 @@ interface MockJsonResponse {
 
 type GeneratedModule = Record<string, unknown>;
 
-function renderRoute(): string {
+function renderRoute(templateName = 'posts-route.ts.hbs'): string {
   const source = fs.readFileSync(
-    path.resolve(__dirname, '..', '..', '..', 'templates', 'posts-route.ts.hbs'),
+    path.resolve(__dirname, '..', '..', '..', 'templates', templateName),
     'utf-8',
   );
   return Handlebars.compile(source)({ publicationId: 'pub_configured' });
 }
 
-function executeRoute() {
+function executeRoute(templateName?: string) {
   const list = vi.fn().mockResolvedValue({
     data: [
       {
@@ -36,10 +36,20 @@ function executeRoute() {
         enforce_gated_content: false,
       },
     ],
-    page: 1,
-    limit: 10,
-    total_results: 1,
-    total_pages: 1,
+    pagination: {
+      page: 1,
+      limit: 10,
+      total_results: 1,
+      total_pages: 1,
+    },
+  });
+  const getPost = vi.fn().mockResolvedValue({
+    data: {
+      id: 'post_public',
+      status: 'confirmed',
+      audience: 'free',
+      enforce_gated_content: false,
+    },
   });
   const fetchPostBySlug = vi.fn().mockResolvedValue({
     id: 'post_public',
@@ -55,10 +65,10 @@ function executeRoute() {
   );
 
   class MockBeehiivClient {
-    readonly posts = { list };
+    readonly posts = { get: getPost, list };
   }
 
-  const compilation = ts.transpileModule(renderRoute(), {
+  const compilation = ts.transpileModule(renderRoute(templateName), {
     compilerOptions: {
       esModuleInterop: true,
       module: ts.ModuleKind.CommonJS,
@@ -111,7 +121,8 @@ function executeRoute() {
 
   return {
     fetchPostBySlug,
-    get: get as (request: unknown) => Promise<MockJsonResponse>,
+    get: get as (...args: unknown[]) => Promise<MockJsonResponse>,
+    getPost,
     list,
   };
 }
@@ -152,6 +163,14 @@ describe('generated public posts route security', () => {
       orderBy: 'publish_date',
       direction: 'desc',
     });
+    expect(response.body).toMatchObject({
+      pagination: {
+        page: 1,
+        limit: 10,
+        total_results: 1,
+        total_pages: 1,
+      },
+    });
   });
 
   it('filters unexpected non-public posts from the Beehiiv response', async () => {
@@ -178,10 +197,12 @@ describe('generated public posts route security', () => {
         },
         { id: 'post_premium', status: 'confirmed', audience: 'premium' },
       ],
-      page: 1,
-      limit: 10,
-      total_results: 3,
-      total_pages: 1,
+      pagination: {
+        page: 1,
+        limit: 10,
+        total_results: 3,
+        total_pages: 1,
+      },
     });
 
     const response = await get(request());
@@ -240,5 +261,43 @@ describe('generated public posts route security', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ data: null });
+  });
+
+  it('serves the generated ID route for a configured public post', async () => {
+    const { get, getPost } = executeRoute('post-route.ts.hbs');
+
+    const response = await get(
+      request(),
+      { params: Promise.resolve({ id: 'post_public' }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(getPost).toHaveBeenCalledWith('post_public', {
+      expand: ['free_web_content', 'tags'],
+    });
+  });
+
+  it('denies restricted ID results and publication override probes', async () => {
+    const restricted = executeRoute('post-route.ts.hbs');
+    restricted.getPost.mockResolvedValueOnce({
+      data: {
+        id: 'post_premium',
+        status: 'confirmed',
+        audience: 'premium',
+      },
+    });
+    const restrictedResponse = await restricted.get(
+      request(),
+      { params: Promise.resolve({ id: 'post_premium' }) },
+    );
+    expect(restrictedResponse.status).toBe(401);
+
+    const override = executeRoute('post-route.ts.hbs');
+    const overrideResponse = await override.get(
+      request('?publicationId=pub_attacker'),
+      { params: Promise.resolve({ id: 'post_public' }) },
+    );
+    expect(overrideResponse.status).toBe(400);
+    expect(override.getPost).not.toHaveBeenCalled();
   });
 });

@@ -111,3 +111,15 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: revert the mutation field contracts, generated route conversion, Server Action fields, form propagation, tests/snapshots, and Ralph state. No migration or persistent data change is involved.
 - BR-006 marked `passes: true`.
+
+## BR-007 iteration 1 - passed
+
+- Added a generated `/posts/[id]` route matching the URLs used by `usePost` and `usePostAccess`.
+- The detail route always uses its configured publication, rejects camel/snake-case publication override probes, returns confirmed explicitly public posts, and denies restricted/draft posts until the application supplies server-side authorization.
+- Deprecated the hook's publication override behavior and stopped forwarding it.
+- Corrected the public list route to read `response.pagination` rather than nonexistent top-level pagination fields.
+- Executable generated-route tests cover public detail success, restricted denial, override rejection before Beehiiv access, and exact nested offset metadata; hook tests cover the matching URL.
+- Final evidence: lint passed, strict typecheck passed, 819 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: remove the post detail template/generator entry, restore the hook override behavior and old pagination mapping, and revert tests/snapshot/Ralph state. No migration or persistent data change is involved.
+- BR-007 marked `passes: true`.

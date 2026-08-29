@@ -26,6 +26,7 @@
 // pulling in the client-side "use client" entry point.
 export { BeehiivClient } from '../client/index.js';
 export type { CreateSubscriptionRequest } from '../types/subscription.js';
+export type { PostInfo } from '../types/post.js';
 
 // --- Endpoint Classes ---
 // Standalone endpoint classes for advanced usage patterns where consumers

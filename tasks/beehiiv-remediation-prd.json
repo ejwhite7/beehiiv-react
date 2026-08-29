@@ -140,9 +140,15 @@
         "Offset pagination metadata is preserved",
         "Generated post handlers pass strict TypeScript"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "Generator now emits /posts/[id] matching usePost and usePostAccess",
+        "Dynamic handler rejects publication overrides and denies restricted content by default",
+        "List handler reads the nested Beehiiv offset-pagination envelope",
+        "Generated handlers transpile and execute in security/contract regressions",
+        "Full gate passed: lint, typecheck, 819 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-008",

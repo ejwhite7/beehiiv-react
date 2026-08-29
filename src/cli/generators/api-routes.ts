@@ -103,6 +103,7 @@ export async function DELETE(
 const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
   { template: 'subscription-route.ts.hbs', outputPath: ['subscription'] },
   { template: 'posts-route.ts.hbs', outputPath: ['posts'] },
+  { template: 'post-route.ts.hbs', outputPath: ['posts', '[id]'] },
   { template: 'authors-route.ts.hbs', outputPath: ['authors'] },
   { template: 'tiers-route.ts.hbs', outputPath: ['tiers'] },
   { template: 'engagements-route.ts.hbs', outputPath: ['engagements'] },

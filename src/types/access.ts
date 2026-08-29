@@ -46,6 +46,8 @@ export interface UseSubscriberAccessOptions {
   id?: string;
   /** The audience/visibility level to check against. */
   audience: PostAudience;
+  /** Whether free-reader content requires an active subscription. Defaults to true. */
+  enforceGatedContent?: boolean;
   /**
    * If `false`, the hook does not fetch. Useful for conditional access checks.
    * @defaultValue true

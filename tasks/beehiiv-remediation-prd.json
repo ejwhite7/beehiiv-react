@@ -80,9 +80,15 @@
         "Server templates, hooks, components, and utilities share one access decision",
         "Every audience, tier, and subscription status combination is tested"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "PostInfo now carries beehiiv's enforce_gated_content policy input",
+        "Public routes, generated server pages, usePostAccess, useSubscriberAccess, and GatedContent use canViewContent",
+        "Missing gate metadata defaults to gated so access fails closed",
+        "The exhaustive matrix covers 168 audience, tier, status, and gate combinations",
+        "Full gate passed: lint, typecheck, 810 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-005",

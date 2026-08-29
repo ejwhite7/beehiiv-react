@@ -62,3 +62,16 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: revert the renderer trust-boundary changes, server sanitizer/export, generated blog template, tests/snapshot, and sanitizer dependencies. No migration or persistent data change is involved.
 - BR-003 marked `passes: true`.
+
+## BR-004 iteration 1 - passed
+
+- Official beehiiv post responses include `enforce_gated_content`; this missing field was the source of the conflicting free/both behavior.
+- Established one shared policy: `all` is public; `free` and `both` are public only when gating is explicitly false, otherwise they require an active subscription; `premium` always requires an active premium subscription.
+- Missing gate metadata defaults to true so old or incomplete responses fail closed.
+- The public posts route, generated blog page, `usePostAccess`, `useSubscriberAccess`, and `GatedContent` now delegate to `canViewContent`.
+- The public route no longer relies on a single audience filter; it response-filters confirmed posts through the shared policy, allowing explicitly ungated free/both records while excluding gated and premium records.
+- Added an exhaustive 168-case audience/tier/status/gate matrix plus hook regressions for explicit ungated access and missing-metadata denial.
+- Final evidence: lint passed, strict typecheck passed, 810 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: revert the shared policy flag/signature, PostInfo field, hook/component propagation, server export, generated templates, and tests/snapshots. No migration or persistent data change is involved.
+- BR-004 marked `passes: true`.

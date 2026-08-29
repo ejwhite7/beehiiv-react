@@ -120,8 +120,15 @@ export function usePostAccess(
   const isActive = status === 'active';
   const isLoading = postLoading || subLoading;
   const combinedError = postError || subError;
-  const audience = post?.audience ?? 'all';
-  const canView = isLoading ? false : canViewContent(tier, status, audience);
+  const canView =
+    !isLoading && post !== null
+      ? canViewContent(
+          tier,
+          status,
+          post.audience,
+          post.enforce_gated_content ?? true,
+        )
+      : false;
 
   /**
    * Manually re-trigger both the post and subscription fetches.

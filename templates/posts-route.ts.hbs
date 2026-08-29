@@ -4,7 +4,11 @@
  * Located at: app/api/beehiiv/posts/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient, fetchPostBySlug } from 'beehiiv-react/server';
+import {
+  BeehiivClient,
+  canViewContent,
+  fetchPostBySlug,
+} from 'beehiiv-react/server';
 
 const DEFAULT_PUBLICATION_ID =
   process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}';
@@ -50,10 +54,17 @@ export async function GET(req: NextRequest) {
     if (slug) {
       const post = await fetchPostBySlug(client, DEFAULT_PUBLICATION_ID, slug, {
         status: 'confirmed',
-        audience: 'free',
       });
       const publicPost =
-        post?.status === 'confirmed' && post.audience === 'free' ? post : null;
+        post?.status === 'confirmed' &&
+        canViewContent(
+          null,
+          null,
+          post.audience,
+          post.enforce_gated_content ?? true,
+        )
+          ? post
+          : null;
       return NextResponse.json({ data: publicPost }, { status: 200 });
     }
 
@@ -66,7 +77,6 @@ export async function GET(req: NextRequest) {
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
       status: 'confirmed',
-      audience: 'free',
       orderBy: orderBy === 'created_at' ? 'created_at' : 'publish_date',
       direction: direction === 'asc' ? 'asc' : 'desc',
     });
@@ -74,7 +84,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         data: response.data.filter(
-          (post) => post.status === 'confirmed' && post.audience === 'free',
+          (post) =>
+            post.status === 'confirmed' &&
+            canViewContent(
+              null,
+              null,
+              post.audience,
+              post.enforce_gated_content ?? true,
+            ),
         ),
         pagination: {
           page: response.page,

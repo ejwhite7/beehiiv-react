@@ -90,7 +90,8 @@ describe('posts-route.ts.hbs', () => {
     const output = template({ publicationId: 'pub_xyz' });
 
     expect(output).toContain("status: 'confirmed'");
-    expect(output).toContain("audience: 'free'");
+    expect(output).toContain('canViewContent');
+    expect(output).toContain('post.enforce_gated_content ?? true');
   });
 
   it('does not cache authorization-sensitive slug results', () => {
@@ -100,7 +101,7 @@ describe('posts-route.ts.hbs', () => {
     expect(output).not.toContain("from 'next/cache'");
     expect(output).not.toContain('unstable_cache');
     expect(output).toContain("post?.status === 'confirmed'");
-    expect(output).toContain("post.audience === 'free'");
+    expect(output).toContain('canViewContent');
   });
 });
 
@@ -133,11 +134,12 @@ describe('blog-post-page.tsx.hbs', () => {
     expect(output).not.toMatch(/subscription=\{subscription\}/);
   });
 
-  it('gates only premium posts server-side and consumes the subscription', () => {
+  it('uses the shared server-side access policy and consumes the subscription', () => {
     const template = compileTemplate('blog-post-page.tsx.hbs');
     const output = template(view);
 
-    expect(output).toContain("post.audience !== 'premium'");
+    expect(output).toContain('canViewContent(');
+    expect(output).toContain('post.enforce_gated_content ?? true');
     expect(output).toContain('getViewerSubscription');
     expect(output).toContain('subscription?.tier');
   });

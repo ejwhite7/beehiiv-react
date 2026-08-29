@@ -9,6 +9,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
+import { canViewContent } from '../../utils/access.js';
 
 interface MockJsonResponse {
   body: unknown;
@@ -27,7 +28,14 @@ function renderRoute(): string {
 
 function executeRoute() {
   const list = vi.fn().mockResolvedValue({
-    data: [{ id: 'post_public', status: 'confirmed', audience: 'free' }],
+    data: [
+      {
+        id: 'post_public',
+        status: 'confirmed',
+        audience: 'free',
+        enforce_gated_content: false,
+      },
+    ],
     page: 1,
     limit: 10,
     total_results: 1,
@@ -37,6 +45,7 @@ function executeRoute() {
     id: 'post_public',
     status: 'confirmed',
     audience: 'free',
+    enforce_gated_content: false,
   });
   const json = vi.fn(
     (body: unknown, init?: { status?: number }): MockJsonResponse => ({
@@ -70,7 +79,11 @@ function executeRoute() {
 
   const generatedModule = { exports: {} as GeneratedModule };
   const modules: Readonly<Record<string, unknown>> = {
-    'beehiiv-react/server': { BeehiivClient: MockBeehiivClient, fetchPostBySlug },
+    'beehiiv-react/server': {
+      BeehiivClient: MockBeehiivClient,
+      canViewContent,
+      fetchPostBySlug,
+    },
     'next/server': { NextResponse: { json } },
   };
 
@@ -125,7 +138,7 @@ describe('generated public posts route security', () => {
     expect(fetchPostBySlug).not.toHaveBeenCalled();
   });
 
-  it('lists only confirmed free posts without expansions', async () => {
+  it('lists only confirmed publicly viewable posts without expansions', async () => {
     const { get, list } = executeRoute();
 
     const response = await get(request('?page=2&limit=5'));
@@ -136,7 +149,6 @@ describe('generated public posts route security', () => {
       page: 2,
       limit: 5,
       status: 'confirmed',
-      audience: 'free',
       orderBy: 'publish_date',
       direction: 'desc',
     });
@@ -146,8 +158,24 @@ describe('generated public posts route security', () => {
     const { get, list } = executeRoute();
     list.mockResolvedValueOnce({
       data: [
-        { id: 'post_public', status: 'confirmed', audience: 'free' },
-        { id: 'post_draft', status: 'draft', audience: 'free' },
+        {
+          id: 'post_public',
+          status: 'confirmed',
+          audience: 'both',
+          enforce_gated_content: false,
+        },
+        {
+          id: 'post_draft',
+          status: 'draft',
+          audience: 'free',
+          enforce_gated_content: false,
+        },
+        {
+          id: 'post_gated',
+          status: 'confirmed',
+          audience: 'free',
+          enforce_gated_content: true,
+        },
         { id: 'post_premium', status: 'confirmed', audience: 'premium' },
       ],
       page: 1,
@@ -164,7 +192,7 @@ describe('generated public posts route security', () => {
     });
   });
 
-  it('resolves slugs only in the configured confirmed free publication', async () => {
+  it('resolves slugs only in the configured confirmed public publication', async () => {
     const { fetchPostBySlug, get, list } = executeRoute();
 
     const response = await get(request('?slug=public-post'));
@@ -178,12 +206,28 @@ describe('generated public posts route security', () => {
     expect(call?.[2]).toBe('public-post');
     expect(call?.[3]).toMatchObject({
       status: 'confirmed',
-      audience: 'free',
     });
   });
 
   it.each([
-    ['draft', { id: 'post_draft', status: 'draft', audience: 'free' }],
+    [
+      'draft',
+      {
+        id: 'post_draft',
+        status: 'draft',
+        audience: 'free',
+        enforce_gated_content: false,
+      },
+    ],
+    [
+      'gated free',
+      {
+        id: 'post_gated',
+        status: 'confirmed',
+        audience: 'free',
+        enforce_gated_content: true,
+      },
+    ],
     [
       'premium',
       { id: 'post_premium', status: 'confirmed', audience: 'premium' },

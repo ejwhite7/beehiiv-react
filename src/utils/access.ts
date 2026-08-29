@@ -17,9 +17,9 @@ import type { PostAudience, SubscriptionTier, SubscriptionStatus } from '../type
  * Rules:
  * - `PostAudience 'all'` — everyone can view (even non-subscribers). This is
  *   an SDK-only alias for public content; the beehiiv API never returns it.
- * - `PostAudience 'free'` — requires an **active** subscription (free or premium tier).
- * - `PostAudience 'both'` — sent to both free and premium audiences; requires an
- *   **active** subscription of either tier (same as `'free'`).
+ * - `PostAudience 'free'` and `'both'` — public unless beehiiv's
+ *   `enforce_gated_content` flag is set; gated posts require an active
+ *   subscription of either tier.
  * - `PostAudience 'premium'` — requires an **active premium** subscription only.
  *
  * A subscription is considered valid only when `status === 'active'`.
@@ -29,6 +29,8 @@ import type { PostAudience, SubscriptionTier, SubscriptionStatus } from '../type
  * @param tier - The subscriber's current tier, or `null` if not subscribed
  * @param status - The subscriber's current status, or `null` if not subscribed
  * @param audience - The content's audience/visibility setting
+ * @param enforceGatedContent - Whether free-reader content is subscriber-gated.
+ *   Defaults to `true` so missing API data fails closed.
  * @returns `true` if the subscriber can view the content
  *
  * @example
@@ -42,23 +44,19 @@ export function canViewContent(
   tier: SubscriptionTier | null,
   status: SubscriptionStatus | null,
   audience: PostAudience,
+  enforceGatedContent = true,
 ): boolean {
   // Public content — visible to everyone
   if (audience === 'all') {
     return true;
   }
 
-  // Gated content requires an active subscription
-  const isActive = status === 'active';
-
-  // 'both' posts go to both the free and premium audiences, so any
-  // active subscriber can view them — same rule as 'free'.
   if (audience === 'free' || audience === 'both') {
-    return isActive;
+    return !enforceGatedContent || status === 'active';
   }
 
   if (audience === 'premium') {
-    return isActive && tier === 'premium';
+    return status === 'active' && tier === 'premium';
   }
 
   return false;

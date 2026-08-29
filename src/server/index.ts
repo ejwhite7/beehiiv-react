@@ -68,6 +68,9 @@ export {
   sanitizeBeehiivPostContent,
 } from './sanitize.js';
 
+// --- Shared access policy ---
+export { canViewContent } from '../utils/access.js';
+
 // --- New Endpoint Classes ---
 export { TiersEndpoint } from '../client/endpoints/tiers.js';
 export { AuthorsEndpoint } from '../client/endpoints/authors.js';

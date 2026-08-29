@@ -112,6 +112,8 @@ export interface PostInfo {
   status: PostStatus;
   /** The intended audience for the post */
   audience: PostAudience;
+  /** Whether beehiiv requires subscriber access for the free web content. */
+  enforce_gated_content?: boolean;
   /** The web URL of the post */
   web_url?: string;
   /** The thumbnail/preview image URL */

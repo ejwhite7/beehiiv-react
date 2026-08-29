@@ -74,6 +74,7 @@
     "lint": "eslint src --ext .ts,.tsx",
     "test": "vitest run",
     "test:pack": "node scripts/pack-smoke.mjs",
+    "test:generated": "node scripts/generated-fixtures.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build && npm run typecheck && npm run test && npm run test:pack",

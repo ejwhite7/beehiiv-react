@@ -22,3 +22,5 @@ jobs:
       # Verify the packed tarball resolves under both CommonJS and ESM for
       # all three entry points — catches exports-map/build-output mismatches.
       - run: npm run test:pack
+      # Compile and production-build every supported generated Next.js setup.
+      - run: npm run test:generated

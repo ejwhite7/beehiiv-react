@@ -208,3 +208,15 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: remove constructor validation and its invalid-input matrix, then revert Ralph state. No migration or persistent data change is involved.
 - BR-013 marked `passes: true`.
+
+## BR-014 iteration 1 - passed
+
+- Extracted a non-interactive scaffold orchestrator and routed the interactive `init` command through it, so CI exercises the same generation path shipped to users.
+- Added a generated-project gate that packs the package, creates API-only, Server-Actions-only, combined, and transport-free Next.js workspaces, and installs the tarball once across the matrix.
+- The gate resolves published library/server entry points through both CJS and ESM, runs strict TypeScript for every fixture, and completes four optimized Next.js 15.5.24 production builds.
+- Added `npm run test:generated` to the pull-request/main CI workflow after the existing package smoke.
+- The first fixture iteration exposed an ambiguous ESM module caused by generator `__dirname` usage; the fixture-only scaffold entry now correctly uses the same CJS runtime as the production CLI while published ESM consumers remain explicitly verified.
+- Final evidence: lint passed, strict typecheck passed, 855 tests passed, build passed, package smoke passed, all four generated fixture builds passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and query-bundle unused-import warnings remain assigned to BR-016.
+- Rollback: restore inline `init` orchestration, remove the scaffold entry and generated fixture script/CI step, then revert Ralph state. No migration or persistent data change is involved.
+- BR-014 marked `passes: true`.

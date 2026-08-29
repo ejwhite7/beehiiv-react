@@ -13,14 +13,8 @@ import type { CustomFieldInfo } from '../../types/custom-field.js';
 import { promptForApiKey } from '../auth/api-key.js';
 import { runOAuthFlow } from '../auth/oauth.js';
 import { selectPublication, selectFeatures, resolveBlogConfig } from '../prompts/index.js';
-import { generateConfig } from '../generators/config.js';
-import { generateCustomFieldTypes } from '../generators/custom-fields.js';
-import { generateApiRoutes } from '../generators/api-routes.js';
-import { generateServerActions } from '../generators/server-actions.js';
-import { generateSubscriberStatusHook } from '../generators/hooks.js';
-import { generateAnalytics } from '../generators/analytics.js';
-import { generateSubscribeComponents } from '../generators/subscribe-components.js';
 import { generateBlogPages } from '../generators/blog-pages.js';
+import { scaffoldIntegration } from '../scaffold.js';
 
 /** Options for the init command */
 export interface InitOptions {
@@ -259,54 +253,13 @@ export async function runInit(options: InitOptions): Promise<void> {
   // --- Step 5: Generate files ---
   console.log(chalk.cyan('\nGenerating files...\n'));
 
-  const generatedFiles: string[] = [];
-
-  await generateConfig({
+  const generatedFiles = await scaffoldIntegration({
+    outputDir,
     publicationId: publication.id,
     publicationName: publication.name,
-    outputDir,
+    customFields,
+    features,
   });
-  generatedFiles.push(path.join(outputDir, 'beehiiv.config.ts'));
-
-  await generateCustomFieldTypes({
-    fields: customFields,
-    publicationName: publication.name,
-    outputDir,
-  });
-  generatedFiles.push(
-    path.join(outputDir, 'lib', 'beehiiv', 'beehiiv-custom-fields.ts'),
-  );
-
-  if (features.apiRoutes) {
-    await generateApiRoutes({
-      outputDir,
-      publicationId: publication.id,
-    });
-    generatedFiles.push(
-      path.join(outputDir, 'app', 'api', 'beehiiv', 'subscribe', 'route.ts'),
-    );
-    generatedFiles.push(
-      path.join(
-        outputDir,
-        'app',
-        'api',
-        'beehiiv',
-        'subscription',
-        '[id]',
-        'route.ts',
-      ),
-    );
-    generatedFiles.push(
-      path.join(outputDir, 'app', 'api', 'beehiiv', 'posts', 'route.ts'),
-    );
-  }
-
-  if (features.serverActions) {
-    await generateServerActions({ outputDir, publicationId: publication.id });
-    generatedFiles.push(
-      path.join(outputDir, 'lib', 'beehiiv', 'actions.ts'),
-    );
-  }
 
   // --- Optional: blog reader pages ---
   // Only scaffolded when the caller explicitly opts in via `--blog`.
@@ -335,36 +288,6 @@ export async function runInit(options: InitOptions): Promise<void> {
       path.join(outputDir, 'app', blogConfig.routePrefix, '[slug]', 'page.tsx'),
       path.join(outputDir, 'app', blogConfig.routePrefix, 'rss.xml', 'route.ts'),
       path.join(outputDir, 'app', blogConfig.routePrefix, 'sitemap.ts'),
-    );
-  }
-
-  // Always generate the subscriber status hook and analytics utility
-  await generateSubscriberStatusHook({ outputDir });
-  generatedFiles.push(
-    path.join(outputDir, 'hooks', 'use-subscriber-status.ts'),
-  );
-
-  await generateAnalytics({ outputDir });
-  generatedFiles.push(
-    path.join(outputDir, 'lib', 'beehiiv', 'analytics.ts'),
-  );
-
-  if (features.apiRoutes || features.serverActions) {
-    await generateSubscribeComponents({
-      outputDir,
-      useServerActions: features.serverActions,
-      useApiRoutes: features.apiRoutes,
-    });
-    generatedFiles.push(
-      path.join(outputDir, 'components', 'beehiiv', 'SubscribeCTA.tsx'),
-    );
-    if (features.serverActions) {
-      generatedFiles.push(
-        path.join(outputDir, 'components', 'beehiiv', 'SubscribeStepTwo.tsx'),
-      );
-    }
-    generatedFiles.push(
-      path.join(outputDir, 'components', 'beehiiv', 'SubscribeWrapper.tsx'),
     );
   }
 

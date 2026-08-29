@@ -277,9 +277,14 @@
         "Every supported scaffold configuration typechecks and builds",
         "CI runs the generated fixture gate"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "CLI init and CI fixtures share one non-interactive scaffold orchestrator, preventing test-only generation drift.",
+        "The packed package resolves under CJS and ESM, then all four API-route and Server-Action combinations pass strict TypeScript and optimized Next.js 15.5.24 builds.",
+        "The GitHub Actions CI workflow runs npm run test:generated after the standard package smoke gate.",
+        "Full gate passed: lint, strict typecheck, 855 tests, dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
     },
     {
       "id": "BR-015",

@@ -6,7 +6,9 @@
 'use client';
 
 import { useEffect, useTransition } from 'react';
+{{#if useServerActions}}
 import { subscribeAction } from '@/lib/beehiiv/actions';
+{{/if}}
 import { useSubscriberStatus } from '@/hooks/use-subscriber-status';
 import { pushEvent } from '@/lib/beehiiv/analytics';
 
@@ -54,7 +56,23 @@ export function SubscribeCTA({
 
     startTransition(async () => {
       try {
+{{#if useServerActions}}
         const result = await subscribeAction({ email });
+{{else}}
+        const response = await fetch('/api/beehiiv/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const body = (await response.json()) as {
+          data?: { publication_id?: string };
+          error?: string;
+        };
+        if (!response.ok) {
+          throw new Error(body.error ?? `Subscribe failed (${response.status})`);
+        }
+        const result = body.data;
+{{/if}}
         pushEvent('beehiiv_subscribe_success', {
           publication_id: result?.publication_id ?? '',
         });

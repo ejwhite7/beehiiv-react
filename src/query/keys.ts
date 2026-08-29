@@ -13,18 +13,24 @@
  * Options used to filter a paginated list of posts.
  */
 export interface PostListKeyOptions {
+  /** Publication owning the posts */
+  publicationId?: string;
   /** Filter by publication status */
   status?: string;
   /** Filter by target audience */
   audience?: string;
   /** Maximum results per page */
   limit?: number;
+  /** Related post fields expanded in the response */
+  expand?: string[];
 }
 
 /**
  * Options used to filter a paginated list of subscribers.
  */
 export interface SubscriberListKeyOptions {
+  /** Publication owning the subscribers */
+  publicationId?: string;
   /** Filter by subscriber email */
   email?: string;
   /** Filter by subscriber status */
@@ -101,6 +107,8 @@ export interface SegmentResultsKeyOptions {
  * Options used to filter a paginated list of tiers.
  */
 export interface TierListKeyOptions {
+  /** Publication owning the tiers */
+  publicationId?: string;
   /** Filter by tier type (free or premium) */
   type?: string;
   /** Filter by active status */
@@ -113,6 +121,8 @@ export interface TierListKeyOptions {
  * Options used to filter a paginated list of authors.
  */
 export interface AuthorListKeyOptions {
+  /** Publication owning the authors */
+  publicationId?: string;
   /** Maximum results per page */
   limit?: number;
 }
@@ -121,10 +131,14 @@ export interface AuthorListKeyOptions {
  * Options used to filter engagement queries by date range.
  */
 export interface EngagementListKeyOptions {
+  /** Publication owning the engagement metrics */
+  publicationId?: string;
   /** Start date for the engagement data range (ISO 8601 date string) */
   start_date?: string;
   /** End date for the engagement data range (ISO 8601 date string) */
   end_date?: string;
+  /** Related engagement fields expanded in the response */
+  expand?: string[];
 }
 
 /**
@@ -168,8 +182,10 @@ export const beehiivKeys = {
      * @param id - The post identifier (starts with "post_")
      * @returns A readonly query key tuple
      */
-    detail: (id: string) =>
-      ['beehiiv', 'posts', 'detail', id] as const,
+    detail: (id: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'posts', 'detail', id, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'posts', 'detail', id] as const),
   },
 
   /**
@@ -199,8 +215,10 @@ export const beehiivKeys = {
      * @param emailOrId - The subscriber email address or subscription ID
      * @returns A readonly query key tuple
      */
-    detail: (emailOrId: string) =>
-      ['beehiiv', 'subscriptions', 'detail', emailOrId] as const,
+    detail: (emailOrId: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'subscriptions', 'detail', emailOrId, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'subscriptions', 'detail', emailOrId] as const),
   },
 
   /**
@@ -232,8 +250,10 @@ export const beehiivKeys = {
      *
      * @returns A readonly query key tuple
      */
-    list: () =>
-      ['beehiiv', 'customFields', 'list'] as const,
+    list: (scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'customFields', 'list', { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'customFields', 'list'] as const),
   },
 
   /**
@@ -356,8 +376,10 @@ export const beehiivKeys = {
      *
      * @returns A readonly query key tuple
      */
-    program: () =>
-      ['beehiiv', 'referrals', 'program'] as const,
+    program: (scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'referrals', 'program', { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'referrals', 'program'] as const),
 
     /**
      * Key for a specific subscriber's referral statistics.
@@ -365,8 +387,10 @@ export const beehiivKeys = {
      * @param subscriberId - The subscriber identifier
      * @returns A readonly query key tuple
      */
-    subscriberStats: (subscriberId: string) =>
-      ['beehiiv', 'referrals', 'subscriberStats', subscriberId] as const,
+    subscriberStats: (subscriberId: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'referrals', 'subscriberStats', subscriberId, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'referrals', 'subscriberStats', subscriberId] as const),
   },
 
   /**
@@ -391,8 +415,10 @@ export const beehiivKeys = {
      * @param id - The tier identifier (starts with "tier_")
      * @returns A readonly query key tuple
      */
-    detail: (id: string) =>
-      ['beehiiv', 'tiers', 'detail', id] as const,
+    detail: (id: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'tiers', 'detail', id, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'tiers', 'detail', id] as const),
   },
 
   /**
@@ -417,8 +443,10 @@ export const beehiivKeys = {
      * @param id - The author identifier (starts with "author_")
      * @returns A readonly query key tuple
      */
-    detail: (id: string) =>
-      ['beehiiv', 'authors', 'detail', id] as const,
+    detail: (id: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'authors', 'detail', id, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'authors', 'detail', id] as const),
   },
 
   /**
@@ -434,8 +462,10 @@ export const beehiivKeys = {
      * @param jobId - The bulk subscription job identifier
      * @returns A readonly query key tuple
      */
-    detail: (jobId: string) =>
-      ['beehiiv', 'bulkSubscriptions', 'detail', jobId] as const,
+    detail: (jobId: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'bulkSubscriptions', 'detail', jobId, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'bulkSubscriptions', 'detail', jobId] as const),
   },
 
   /**
@@ -450,8 +480,10 @@ export const beehiivKeys = {
      *
      * @returns A readonly query key tuple
      */
-    list: () =>
-      ['beehiiv', 'bulkSubscriptionUpdates', 'list'] as const,
+    list: (scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'bulkSubscriptionUpdates', 'list', { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'bulkSubscriptionUpdates', 'list'] as const),
 
     /**
      * Key for a specific bulk update job by ID.
@@ -459,8 +491,10 @@ export const beehiivKeys = {
      * @param jobId - The bulk update job identifier
      * @returns A readonly query key tuple
      */
-    detail: (jobId: string) =>
-      ['beehiiv', 'bulkSubscriptionUpdates', 'detail', jobId] as const,
+    detail: (jobId: string, scope?: DetailKeyOptions) =>
+      scope?.publicationId
+        ? (['beehiiv', 'bulkSubscriptionUpdates', 'detail', jobId, { publicationId: scope.publicationId }] as const)
+        : (['beehiiv', 'bulkSubscriptionUpdates', 'detail', jobId] as const),
   },
 
   /**

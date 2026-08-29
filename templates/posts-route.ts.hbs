@@ -4,29 +4,18 @@
  * Located at: app/api/beehiiv/posts/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { unstable_cache } from 'next/cache';
-import { BeehiivClient, fetchPostBySlug } from 'beehiiv-react/server';
+import {
+  createBeehiivClient,
+  canViewContent,
+  fetchPostBySlug,
+} from 'beehiiv-react/server';
 
 const DEFAULT_PUBLICATION_ID =
   process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}';
 
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: DEFAULT_PUBLICATION_ID,
 });
-
-/**
- * Slug lookup is an O(N/limit) scan of the posts list, so cache the result
- * (including misses) per (publicationId, slug). This dedupes repeated
- * requests and prevents unmatched slugs from re-scanning the list on every
- * call — slugs are stable, so a short TTL is safe.
- */
-const getPostBySlug = unstable_cache(
-  (publicationId: string, slug: string) =>
-    fetchPostBySlug(client, publicationId, slug),
-  ['beehiiv-post-by-slug'],
-  { revalidate: 300 },
-);
 
 /**
  * GET /api/beehiiv/posts
@@ -40,50 +29,74 @@ export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
 
+    // This route is a public, read-only projection. Never forward caller-
+    // controlled publication, visibility, or expansion parameters to beehiiv.
+    // Add a separately authenticated route if your application needs drafts,
+    // premium posts, or expanded content.
+    const restrictedParameters = [
+      'publicationId',
+      'publication_id',
+      'status',
+      'audience',
+      'expand',
+      'expand[]',
+    ];
+    if (restrictedParameters.some((parameter) => searchParams.has(parameter))) {
+      return NextResponse.json(
+        { error: 'Unsupported public posts query' },
+        { status: 400 },
+      );
+    }
+
     // --- Slug lookup branch ---
     const slug = searchParams.get('slug');
     if (slug) {
-      const publicationId =
-        searchParams.get('publicationId') ?? DEFAULT_PUBLICATION_ID;
-      const post = await getPostBySlug(publicationId, slug);
-      return NextResponse.json({ data: post }, { status: 200 });
+      const post = await fetchPostBySlug(client, DEFAULT_PUBLICATION_ID, slug, {
+        status: 'confirmed',
+      });
+      const publicPost =
+        post?.status === 'confirmed' &&
+        canViewContent(
+          null,
+          null,
+          post.audience,
+          post.enforce_gated_content ?? true,
+        )
+          ? post
+          : null;
+      return NextResponse.json({ data: publicPost }, { status: 200 });
     }
 
     const page = searchParams.get('page');
     const limit = searchParams.get('limit');
-    const status = searchParams.get('status') as
-      | 'draft'
-      | 'confirmed'
-      | 'archived'
-      | undefined;
-    const audience = searchParams.get('audience') as
-      | 'free'
-      | 'premium'
-      | 'all'
-      | undefined;
-
-    const expand = searchParams.getAll('expand[]');
     const orderBy = searchParams.get('order_by') ?? 'publish_date';
     const direction = searchParams.get('direction') ?? 'desc';
 
     const response = await client.posts.list({
       page: page ? Number(page) : undefined,
       limit: limit ? Number(limit) : undefined,
-      status: status ?? undefined,
-      audience: audience ?? undefined,
-      expand: expand.length > 0 ? expand : undefined,
-      orderBy,
-      direction: direction as 'asc' | 'desc',
+      status: 'confirmed',
+      orderBy: orderBy === 'created_at' ? 'created_at' : 'publish_date',
+      direction: direction === 'asc' ? 'asc' : 'desc',
     });
 
     return NextResponse.json(
       {
-        data: response.data,
+        data: response.data.filter(
+          (post) =>
+            post.status === 'confirmed' &&
+            canViewContent(
+              null,
+              null,
+              post.audience,
+              post.enforce_gated_content ?? true,
+            ),
+        ),
         pagination: {
-          page: response.page,
-          limit: response.limit,
-          total_results: response.total_results,
-          total_pages: response.total_pages,
+          page: response.pagination.page,
+          limit: response.pagination.limit,
+          total_results: response.pagination.total_results,
+          total_pages: response.pagination.total_pages,
         },
       },
       { status: 200 },

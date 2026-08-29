@@ -12,8 +12,57 @@
 import { describe, expect, it } from 'vitest';
 
 import { canViewContent, getAudienceLabel, getTierLabel } from '../../utils/access.js';
+import type {
+  PostAudience,
+  SubscriptionStatus,
+  SubscriptionTier,
+} from '../../types/index.js';
 
 describe('canViewContent', () => {
+  const audiences: PostAudience[] = ['all', 'free', 'both', 'premium'];
+  const tiers: (SubscriptionTier | null)[] = [null, 'free', 'premium'];
+  const statuses: (SubscriptionStatus | null)[] = [
+    null,
+    'validating',
+    'invalid',
+    'pending',
+    'active',
+    'inactive',
+    'needs_attention',
+  ];
+  const matrix = audiences.flatMap((audience) =>
+    tiers.flatMap((tier) =>
+      statuses.flatMap((status) =>
+        [false, true].map((enforceGatedContent) => ({
+          audience,
+          tier,
+          status,
+          enforceGatedContent,
+        })),
+      ),
+    ),
+  );
+
+  it.each(matrix)(
+    'resolves $audience for tier=$tier status=$status gated=$enforceGatedContent',
+    ({ audience, tier, status, enforceGatedContent }) => {
+      const expected =
+        audience === 'all' ||
+        (audience === 'premium'
+          ? tier === 'premium' && status === 'active'
+          : !enforceGatedContent || status === 'active');
+
+      expect(
+        canViewContent(tier, status, audience, enforceGatedContent),
+      ).toBe(expected);
+    },
+  );
+
+  it('fails closed when the gate flag is unavailable', () => {
+    expect(canViewContent(null, null, 'free')).toBe(false);
+    expect(canViewContent(null, null, 'both')).toBe(false);
+  });
+
   describe('audience = "all"', () => {
     it('returns true for active premium subscriber', () => {
       expect(canViewContent('premium', 'active', 'all')).toBe(true);

@@ -42,7 +42,13 @@ import { useSubscription } from './useSubscription.js';
 export function useSubscriberAccess(
   options: UseSubscriberAccessOptions,
 ): AccessResult {
-  const { email, id, audience, enabled = true } = options;
+  const {
+    email,
+    id,
+    audience,
+    enforceGatedContent = true,
+    enabled = true,
+  } = options;
 
   const { subscription, isLoading, error } = useSubscription({
     email,
@@ -55,7 +61,9 @@ export function useSubscriberAccess(
 
   const accessResult = useMemo<AccessResult>(() => {
     const isActive = status === 'active';
-    const canView = isLoading ? false : canViewContent(tier, status, audience);
+    const canView = isLoading
+      ? false
+      : canViewContent(tier, status, audience, enforceGatedContent);
 
     return {
       canView,
@@ -65,7 +73,7 @@ export function useSubscriberAccess(
       isLoading,
       error: error as BeehiivApiError | null,
     };
-  }, [tier, status, audience, isLoading, error]);
+  }, [tier, status, audience, enforceGatedContent, isLoading, error]);
 
   return accessResult;
 }

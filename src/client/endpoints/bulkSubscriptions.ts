@@ -9,6 +9,7 @@ import type {
   BulkCreateSubscriptionsResponse,
 } from '../../types/bulk-subscriptions.js';
 import type { BeehiivHttpClient } from '../index.js';
+import { requireObjectPayload } from './signature-validation.js';
 
 /**
  * Client for the `/publications/{publicationId}/bulk_subscriptions` endpoint.
@@ -81,6 +82,8 @@ export class BulkSubscriptionsEndpoint {
    * @param body - The bulk create request body (when publicationId is passed explicitly)
    * @returns A response containing the job ID and initial status
    */
+  create(publicationId: string, body: BulkCreateSubscriptionsRequest): Promise<BulkCreateSubscriptionsResponse>;
+  create(body: BulkCreateSubscriptionsRequest): Promise<BulkCreateSubscriptionsResponse>;
   async create(
     publicationIdOrBody: string | BulkCreateSubscriptionsRequest,
     body?: BulkCreateSubscriptionsRequest
@@ -90,10 +93,13 @@ export class BulkSubscriptionsEndpoint {
 
     if (typeof publicationIdOrBody === 'string') {
       publicationId = publicationIdOrBody;
-      requestBody = body!;
+      requestBody = requireObjectPayload('BulkSubscriptionsEndpoint.create', body);
     } else {
       publicationId = this._resolvePublicationId();
-      requestBody = publicationIdOrBody;
+      requestBody = requireObjectPayload(
+        'BulkSubscriptionsEndpoint.create',
+        publicationIdOrBody,
+      );
     }
 
     return this._http.post<BulkCreateSubscriptionsResponse>(

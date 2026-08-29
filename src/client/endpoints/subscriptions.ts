@@ -13,6 +13,10 @@ import type {
   SubscriptionListResponse,
   SubscriptionResponse,
 } from '../../types/subscription.js';
+import {
+  requireObjectPayload,
+  requireStringArrayPayload,
+} from './signature-validation.js';
 import type { BeehiivHttpClient } from '../index.js';
 
 /** Options for listing subscriptions with cursor-based pagination */
@@ -98,6 +102,8 @@ export class SubscriptionsEndpoint {
    * @param data - Subscription data including email and optional UTM/custom fields (when publicationId is passed explicitly)
    * @returns The newly created subscription
    */
+  create(publicationId: string, data: CreateSubscriptionRequest): Promise<SubscriptionResponse>;
+  create(data: CreateSubscriptionRequest): Promise<SubscriptionResponse>;
   async create(
     publicationIdOrData: string | CreateSubscriptionRequest,
     data?: CreateSubscriptionRequest
@@ -107,10 +113,16 @@ export class SubscriptionsEndpoint {
 
     if (typeof publicationIdOrData === 'string') {
       publicationId = publicationIdOrData;
-      requestData = data!;
+      requestData = requireObjectPayload(
+        'SubscriptionsEndpoint.create',
+        data,
+      );
     } else {
       publicationId = this._resolvePublicationId();
-      requestData = publicationIdOrData;
+      requestData = requireObjectPayload(
+        'SubscriptionsEndpoint.create',
+        publicationIdOrData,
+      );
     }
 
     return this._http.post<SubscriptionResponse>(
@@ -284,6 +296,8 @@ export class SubscriptionsEndpoint {
    * @param data - The fields to update (when publicationId is passed explicitly)
    * @returns The updated subscription record
    */
+  updateById(publicationId: string, id: string, data: UpdateSubscriptionRequest): Promise<SubscriptionResponse>;
+  updateById(id: string, data: UpdateSubscriptionRequest): Promise<SubscriptionResponse>;
   async updateById(
     publicationIdOrId: string,
     idOrData: string | UpdateSubscriptionRequest,
@@ -296,11 +310,17 @@ export class SubscriptionsEndpoint {
     if (typeof idOrData === 'string') {
       publicationId = publicationIdOrId;
       subscriptionId = idOrData;
-      updateData = data!;
+      updateData = requireObjectPayload(
+        'SubscriptionsEndpoint.updateById',
+        data,
+      );
     } else {
       publicationId = this._resolvePublicationId();
       subscriptionId = publicationIdOrId;
-      updateData = idOrData;
+      updateData = requireObjectPayload(
+        'SubscriptionsEndpoint.updateById',
+        idOrData,
+      );
     }
 
     return this._http.patch<SubscriptionResponse>(
@@ -319,6 +339,8 @@ export class SubscriptionsEndpoint {
    * @param data - The fields to update (when publicationId is passed explicitly)
    * @returns The updated subscription record
    */
+  updateByEmail(publicationId: string, email: string, data: UpdateSubscriptionRequest): Promise<SubscriptionResponse>;
+  updateByEmail(email: string, data: UpdateSubscriptionRequest): Promise<SubscriptionResponse>;
   async updateByEmail(
     publicationIdOrEmail: string,
     emailOrData: string | UpdateSubscriptionRequest,
@@ -331,11 +353,17 @@ export class SubscriptionsEndpoint {
     if (typeof emailOrData === 'string') {
       publicationId = publicationIdOrEmail;
       email = emailOrData;
-      updateData = data!;
+      updateData = requireObjectPayload(
+        'SubscriptionsEndpoint.updateByEmail',
+        data,
+      );
     } else {
       publicationId = this._resolvePublicationId();
       email = publicationIdOrEmail;
-      updateData = emailOrData;
+      updateData = requireObjectPayload(
+        'SubscriptionsEndpoint.updateByEmail',
+        emailOrData,
+      );
     }
 
     const encodedEmail = encodeURIComponent(email);
@@ -414,11 +442,17 @@ export class SubscriptionsEndpoint {
     if (typeof subscriptionIdOrTags === 'string') {
       publicationId = publicationIdOrSubscriptionId;
       subscriptionId = subscriptionIdOrTags;
-      tagList = tags!;
+      tagList = requireStringArrayPayload(
+        'SubscriptionsEndpoint.addTags',
+        tags,
+      );
     } else {
       publicationId = this._resolvePublicationId();
       subscriptionId = publicationIdOrSubscriptionId;
-      tagList = subscriptionIdOrTags;
+      tagList = requireStringArrayPayload(
+        'SubscriptionsEndpoint.addTags',
+        subscriptionIdOrTags,
+      );
     }
 
     return this._http.post<AddTagsResponse>(

@@ -12,7 +12,7 @@
  * @module hooks/usePosts
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { PostInfo, PostAudience, PostStatus } from '../types/post.js';
 import { useBeehiiv } from './useBeehiiv.js';
@@ -22,22 +22,20 @@ import { useBeehiiv } from './useBeehiiv.js';
  */
 export interface UsePostsOptions {
   /**
-   * Override the publication ID from the provider context.
-   * When omitted the value from the nearest `<BeehiivProvider>` is used.
+   * Retained for source compatibility; the public proxy owns publication scope.
+   * @deprecated Configure the publication in the server-side proxy instead.
    */
   publicationId?: string;
-  /** Filter posts by their publication status */
+  /** @deprecated The public proxy always returns confirmed posts. */
   status?: PostStatus;
-  /** Filter posts by their intended audience */
+  /** @deprecated The public proxy always enforces its public audience policy. */
   audience?: PostAudience;
   /** Maximum number of results to return per page */
   limit?: number;
   /**
-   * Fields to expand in the response (e.g. ['free_web_content']).
-   * When included, the beehiiv API returns the full post content
-   * alongside the standard list fields. This parameter is forwarded
-   * on every fetch, including paginated load-more requests, so that
-   * all posts in the accumulated list contain their content.
+   * Retained for source compatibility; expansions are forbidden on the public
+   * list proxy. Fetch authorized post detail through a protected route.
+   * @deprecated Use an authenticated detail route for expanded content.
    */
   expand?: string[];
   /**
@@ -101,18 +99,7 @@ export interface UsePostsReturn {
  */
 export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
   const { apiUrl } = useBeehiiv();
-  const { publicationId, status, audience, limit, expand, enabled = true } = options;
-
-  /**
-   * Serialised expand key for stable dependency tracking.
-   * Arrays are compared by reference in dependency arrays, so we
-   * serialise to avoid infinite re-render loops when callers pass
-   * a new array literal on each render.
-   */
-  const expandKey = useMemo(
-    () => (expand && expand.length > 0 ? JSON.stringify(expand) : ''),
-    [expand],
-  );
+  const { limit, enabled = true } = options;
 
   const [posts, setPosts] = useState<PostInfo[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -134,28 +121,14 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
   const buildUrl = useCallback(
     (page: number): string => {
       const params = new URLSearchParams();
-      if (publicationId) {
-        params.set('publicationId', publicationId);
-      }
-      if (status) {
-        params.set('status', status);
-      }
-      if (audience) {
-        params.set('audience', audience);
-      }
       if (limit !== undefined) {
         params.set('limit', String(limit));
-      }
-      if (expand) {
-        for (const field of expand) {
-          params.append('expand[]', field);
-        }
       }
       params.set('page', String(page));
       const query = params.toString();
       return `${apiUrl}/posts${query ? `?${query}` : ''}`;
     },
-    [apiUrl, publicationId, status, audience, limit, expandKey],
+    [apiUrl, limit],
   );
 
   /**
@@ -223,6 +196,9 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
       pageRef.current = 1;
       void fetchPosts(1, false);
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchPosts]);
 
   /**

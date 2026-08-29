@@ -215,6 +215,26 @@ describe('server fetchers', () => {
       // Match is on page 1 — must not request further pages.
       expect(client.posts.list).toHaveBeenCalledTimes(1);
     });
+
+    it('forwards an explicit audience filter while scanning', async () => {
+      vi.mocked(client.posts.list).mockResolvedValueOnce(
+        postsPage([], { page: 1, total_pages: 1 }),
+      );
+
+      await fetchPostBySlug(client, 'pub_abc', 'public-post', {
+        status: 'confirmed',
+        audience: 'free',
+      });
+
+      expect(client.posts.list).toHaveBeenCalledWith('pub_abc', {
+        page: 1,
+        limit: 100,
+        status: 'confirmed',
+        audience: 'free',
+        orderBy: 'publish_date',
+        direction: 'desc',
+      });
+    });
   });
 
   // ---------- fetchAllPostSlugs / fetchAllPosts ----------

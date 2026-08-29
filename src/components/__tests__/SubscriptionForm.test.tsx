@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SubscriptionForm } from '../SubscriptionForm';
 import type { CustomFieldConfig } from '../SubscriptionForm';
@@ -104,7 +104,7 @@ describe('SubscriptionForm', () => {
       const user = userEvent.setup();
       render(<SubscriptionForm />);
 
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       expect(screen.getByRole('alert').textContent).toBe(
         'Please enter a valid email address',
@@ -116,8 +116,8 @@ describe('SubscriptionForm', () => {
       const user = userEvent.setup();
       render(<SubscriptionForm />);
 
-      await user.type(screen.getByLabelText('Email'), 'notanemail');
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.type(screen.getByLabelText('Email'), 'notanemail'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       expect(screen.getByRole('alert').textContent).toBe(
         'Please enter a valid email address',
@@ -128,8 +128,8 @@ describe('SubscriptionForm', () => {
       const user = userEvent.setup();
       render(<SubscriptionForm />);
 
-      await user.type(screen.getByLabelText('Email'), 'user@localhost');
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.type(screen.getByLabelText('Email'), 'user@localhost'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       expect(screen.getByRole('alert').textContent).toBe(
         'Please enter a valid email address',
@@ -140,10 +140,44 @@ describe('SubscriptionForm', () => {
       const user = userEvent.setup();
       render(<SubscriptionForm />);
 
-      await user.type(screen.getByLabelText('Email'), 'user@example.com');
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.type(screen.getByLabelText('Email'), 'user@example.com'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       expect(mockSubscribe).toHaveBeenCalledWith(expect.objectContaining({ email: 'user@example.com' }));
+    });
+
+    it('forwards the complete attribution and signup-control contract', async () => {
+      const user = userEvent.setup();
+      render(
+        <SubscriptionForm
+          utmSource="website"
+          utmMedium="cta"
+          utmChannel="web"
+          utmCampaign="launch"
+          utmTerm="newsletter"
+          utmContent="hero"
+          referringSite="https://example.com"
+          reactivateExisting
+          sendWelcomeEmail={false}
+        />,
+      );
+
+      await act(() => user.type(screen.getByLabelText('Email'), 'user@example.com'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
+
+      expect(mockSubscribe).toHaveBeenCalledWith({
+        email: 'user@example.com',
+        customFields: {},
+        utmSource: 'website',
+        utmMedium: 'cta',
+        utmChannel: 'web',
+        utmCampaign: 'launch',
+        utmTerm: 'newsletter',
+        utmContent: 'hero',
+        referringSite: 'https://example.com',
+        reactivateExisting: true,
+        sendWelcomeEmail: false,
+      });
     });
   });
 
@@ -371,8 +405,8 @@ describe('SubscriptionForm', () => {
         />,
       );
 
-      await user.type(screen.getByLabelText('Email'), 'user@example.com');
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.type(screen.getByLabelText('Email'), 'user@example.com'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       expect(screen.getByRole('alert').textContent).toBe(
         'Company is required',
@@ -396,8 +430,8 @@ describe('SubscriptionForm', () => {
         />,
       );
 
-      await user.type(screen.getByLabelText('Email'), 'user@example.com');
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.type(screen.getByLabelText('Email'), 'user@example.com'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       expect(screen.getByRole('alert').textContent).toBe('Plan is required');
     });
@@ -412,8 +446,8 @@ describe('SubscriptionForm', () => {
         />,
       );
 
-      await user.type(screen.getByLabelText('Email'), 'user@example.com');
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.type(screen.getByLabelText('Email'), 'user@example.com'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       // Boolean fields are always valid (false is valid), so subscribe should be called
       expect(mockSubscribe).toHaveBeenCalledWith(expect.objectContaining({ email: 'user@example.com' }));
@@ -429,9 +463,9 @@ describe('SubscriptionForm', () => {
         />,
       );
 
-      await user.type(screen.getByLabelText('Email'), 'user@example.com');
-      await user.type(screen.getByLabelText('Company'), 'Acme Inc');
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.type(screen.getByLabelText('Email'), 'user@example.com'));
+      await act(() => user.type(screen.getByLabelText('Company'), 'Acme Inc'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       expect(mockSubscribe).toHaveBeenCalledWith(expect.objectContaining({ email: 'user@example.com' }));
     });
@@ -446,8 +480,8 @@ describe('SubscriptionForm', () => {
         />,
       );
 
-      await user.type(screen.getByLabelText('Email'), 'user@example.com');
-      await user.click(screen.getByRole('button', { name: 'Subscribe' }));
+      await act(() => user.type(screen.getByLabelText('Email'), 'user@example.com'));
+      await act(() => user.click(screen.getByRole('button', { name: 'Subscribe' })));
 
       expect(screen.getByRole('alert').textContent).toBe('Age is required');
     });

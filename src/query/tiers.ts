@@ -17,7 +17,7 @@ import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import {
   BeehiivContext,
   type BeehiivContextValue,
-} from '../components/BeehiivProvider.js';
+} from '../components/beehiiv-context.js';
 import type {
   Tier,
   TierType,
@@ -82,7 +82,7 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 /** Filter / pagination options for {@link useTiersQuery}. */
 export interface UseTiersQueryOptions {
-  /** Override the publication ID from the provider context */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
   /** Filter tiers by type (free or premium) */
   type?: TierType;
@@ -126,17 +126,16 @@ interface TiersListResponse {
 export function useTiersQuery(
   options: UseTiersQueryOptions = {},
 ): UseQueryResult<TiersListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const {
-    publicationId,
     type,
     active,
     limit,
     staleTime = 60_000,
     enabled = true,
   } = options;
-
   const keyOptions = {
+    publicationId: contextPublicationId,
     ...(type ? { type } : {}),
     ...(active !== undefined ? { active } : {}),
     ...(limit !== undefined ? { limit } : {}),
@@ -146,7 +145,6 @@ export function useTiersQuery(
     queryKey: beehiivKeys.tiers.list(keyOptions),
     queryFn: () => {
       const params = new URLSearchParams();
-      if (publicationId) params.set('publicationId', publicationId);
       if (type) params.set('type', type);
       if (active !== undefined) params.set('active', String(active));
       if (limit !== undefined) params.set('limit', String(limit));
@@ -166,7 +164,7 @@ export function useTiersQuery(
 
 /** Options for {@link useTierQuery}. */
 export interface UseTierQueryOptions {
-  /** Override the publication ID from the provider context */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
   /**
    * Stale time in milliseconds before a background re-fetch is triggered.
@@ -205,17 +203,16 @@ export function useTierQuery(
   id: string,
   options: UseTierQueryOptions = {},
 ): UseQueryResult<TierDetailResponse> {
-  const { apiUrl } = useBeehiivContext();
-  const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
+  const { staleTime = 60_000, enabled = true } = options;
 
   return useQuery<TierDetailResponse>({
-    queryKey: beehiivKeys.tiers.detail(id),
+    queryKey: beehiivKeys.tiers.detail(id, {
+      publicationId: contextPublicationId,
+    }),
     queryFn: () => {
-      const params = new URLSearchParams();
-      if (publicationId) params.set('publicationId', publicationId);
-      const query = params.toString();
       return fetchJson<TierDetailResponse>(
-        `${apiUrl}/tiers/${encodeURIComponent(id)}${query ? `?${query}` : ''}`,
+        `${apiUrl}/tiers/${encodeURIComponent(id)}`,
       );
     },
     staleTime,
@@ -427,7 +424,9 @@ export function useUpdateTierMutation(
       });
       // Also invalidate the specific tier detail query
       void queryClient.invalidateQueries({
-        queryKey: beehiivKeys.tiers.detail(variables.tierId),
+        queryKey: beehiivKeys.tiers.detail(variables.tierId, {
+          publicationId: variables.publicationId,
+        }),
       });
       options?.onSuccess?.(data);
     },

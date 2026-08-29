@@ -4,13 +4,26 @@
  */
 'use server';
 
-import { BeehiivClient } from 'beehiiv-react/server';
+import { createBeehiivClient } from 'beehiiv-react/server';
 import type { BeehiivCustomFields } from './beehiiv-custom-fields';
 
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
 });
+
+/**
+ * Authorize a mutation of an existing subscriber.
+ *
+ * This deliberately throws for every call. Replace the body with a server-side
+ * session and ownership check before enabling either privileged action. Never
+ * trust the supplied subscription ID as proof of identity.
+ */
+async function assertSubscriberMutationAuthorized(
+  _subscriptionId: string,
+  _operation: 'update' | 'delete',
+): Promise<void> {
+  throw new Error('Unauthorized subscriber operation');
+}
 
 /** Payload accepted by the subscribeAction server action */
 interface SubscribePayload {
@@ -20,8 +33,11 @@ interface SubscribePayload {
   utmMedium?: string;
   utmChannel?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
   referringSite?: string;
   reactivateExisting?: boolean;
+  sendWelcomeEmail?: boolean;
 }
 
 /**
@@ -44,9 +60,11 @@ export async function subscribeAction(data: SubscribePayload) {
     utm_medium: data.utmMedium,
     utm_channel: data.utmChannel,
     utm_campaign: data.utmCampaign,
+    utm_term: data.utmTerm,
+    utm_content: data.utmContent,
     referring_site: data.referringSite,
     reactivate_existing: data.reactivateExisting,
-    send_welcome_email: true,
+    send_welcome_email: data.sendWelcomeEmail ?? true,
   });
 
   return response.data;
@@ -65,6 +83,8 @@ export async function enrichSubscriptionAction(
   id: string,
   customFields: Partial<BeehiivCustomFields>,
 ) {
+  await assertSubscriberMutationAuthorized(id, 'update');
+
   const response = await client.subscriptions.updateById(id, {
     custom_fields: Object.entries(customFields).map(([name, value]) => ({
       name,
@@ -81,5 +101,7 @@ export async function enrichSubscriptionAction(
  * @param id - The subscription ID to delete (starts with "sub_")
  */
 export async function unsubscribeAction(id: string) {
+  await assertSubscriberMutationAuthorized(id, 'delete');
+
   await client.subscriptions.delete(id);
 }

@@ -84,6 +84,8 @@ interface ScanPostsOptions {
   maxPages?: number;
   /** Status filter applied while scanning. @defaultValue 'confirmed' */
   status?: ListPostsOptions['status'];
+  /** Audience filter applied while scanning. */
+  audience?: ListPostsOptions['audience'];
 }
 
 /**
@@ -103,15 +105,18 @@ async function scanPosts(
   const pageSize = options?.pageSize ?? 100;
   const maxPages = options?.maxPages ?? 50;
   const status = options?.status ?? 'confirmed';
+  const audience = options?.audience;
 
   for (let page = 1; page <= maxPages; page++) {
-    const response = await client.posts.list(publicationId, {
+    const listOptions: ListPostsOptions = {
       page,
       limit: pageSize,
       status,
       orderBy: 'publish_date',
       direction: 'desc',
-    });
+    };
+    if (audience !== undefined) listOptions.audience = audience;
+    const response = await client.posts.list(publicationId, listOptions);
     const items = response.data ?? [];
     for (const post of items) {
       if (visit(post) === true) return;

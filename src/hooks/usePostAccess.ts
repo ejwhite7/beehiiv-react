@@ -49,6 +49,7 @@ export function usePostAccess(
   const { postId, subscriberEmail, subscriberId, enabled = true } = options;
 
   const [post, setPost] = useState<PostInfo | null>(null);
+  const [resolvedPostId, setResolvedPostId] = useState<string | null>(null);
   const [postLoading, setPostLoading] = useState<boolean>(false);
   const [postError, setPostError] = useState<Error | null>(null);
 
@@ -62,6 +63,8 @@ export function usePostAccess(
     if (!postId) return;
 
     const currentFetchId = ++fetchIdRef.current;
+    setPost(null);
+    setResolvedPostId(null);
     setPostLoading(true);
     setPostError(null);
 
@@ -85,10 +88,13 @@ export function usePostAccess(
 
       if (currentFetchId === fetchIdRef.current) {
         setPost(result.data);
+        setResolvedPostId(postId);
         setPostLoading(false);
       }
     } catch (err: unknown) {
       if (currentFetchId === fetchIdRef.current) {
+        setPost(null);
+        setResolvedPostId(null);
         setPostError(err instanceof Error ? err : new Error(String(err)));
         setPostLoading(false);
       }
@@ -111,7 +117,17 @@ export function usePostAccess(
   useEffect(() => {
     if (enabled && postId) {
       void fetchPost();
+      return () => {
+        fetchIdRef.current += 1;
+      };
     }
+
+    fetchIdRef.current += 1;
+    setPost(null);
+    setResolvedPostId(null);
+    setPostLoading(false);
+    setPostError(null);
+    return undefined;
   }, [enabled, postId, fetchPost]);
 
   // Derive access state
@@ -120,8 +136,18 @@ export function usePostAccess(
   const isActive = status === 'active';
   const isLoading = postLoading || subLoading;
   const combinedError = postError || subError;
-  const audience = post?.audience ?? 'all';
-  const canView = isLoading ? false : canViewContent(tier, status, audience);
+  const canView =
+    enabled &&
+    !isLoading &&
+    post !== null &&
+    resolvedPostId === postId
+      ? canViewContent(
+          tier,
+          status,
+          post.audience,
+          post.enforce_gated_content ?? true,
+        )
+      : false;
 
   /**
    * Manually re-trigger both the post and subscription fetches.

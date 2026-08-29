@@ -14,7 +14,7 @@ import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import {
   BeehiivContext,
   type BeehiivContextValue,
-} from '../components/BeehiivProvider.js';
+} from '../components/beehiiv-context.js';
 import type {
   WebhookInfo,
   CreateWebhookRequest,
@@ -112,11 +112,14 @@ interface WebhooksListResponse {
 export function useWebhooksQuery(
   options: UseWebhooksQueryOptions = {},
 ): UseQueryResult<WebhooksListResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<WebhooksListResponse>({
-    queryKey: beehiivKeys.webhooks.list(publicationId ? { publicationId } : {}),
+    queryKey: beehiivKeys.webhooks.list({
+      publicationId: resolvedPublicationId,
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);
@@ -175,11 +178,14 @@ export function useWebhookQuery(
   id: string,
   options: UseWebhookQueryOptions = {},
 ): UseQueryResult<WebhookDetailResponse> {
-  const { apiUrl } = useBeehiivContext();
+  const { apiUrl, publicationId: contextPublicationId } = useBeehiivContext();
   const { publicationId, staleTime = 60_000, enabled = true } = options;
+  const resolvedPublicationId = publicationId ?? contextPublicationId;
 
   return useQuery<WebhookDetailResponse>({
-    queryKey: beehiivKeys.webhooks.detail(id, publicationId ? { publicationId } : undefined),
+    queryKey: beehiivKeys.webhooks.detail(id, {
+      publicationId: resolvedPublicationId,
+    }),
     queryFn: () => {
       const params = new URLSearchParams();
       if (publicationId) params.set('publicationId', publicationId);

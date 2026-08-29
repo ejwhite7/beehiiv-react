@@ -15,6 +15,13 @@ interface QueuedRequest<T> {
   reject: (reason: unknown) => void;
 }
 
+/** Assert that a scheduler limit can safely control queue progress. */
+function assertPositiveSafeInteger(name: string, value: number): void {
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new RangeError(`${name} must be a positive safe integer`);
+  }
+}
+
 /**
  * Rate limiter that throttles outgoing API requests using a rolling window.
  *
@@ -65,10 +72,18 @@ export class RateLimiter {
    * @param options - Configuration options
    * @param options.requestsPerMinute - Maximum requests allowed per 60-second rolling window
    * @param options.maxConcurrent - Maximum concurrent in-flight requests (default: 5)
+   * @throws {RangeError} When either limit is not a positive safe integer
    */
   constructor(options: { requestsPerMinute: number; maxConcurrent?: number }) {
+    const maxConcurrent = options.maxConcurrent ?? 5;
+    assertPositiveSafeInteger(
+      'options.requestsPerMinute',
+      options.requestsPerMinute,
+    );
+    assertPositiveSafeInteger('options.maxConcurrent', maxConcurrent);
+
     this._requestsPerMinute = options.requestsPerMinute;
-    this._maxConcurrent = options.maxConcurrent ?? 5;
+    this._maxConcurrent = maxConcurrent;
 
     // Calculate minimum spacing between dispatched requests to spread load evenly.
     // E.g., 180 req/min -> Math.ceil(60000 / 180) = 334ms between requests.

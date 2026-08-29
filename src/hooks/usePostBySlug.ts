@@ -18,7 +18,11 @@ import { useBeehiiv } from './useBeehiiv.js';
 export interface UsePostBySlugOptions {
   /** The post slug to look up */
   slug: string;
-  /** Override the publication ID from provider context */
+  /**
+   * Retained for source compatibility. The generated proxy is scoped to its
+   * server-configured publication and ignores caller-controlled overrides.
+   * @deprecated Configure the publication in the server-side proxy instead.
+   */
   publicationId?: string;
   /** Whether the fetch should run automatically. @defaultValue true */
   enabled?: boolean;
@@ -60,7 +64,7 @@ export function usePostBySlug(
   options: UsePostBySlugOptions,
 ): UsePostBySlugReturn {
   const { apiUrl } = useBeehiiv();
-  const { slug, publicationId, enabled = true } = options;
+  const { slug, enabled = true } = options;
 
   const [post, setPost] = useState<PostInfo | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -72,9 +76,8 @@ export function usePostBySlug(
   const buildUrl = useCallback((): string => {
     const params = new URLSearchParams();
     params.set('slug', slug);
-    if (publicationId) params.set('publicationId', publicationId);
     return `${apiUrl}/posts?${params.toString()}`;
-  }, [apiUrl, slug, publicationId]);
+  }, [apiUrl, slug]);
 
   const run = useCallback(async () => {
     const id = ++fetchIdRef.current;
@@ -112,6 +115,9 @@ export function usePostBySlug(
 
   useEffect(() => {
     if (enabled && slug) void run();
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, slug, run]);
 
   const refetch = useCallback(async (): Promise<void> => {

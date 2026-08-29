@@ -25,6 +25,8 @@
 // beehiiv API. Re-exported here so server code can import it without
 // pulling in the client-side "use client" entry point.
 export { BeehiivClient } from '../client/index.js';
+export type { CreateSubscriptionRequest } from '../types/subscription.js';
+export type { PostInfo } from '../types/post.js';
 
 // --- Endpoint Classes ---
 // Standalone endpoint classes for advanced usage patterns where consumers
@@ -36,9 +38,8 @@ export { AutomationsEndpoint } from '../client/endpoints/automations.js';
 export { ReferralsEndpoint } from '../client/endpoints/referrals.js';
 
 // --- Server Helpers ---
-// Factory function that reads BEEHIIV_API_KEY from process.env and returns
-// a fully configured BeehiivClient instance.
-export { createBeehiivClient } from './client.js';
+// Shared credential resolver and client factory for API-key and OAuth modes.
+export { createBeehiivClient, resolveBeehiivAuthToken } from './client.js';
 
 // --- Data Fetchers ---
 // Pure async functions that accept a BeehiivClient and return unwrapped
@@ -61,6 +62,15 @@ export {
 // --- Metadata helpers ---
 export { generatePostMetadata } from './metadata.js';
 export type { PostMetadata } from './metadata.js';
+
+// --- HTML sanitization ---
+export {
+  sanitizeBeehiivHtml,
+  sanitizeBeehiivPostContent,
+} from './sanitize.js';
+
+// --- Shared access policy ---
+export { canViewContent } from '../utils/access.js';
 
 // --- New Endpoint Classes ---
 export { TiersEndpoint } from '../client/endpoints/tiers.js';

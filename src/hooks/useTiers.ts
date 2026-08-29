@@ -25,6 +25,7 @@ export interface UseTiersOptions {
    * Override the publication ID from the provider context.
    * When omitted the value from the nearest `<BeehiivProvider>` is used.
    */
+  /** @deprecated Configure publication scope in the server-side proxy. */
   publicationId?: string;
   /** Filter tiers by type (free or premium) */
   type?: TierType;
@@ -92,7 +93,7 @@ export interface UseTiersReturn {
  */
 export function useTiers(options: UseTiersOptions = {}): UseTiersReturn {
   const { apiUrl } = useBeehiiv();
-  const { publicationId, type, active, limit, enabled = true } = options;
+  const { type, active, limit, enabled = true } = options;
 
   /**
    * Serialised filter key for stable dependency tracking.
@@ -124,9 +125,6 @@ export function useTiers(options: UseTiersOptions = {}): UseTiersReturn {
   const buildUrl = useCallback(
     (cursor: string | null): string => {
       const params = new URLSearchParams();
-      if (publicationId) {
-        params.set('publicationId', publicationId);
-      }
       if (type) {
         params.set('type', type);
       }
@@ -142,7 +140,7 @@ export function useTiers(options: UseTiersOptions = {}): UseTiersReturn {
       const query = params.toString();
       return `${apiUrl}/tiers${query ? `?${query}` : ''}`;
     },
-    [apiUrl, publicationId, filterKey],
+    [apiUrl, filterKey],
   );
 
   /**
@@ -205,6 +203,9 @@ export function useTiers(options: UseTiersOptions = {}): UseTiersReturn {
       cursorRef.current = null;
       void fetchTiers(null, false);
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchTiers]);
 
   /**

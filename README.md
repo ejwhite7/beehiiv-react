@@ -59,11 +59,12 @@ npm install @tanstack/react-query
 
 ## Import Paths
 
-`beehiiv-react` ships two entry points to support Next.js App Router's server/client module boundary:
+`beehiiv-react` ships three entry points to support Next.js App Router's server/client module boundary:
 
 | Entry Point | Directive | Use In | Exports |
 |---|---|---|---|
 | `beehiiv-react` | `"use client"` | Client Components | Hooks, UI components, utilities |
+| `beehiiv-react/query` | `"use client"` | Client Components | TanStack Query hooks, mutations, key factories |
 | `beehiiv-react/server` | _(none)_ | Server Components, API routes, Server Actions | `BeehiivClient`, endpoint classes, data fetchers |
 
 ```ts
@@ -74,7 +75,7 @@ import { useSubscribe, SubscriptionForm } from 'beehiiv-react';
 import { BeehiivClient, createBeehiivClient } from 'beehiiv-react/server';
 ```
 
-> **Why two entry points?** Next.js enforces a strict boundary between server and client
+> **Why separate entry points?** Next.js enforces a strict boundary between server and client
 > modules. The root `beehiiv-react` entry has a `"use client"` directive so React hooks
 > and components work in Client Components. Server-only code like `BeehiivClient` must
 > live in a separate entry point without that directive — otherwise Next.js throws
@@ -95,14 +96,16 @@ This interactive wizard will:
 1. Prompt for your beehiiv API key
 2. Let you select a publication
 3. Fetch custom fields and generate TypeScript types
-4. Scaffold a `beehiiv.config.ts`, API routes, and server actions
+4. Let you select API routes, Server Actions, both transports, or neither
+5. Scaffold only the configuration, types, routes, actions, and components required by that selection
 
 Re-running `init` prompts before overwriting any file you may have customized.
 
-> **Security note:** the generated `GET /api/beehiiv/subscribe` route looks up
-> subscriptions by email and, as scaffolded, is publicly accessible. Before
-> production, add an auth check or rate limiting (the generated file includes
-> a TODO with an example guard) so visitors can't enumerate your subscribers.
+> **Security note:** public single-subscribe POSTs include bounded starter abuse
+> controls. Subscriber lookup, update, deletion, and bulk creation deny access by
+> default. Replace the generated authorization and rate-limit hooks with your
+> application's server-side session, ownership, and distributed abuse controls
+> before enabling privileged operations in production.
 
 ---
 
@@ -116,9 +119,8 @@ After adding or modifying custom fields in the beehiiv dashboard, regenerate you
 npx beehiiv-react sync
 ```
 
-This re-fetches the custom field definitions from the beehiiv API and updates `types/beehiiv.generated.ts` with the latest fields and types.
-
-> **Upgrading to v0.5.0?** Run `npx beehiiv-react sync` to scaffold routes for the new resources (authors, tiers, engagements, bulk-subscriptions).
+This re-fetches the custom field definitions from the beehiiv API and updates
+`lib/beehiiv/beehiiv-custom-fields.ts` with the latest fields and types.
 
 
 ### OAuth2 Support
@@ -139,7 +141,7 @@ Print the installed version:
 npx beehiiv-react -v
 # or
 npx beehiiv-react --version
-# beehiiv-react/0.4.2
+# beehiiv-react/0.7.0
 ```
 
 ---
@@ -180,7 +182,7 @@ Subscribe new emails with fully typed custom fields:
 'use client';
 
 import { useSubscribe } from 'beehiiv-react';
-import type { BeehiivCustomFields } from '@/types/beehiiv.generated';
+import type { BeehiivCustomFields } from '@/lib/beehiiv/beehiiv-custom-fields';
 
 export function NewsletterSignup() {
   const { subscribe, isLoading, isSuccess, error } = useSubscribe<BeehiivCustomFields>({
@@ -363,7 +365,7 @@ The client includes built-in rate limiting (180 requests/minute) matching beehii
 ### Fetching Posts
 
 ```tsx
-import { usePosts, usePost } from 'beehiiv-react';
+import { usePosts, usePost, usePostBySlug } from 'beehiiv-react';
 
 // List posts — filter by audience and status
 const { posts, isLoading, hasMore, loadMore } = usePosts({
@@ -373,6 +375,9 @@ const { posts, isLoading, hasMore, loadMore } = usePosts({
 
 // Single post
 const { post, isLoading } = usePost({ id: 'post_abc123' });
+
+// Single post by slug
+const { post: slugPost } = usePostBySlug({ slug: 'welcome-to-our-newsletter' });
 ```
 
 ### Rendering Posts
@@ -957,6 +962,7 @@ All v0.2.x APIs remain stable and unchanged. v0.3.0 is a purely additive release
 | `useCustomFields()` | Retrieve custom field definitions |
 | `usePosts()` | Paginated post list with audience/status filters |
 | `usePost()` | Fetch a single post by ID |
+| `usePostBySlug()` | Fetch a single post by slug |
 | `useSubscriberAccess()` | Resolve subscriber tier + status into an access result |
 | `usePostAccess()` | Fetch post + subscriber, returns combined `{ post, canView }` |
 | `useSubscribers()` | Fetch and paginate through subscribers |
@@ -1031,4 +1037,3 @@ Please follow the existing code style and include tests for any new functionalit
 ## License
 
 Released under the [MIT License](LICENSE).
-

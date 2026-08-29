@@ -10,6 +10,7 @@ import type {
   AutomationJourneyResponse,
 } from '../../types/automation-journey.js';
 import type { BeehiivHttpClient } from '../index.js';
+import { requireObjectPayload } from './signature-validation.js';
 
 /**
  * Client for the `/publications/{publicationId}/automation_journeys` endpoints.
@@ -80,6 +81,8 @@ export class AutomationJourneysEndpoint {
    * @param data - Journey data including automationId and subscriptionId (when publicationId is passed explicitly)
    * @returns The newly created automation journey
    */
+  create(publicationId: string, data: CreateAutomationJourneyRequest): Promise<AutomationJourneyResponse>;
+  create(data: CreateAutomationJourneyRequest): Promise<AutomationJourneyResponse>;
   async create(
     publicationIdOrData: string | CreateAutomationJourneyRequest,
     data?: CreateAutomationJourneyRequest
@@ -89,10 +92,16 @@ export class AutomationJourneysEndpoint {
 
     if (typeof publicationIdOrData === 'string') {
       publicationId = publicationIdOrData;
-      requestData = data!;
+      requestData = requireObjectPayload(
+        'AutomationJourneysEndpoint.create',
+        data,
+      );
     } else {
       publicationId = this._resolvePublicationId();
-      requestData = publicationIdOrData;
+      requestData = requireObjectPayload(
+        'AutomationJourneysEndpoint.create',
+        publicationIdOrData,
+      );
     }
 
     return this._http.post<AutomationJourneyResponse>(

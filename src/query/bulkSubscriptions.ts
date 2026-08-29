@@ -16,7 +16,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import {
   BeehiivContext,
   type BeehiivContextValue,
-} from '../components/BeehiivProvider.js';
+} from '../components/beehiiv-context.js';
 import type {
   BulkCreateSubscriptionsRequest,
   BulkCreateSubscriptionsResponse,
@@ -117,7 +117,7 @@ export interface UseBulkSubscribeMutationOptions {
 /**
  * Mutation hook for creating multiple subscriptions in bulk.
  *
- * POSTs to `{apiUrl}/bulk_subscriptions` with an array of subscription
+ * POSTs to `{apiUrl}/bulk-subscriptions` with an array of subscription
  * entries. On success, the mutation automatically invalidates all subscriber
  * and bulk subscription queries so that list views stay up-to-date.
  *
@@ -168,7 +168,7 @@ export function useBulkSubscribeMutation(
   >({
     mutationFn: async (variables: BulkSubscribeMutationVariables) => {
       return fetchJsonMutation<BulkCreateSubscriptionsResponse>(
-        `${apiUrl}/bulk_subscriptions`,
+        `${apiUrl}/bulk-subscriptions`,
         'POST',
         variables.body,
       );

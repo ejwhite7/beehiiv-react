@@ -24,6 +24,7 @@ import {
   useCustomFieldsQuery,
   usePublicationsQuery,
 } from '../hooks.js';
+import { beehiivKeys } from '../keys.js';
 
 // ---------------------------------------------------------------------------
 // Test wrapper
@@ -38,6 +39,24 @@ function createWrapper(apiUrl = '/api/beehiiv') {
     return (
       <QueryClientProvider client={queryClient}>
         <BeehiivProvider apiUrl={apiUrl} publicationId="pub_test">
+          {children}
+        </BeehiivProvider>
+      </QueryClientProvider>
+    );
+  };
+}
+
+function createSharedWrapper(
+  queryClient: QueryClient,
+  publicationId: string,
+) {
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <BeehiivProvider
+          apiUrl="/api/beehiiv"
+          publicationId={publicationId}
+        >
           {children}
         </BeehiivProvider>
       </QueryClientProvider>
@@ -60,7 +79,12 @@ const MOCK_POSTS = {
       created_at: 1700000000,
     },
   ],
-  pagination: { next_cursor: null, has_more: false },
+  pagination: {
+    page: 1,
+    limit: 10,
+    total_results: 1,
+    total_pages: 1,
+  },
 };
 
 const MOCK_POST_DETAIL = {
@@ -138,24 +162,28 @@ describe('usePostsQuery', () => {
     expect(result.current.data?.data[0].id).toBe('post_001');
   });
 
-  it('passes filter params as query string', async () => {
+  it('forwards limit but suppresses restricted public-route parameters', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => MOCK_POSTS,
     });
 
     renderHook(
-      () => usePostsQuery({ status: 'confirmed', audience: 'premium', limit: 5 }),
+      () =>
+        usePostsQuery({
+          publicationId: 'pub_attacker',
+          status: 'draft',
+          audience: 'premium',
+          expand: ['premium_web_content'],
+          limit: 5,
+        }),
       { wrapper: createWrapper() },
     );
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
 
     const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
-    expect(url).toContain('/api/beehiiv/posts');
-    expect(url).toContain('status=confirmed');
-    expect(url).toContain('audience=premium');
-    expect(url).toContain('limit=5');
+    expect(url).toBe('/api/beehiiv/posts?limit=5');
   });
 
   it('does not fetch when enabled is false', async () => {
@@ -193,6 +221,67 @@ describe('usePostQuery', () => {
 
     const url = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(url).toBe('/api/beehiiv/posts/post_001');
+  });
+
+  it('does not forward a caller-controlled publication override', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => MOCK_POST_DETAIL,
+    });
+
+    renderHook(
+      () => usePostQuery('post_001', { publicationId: 'pub_attacker' }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledOnce());
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/beehiiv/posts/post_001',
+    );
+  });
+
+  it('does not reuse cached post data across provider publications', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    (globalThis.fetch as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: { ...MOCK_POST_DETAIL.data, publication_id: 'pub_a' },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: { ...MOCK_POST_DETAIL.data, publication_id: 'pub_b' },
+        }),
+      });
+
+    const first = renderHook(() => usePostQuery('post_001'), {
+      wrapper: createSharedWrapper(queryClient, 'pub_a'),
+    });
+    await waitFor(() => expect(first.result.current.isSuccess).toBe(true));
+    expect(first.result.current.data?.data.publication_id).toBe('pub_a');
+    first.unmount();
+
+    const second = renderHook(() => usePostQuery('post_001'), {
+      wrapper: createSharedWrapper(queryClient, 'pub_b'),
+    });
+    await waitFor(() => expect(second.result.current.isSuccess).toBe(true));
+
+    expect(second.result.current.data?.data.publication_id).toBe('pub_b');
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    expect(
+      queryClient.getQueryData(
+        beehiivKeys.posts.detail('post_001', { publicationId: 'pub_a' }),
+      ),
+    ).toMatchObject({ data: { publication_id: 'pub_a' } });
+    expect(
+      queryClient.getQueryData(
+        beehiivKeys.posts.detail('post_001', { publicationId: 'pub_b' }),
+      ),
+    ).toMatchObject({ data: { publication_id: 'pub_b' } });
   });
 });
 

@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BeehiivProvider } from '../../components/BeehiivProvider.js';
 import { useSubscribeMutation } from '../mutations.js';
+import { useBulkSubscribeMutation } from '../bulkSubscriptions.js';
 
 // ---------------------------------------------------------------------------
 // Test wrapper
@@ -182,7 +183,13 @@ describe('useSubscribeMutation', () => {
         customFields: { company: 'Acme' },
         utmSource: 'website',
         utmMedium: 'cta',
-        reactivate: true,
+        utmChannel: 'web',
+        utmCampaign: 'launch',
+        utmTerm: 'newsletter',
+        utmContent: 'hero',
+        referringSite: 'https://example.com',
+        reactivateExisting: true,
+        sendWelcomeEmail: false,
       });
     });
 
@@ -193,6 +200,47 @@ describe('useSubscribeMutation', () => {
     expect(body.customFields).toEqual({ company: 'Acme' });
     expect(body.utmSource).toBe('website');
     expect(body.utmMedium).toBe('cta');
-    expect(body.reactivate).toBe(true);
+    expect(body.utmChannel).toBe('web');
+    expect(body.utmCampaign).toBe('launch');
+    expect(body.utmTerm).toBe('newsletter');
+    expect(body.utmContent).toBe('hero');
+    expect(body.referringSite).toBe('https://example.com');
+    expect(body.reactivateExisting).toBe(true);
+    expect(body.sendWelcomeEmail).toBe(false);
+  });
+});
+
+describe('useBulkSubscribeMutation', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('uses the generated bulk-subscriptions route', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { id: 'bulk_1' } }),
+    });
+
+    const { Wrapper } = createWrapper();
+    const { result } = renderHook(() => useBulkSubscribeMutation(), {
+      wrapper: Wrapper,
+    });
+
+    await act(async () => {
+      result.current.mutate({
+        body: { subscriptions: [{ email: 'reader@example.com' }] },
+      });
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/beehiiv/bulk-subscriptions',
+      expect.objectContaining({ method: 'POST' }),
+    );
   });
 });

@@ -37,16 +37,24 @@ export interface SubscribeData<TCustomFields = Record<string, unknown>> {
   customFields?: TCustomFields;
   /** Whether to reactivate an existing inactive subscription */
   reactivate?: boolean;
+  /** Explicit alias for reactivating an existing inactive subscription */
+  reactivateExisting?: boolean;
+  /** Whether beehiiv should send its welcome email. Defaults to true. */
+  sendWelcomeEmail?: boolean;
   /** UTM source for attribution tracking */
   utmSource?: string;
   /** UTM medium for attribution tracking */
   utmMedium?: string;
+  /** UTM channel for attribution tracking */
+  utmChannel?: string;
   /** UTM campaign for attribution tracking */
   utmCampaign?: string;
   /** UTM term for attribution tracking */
   utmTerm?: string;
   /** UTM content for attribution tracking */
   utmContent?: string;
+  /** Referring site URL for attribution tracking */
+  referringSite?: string;
 }
 
 /**
@@ -150,12 +158,15 @@ export function useSubscribe<TCustomFields = Record<string, unknown>>(
             publicationId,
             email: data.email,
             customFields: data.customFields,
-            reactivate: data.reactivate,
+            reactivateExisting: data.reactivateExisting ?? data.reactivate,
+            sendWelcomeEmail: data.sendWelcomeEmail,
             utmSource: data.utmSource,
             utmMedium: data.utmMedium,
+            utmChannel: data.utmChannel,
             utmCampaign: data.utmCampaign,
             utmTerm: data.utmTerm,
             utmContent: data.utmContent,
+            referringSite: data.referringSite,
           }),
         });
 

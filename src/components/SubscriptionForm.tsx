@@ -37,7 +37,11 @@ export interface CustomFieldConfig {
  *   Defaults to `Record<string, unknown>`.
  */
 export interface SubscriptionFormProps<TCustomFields = Record<string, unknown>> {
-  /** The publication ID. Can be inferred from BeehiivProvider context. */
+  /**
+   * Retained for source compatibility. SubscriptionForm always uses the
+   * nearest BeehiivProvider, and generated routes own publication scope.
+   * @deprecated Configure publicationId on BeehiivProvider instead.
+   */
   publicationId?: string;
 
   /** Custom field configuration. When provided, the form renders inputs for each field. */
@@ -76,8 +80,26 @@ export interface SubscriptionFormProps<TCustomFields = Record<string, unknown>> 
   /** UTM medium for attribution tracking */
   utmMedium?: string;
 
+  /** UTM channel for attribution tracking */
+  utmChannel?: string;
+
   /** UTM campaign for attribution tracking */
   utmCampaign?: string;
+
+  /** UTM term for attribution tracking */
+  utmTerm?: string;
+
+  /** UTM content for attribution tracking */
+  utmContent?: string;
+
+  /** Referring site URL for attribution tracking */
+  referringSite?: string;
+
+  /** Reactivate an existing inactive subscription */
+  reactivateExisting?: boolean;
+
+  /** Whether beehiiv should send its welcome email. Defaults to true. */
+  sendWelcomeEmail?: boolean;
 
   /**
    * Render prop for headless mode. When provided, the default UI is not rendered.
@@ -189,11 +211,12 @@ function validateCustomFields(
  * @example
  * ```tsx
  * // Basic usage
- * <SubscriptionForm
- *   publicationId="pub_xxxxx"
- *   submitLabel="Join Newsletter"
- *   utmSource="website"
- * />
+ * <BeehiivProvider publicationId="pub_xxxxx">
+ *   <SubscriptionForm
+ *     submitLabel="Join Newsletter"
+ *     utmSource="website"
+ *   />
+ * </BeehiivProvider>
  *
  * // With custom fields
  * <SubscriptionForm
@@ -230,7 +253,13 @@ export function SubscriptionForm<
     successMessage = 'Thanks for subscribing!',
     utmSource,
     utmMedium,
+    utmChannel,
     utmCampaign,
+    utmTerm,
+    utmContent,
+    referringSite,
+    reactivateExisting,
+    sendWelcomeEmail,
     renderForm,
   } = props;
 
@@ -301,10 +330,30 @@ export function SubscriptionForm<
         customFields: customFieldValues,
         utmSource,
         utmMedium,
+        utmChannel,
         utmCampaign,
+        utmTerm,
+        utmContent,
+        referringSite,
+        reactivateExisting,
+        sendWelcomeEmail,
       });
     },
-    [email, customFields, customFieldValues, subscribe],
+    [
+      email,
+      customFields,
+      customFieldValues,
+      subscribe,
+      utmSource,
+      utmMedium,
+      utmChannel,
+      utmCampaign,
+      utmTerm,
+      utmContent,
+      referringSite,
+      reactivateExisting,
+      sendWelcomeEmail,
+    ],
   );
 
   // Headless mode: delegate all rendering to the consumer

@@ -2,11 +2,11 @@
  * Unit tests for createBeehiivClient.
  *
  * Validates that the factory reads environment variables, throws when the
- * API key is missing, and correctly merges explicit options over env defaults.
+ * credentials are missing, and correctly merges explicit options over env defaults.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createBeehiivClient } from '../client.js';
+import { createBeehiivClient, resolveBeehiivAuthToken } from '../client.js';
 import { BeehiivClient } from '../../client/index.js';
 
 describe('createBeehiivClient', () => {
@@ -15,11 +15,15 @@ describe('createBeehiivClient', () => {
   beforeEach(() => {
     // Clone env so mutations are isolated per test
     process.env = { ...originalEnv };
+    delete process.env.BEEHIIV_API_KEY;
+    delete process.env.BEEHIIV_ACCESS_TOKEN;
+    delete process.env.BEEHIIV_PUBLICATION_ID;
   });
 
   afterEach(() => {
     process.env = originalEnv;
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('should create a BeehiivClient using BEEHIIV_API_KEY from env', () => {
@@ -28,6 +32,37 @@ describe('createBeehiivClient', () => {
     const client = createBeehiivClient();
 
     expect(client).toBeInstanceOf(BeehiivClient);
+  });
+
+  it('creates a client from the OAuth access token written by init', () => {
+    process.env.BEEHIIV_ACCESS_TOKEN = 'oauth-access-token';
+
+    const client = createBeehiivClient();
+
+    expect(client).toBeInstanceOf(BeehiivClient);
+    expect(resolveBeehiivAuthToken()).toBe('oauth-access-token');
+  });
+
+  it('sends the OAuth access token as the API bearer credential', async () => {
+    process.env.BEEHIIV_ACCESS_TOKEN = 'oauth-access-token';
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ data: [] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await createBeehiivClient().publications.list();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer oauth-access-token',
+        }),
+      }),
+    );
   });
 
   it('should create a BeehiivClient using BEEHIIV_PUBLICATION_ID from env', () => {
@@ -39,11 +74,9 @@ describe('createBeehiivClient', () => {
     expect(client).toBeInstanceOf(BeehiivClient);
   });
 
-  it('should throw a descriptive error when BEEHIIV_API_KEY is not set and no apiKey option provided', () => {
-    delete process.env.BEEHIIV_API_KEY;
-
+  it('throws a descriptive error when no credential is configured', () => {
     expect(() => createBeehiivClient()).toThrow(
-      /beehiiv API key is required/,
+      /beehiiv credential is required/,
     );
   });
 
@@ -64,6 +97,14 @@ describe('createBeehiivClient', () => {
     const client = createBeehiivClient({ apiKey: 'options-key' });
 
     expect(client).toBeInstanceOf(BeehiivClient);
+  });
+
+  it('prefers the API key over an OAuth token for backward compatibility', () => {
+    process.env.BEEHIIV_API_KEY = 'env-key';
+    process.env.BEEHIIV_ACCESS_TOKEN = 'oauth-token';
+
+    expect(resolveBeehiivAuthToken()).toBe('env-key');
+    expect(resolveBeehiivAuthToken('explicit-token')).toBe('explicit-token');
   });
 
   it('should prefer options.publicationId over BEEHIIV_PUBLICATION_ID env var', () => {

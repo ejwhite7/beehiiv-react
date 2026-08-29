@@ -3,7 +3,7 @@
  *
  * Validates that:
  * - It fetches posts on mount when enabled (default)
- * - It passes audience and status as query params
+ * - It suppresses restricted public-route parameters
  * - Page-based pagination works via loadMore
  * - Errors are handled correctly
  * - It skips the fetch when enabled is false
@@ -117,14 +117,21 @@ describe('usePosts', () => {
     expect(calledUrl).toContain('page=1');
   });
 
-  it('passes audience and status as query params', async () => {
+  it('does not forward restricted public-route parameters', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,
       json: async () => MOCK_POSTS_PAGE_1,
     });
 
     renderHook(
-      () => usePosts({ status: 'confirmed', audience: 'premium' }),
+      () =>
+        usePosts({
+          publicationId: 'pub_attacker',
+          status: 'draft',
+          audience: 'premium',
+          expand: ['premium_web_content'],
+          limit: 5,
+        }),
       { wrapper: createWrapper() },
     );
 
@@ -134,8 +141,7 @@ describe('usePosts', () => {
 
     const calledUrl = (globalThis.fetch as ReturnType<typeof vi.fn>).mock
       .calls[0][0] as string;
-    expect(calledUrl).toContain('status=confirmed');
-    expect(calledUrl).toContain('audience=premium');
+    expect(calledUrl).toBe('/api/beehiiv/posts?limit=5&page=1');
   });
 
   it('supports page-based pagination via loadMore', async () => {

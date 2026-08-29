@@ -169,18 +169,18 @@ describe('api-route.ts.hbs', () => {
     expect(output).toMatchSnapshot();
   });
 
-  it('includes POST and GET handlers', () => {
+  it('includes only the public POST handler', () => {
     const template = compileTemplate('api-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
     expect(output).toContain('export async function POST');
-    expect(output).toContain('export async function GET');
-    expect(output).toContain('BeehiivClient');
-    expect(output).toContain('BEEHIIV_API_KEY');
+    expect(output).not.toContain('export async function GET');
+    expect(output).toContain('createBeehiivClient');
+    expect(output).not.toContain('BEEHIIV_API_KEY');
     expect(output).toContain('BEEHIIV_PUBLICATION_ID');
   });
 
-  it('imports BeehiivClient from beehiiv-react/server', () => {
+  it('imports the shared server client factory', () => {
     const template = compileTemplate('api-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
@@ -194,6 +194,40 @@ describe('api-route.ts.hbs', () => {
 
     expect(output).toContain('return NextResponse.json(subscription');
     expect(output).not.toContain('{ data: subscription }');
+  });
+
+  it('bounds public input and invokes the abuse-control hook before create', () => {
+    const template = compileTemplate('api-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    const abuseCheck = output.indexOf(
+      'if (!(await isPublicSubscriptionAllowed(req, email)))',
+    );
+    expect(output).toContain('MAX_SIGNUP_BODY_BYTES');
+    expect(output).toContain('MAX_SIGNUPS_PER_MINUTE');
+    expect(output).toContain('MAX_TRACKED_CLIENTS');
+    expect(output).toContain("{ status: 429, headers: { 'Retry-After': '60' } }");
+    expect(abuseCheck).toBeGreaterThan(-1);
+    expect(output.indexOf('client.subscriptions.create')).toBeGreaterThan(
+      abuseCheck,
+    );
+  });
+
+  it('denies anonymous lookup before validation or subscriber enumeration', () => {
+    const template = compileTemplate('subscription-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    const authorization = output.indexOf(
+      'if (!(await isSubscriberLookupAuthorized(req, email)))',
+    );
+    const emailValidation = output.indexOf('if (!email)');
+    const enumeration = output.indexOf(
+      'client.subscriptions.list({ email })',
+    );
+
+    expect(authorization).toBeGreaterThan(-1);
+    expect(emailValidation).toBeGreaterThan(authorization);
+    expect(enumeration).toBeGreaterThan(authorization);
   });
 });
 
@@ -219,11 +253,34 @@ describe('server-action.ts.hbs', () => {
     expect(output).toContain('subscribeAction');
     expect(output).toContain('unsubscribeAction');
     expect(output).toContain('enrichSubscriptionAction');
-    expect(output).toContain('BeehiivClient');
-    expect(output).toContain('BEEHIIV_API_KEY');
+    expect(output).toContain('createBeehiivClient');
+    expect(output).not.toContain('BEEHIIV_API_KEY');
   });
 
-  it('imports BeehiivClient from beehiiv-react/server', () => {
+  it('fails existing-subscriber mutations closed before calling beehiiv', () => {
+    const template = compileTemplate('server-action.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).toMatch(
+      /async function assertSubscriberMutationAuthorized[\s\S]*?throw new Error\('Unauthorized subscriber operation'\);/,
+    );
+
+    const updateAuthorization = output.indexOf(
+      "await assertSubscriberMutationAuthorized(id, 'update')",
+    );
+    const update = output.indexOf('client.subscriptions.updateById(id');
+    const deleteAuthorization = output.indexOf(
+      "await assertSubscriberMutationAuthorized(id, 'delete')",
+    );
+    const deletion = output.indexOf('client.subscriptions.delete(id)');
+
+    expect(updateAuthorization).toBeGreaterThan(-1);
+    expect(update).toBeGreaterThan(updateAuthorization);
+    expect(deleteAuthorization).toBeGreaterThan(-1);
+    expect(deletion).toBeGreaterThan(deleteAuthorization);
+  });
+
+  it('imports the shared server client factory', () => {
     const template = compileTemplate('server-action.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 

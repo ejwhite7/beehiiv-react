@@ -21,6 +21,8 @@ import { useSubscriberAccess } from '../hooks/useSubscriberAccess.js';
 export interface GatedContentProps {
   /** The audience/visibility level required to view the children. */
   audience: PostAudience;
+  /** Whether free-reader content requires an active subscription. Defaults to true. */
+  enforceGatedContent?: boolean;
   /** Subscriber email to resolve access for. */
   subscriberEmail?: string;
   /** Subscriber ID to resolve access for. */
@@ -65,6 +67,7 @@ export interface GatedContentProps {
 export function GatedContent(props: GatedContentProps): React.JSX.Element {
   const {
     audience,
+    enforceGatedContent = true,
     subscriberEmail,
     subscriberId,
     children,
@@ -78,6 +81,7 @@ export function GatedContent(props: GatedContentProps): React.JSX.Element {
     email: subscriberEmail,
     id: subscriberId,
     audience,
+    enforceGatedContent,
   });
 
   const { canView, isLoading } = accessResult;

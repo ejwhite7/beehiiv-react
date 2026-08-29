@@ -4,17 +4,40 @@
  * Located at: app/api/beehiiv/engagements/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react/server';
+import { createBeehiivClient } from 'beehiiv-react/server';
 
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
 });
+
+/**
+ * Engagement analytics are privileged and deny by default. Replace this with
+ * a server-side administrator or analytics-role check before enabling access.
+ */
+async function isEngagementAnalyticsAuthorized(
+  _req: NextRequest,
+): Promise<boolean> {
+  return false;
+}
 
 /** GET /api/beehiiv/engagements — Fetch engagement metrics for a date range */
 export async function GET(req: NextRequest) {
   try {
+    if (!(await isEngagementAnalyticsAuthorized(req))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const searchParams = req.nextUrl.searchParams;
+    if (
+      searchParams.has('publicationId') ||
+      searchParams.has('publication_id')
+    ) {
+      return NextResponse.json(
+        { error: 'Publication override is not supported.' },
+        { status: 400 },
+      );
+    }
+
     const startDate = searchParams.get('start_date');
     const endDate = searchParams.get('end_date');
 
@@ -25,9 +48,18 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const requestedExpansions = searchParams.getAll('expand[]');
+    if (requestedExpansions.some((field) => field !== 'stats')) {
+      return NextResponse.json(
+        { error: 'Unsupported engagement expansion.' },
+        { status: 400 },
+      );
+    }
+
     const response = await client.engagements.get({
       start_date: startDate,
       end_date: endDate,
+      expand: requestedExpansions.length > 0 ? ['stats'] : undefined,
     });
 
     return NextResponse.json({ data: response.data }, { status: 200 });

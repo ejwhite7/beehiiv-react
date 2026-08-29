@@ -67,6 +67,23 @@ describe('usePost', () => {
     );
   });
 
+  it('does not forward a caller-controlled publication override', async () => {
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: MOCK_POST }),
+    });
+
+    renderHook(
+      () => usePost({ id: 'post_abc123', publicationId: 'pub_attacker' }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/api/beehiiv/posts/post_abc123',
+    );
+  });
+
   it('re-fetches when the id changes', async () => {
     const secondPost = {
       ...MOCK_POST,

@@ -134,6 +134,9 @@ export function useReferrals(
     if (enabled) {
       void fetchReferralProgram();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchReferralProgram]);
 
   /**

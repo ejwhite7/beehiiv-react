@@ -1,0 +1,530 @@
+{
+  "project": "beehiiv-react production remediation",
+  "branchName": "tidebreak/ember-inlet",
+  "completionSignal": "<promise>COMPLETE</promise>",
+  "qualityGates": [
+    "npm run lint",
+    "npm run typecheck",
+    "npm test",
+    "npm run build",
+    "npm run test:pack",
+    "npm audit --omit=dev"
+  ],
+  "userStories": [
+    {
+      "id": "BR-001",
+      "priority": 1,
+      "title": "Secure generated subscriber operations",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Generated code does not expose unauthenticated subscriber lookup, update, or deletion",
+        "Privileged subscriber operations fail closed until an application supplies authorization",
+        "Regression tests cover anonymous lookup, update, deletion, and enumeration"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generated email and ID lookup/delete handlers deny by default before Beehiiv calls",
+        "Generated existing-subscriber Server Actions throw before update/delete calls",
+        "Behavioral VM tests execute generated modules and prove protected Beehiiv spies remain untouched",
+        "Public subscribe POST behavior remains reachable and tested",
+        "Full gate passed: lint, typecheck, 614 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-002",
+      "priority": 1,
+      "title": "Restrict the public posts proxy",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Only confirmed authorized posts can be returned publicly",
+        "Draft, premium expansion, arbitrary expansion, and publication override probes fail",
+        "Security regression tests cover the public route"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generated public route rejects caller-controlled status, audience, expansion, and publication parameters before Beehiiv calls",
+        "List and slug lookups use the configured publication with confirmed and free filters",
+        "Response-side guards remove unexpected draft or premium records, and authorization-sensitive slug results are not cached",
+        "Executable generated-route tests cover unsafe probes, upstream inconsistencies, and safe list/detail behavior",
+        "Full gate passed: lint, typecheck, 627 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-003",
+      "priority": 1,
+      "title": "Eliminate unsanitized HTML rendering",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Raw API HTML cannot be injected without an explicit trusted sanitizer decision",
+        "Generated blog output is sanitized",
+        "XSS regression fixtures cover scripts, event handlers, dangerous URLs, SVG, and malformed markup"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "PostContent and PostContentRenderer fail closed unless given a sanitizer or an explicit sanitized-content assertion",
+        "Generated blog pages sanitize all free and premium web and RSS HTML on the server before rendering",
+        "Server sanitizer strips scripts, handlers, unsafe URLs, SVG, inline styles, and malformed payloads",
+        "sanitize-html 2.17.7 and its compatible transitive updates pass the production dependency audit",
+        "Full gate passed: lint, typecheck, 638 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-004",
+      "priority": 1,
+      "title": "Establish one audience access matrix",
+      "dependsOn": ["BR-002"],
+      "acceptanceCriteria": [
+        "Server templates, hooks, components, and utilities share one access decision",
+        "Every audience, tier, and subscription status combination is tested"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "PostInfo now carries beehiiv's enforce_gated_content policy input",
+        "Public routes, generated server pages, usePostAccess, useSubscriberAccess, and GatedContent use canViewContent",
+        "Missing gate metadata defaults to gated so access fails closed",
+        "The exhaustive matrix covers 168 audience, tier, status, and gate combinations",
+        "Full gate passed: lint, typecheck, 810 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-005",
+      "priority": 2,
+      "title": "Repair subscription route contracts",
+      "dependsOn": ["BR-001"],
+      "acceptanceCriteria": [
+        "Email and ID lookup URLs match generated handlers",
+        "List and detail response envelopes match hook expectations",
+        "Hook-to-generated-handler contract tests pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generated /subscribe is creation-only and /subscription handles fail-closed email lookup",
+        "Email and ID handlers both return one-record data envelopes, including null for no email match",
+        "React and TanStack Query hooks target the generated subscription root and ID paths",
+        "Executed generated-handler tests verify authorized email and ID envelope behavior",
+        "Full gate passed: lint, typecheck, 815 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-006",
+      "priority": 2,
+      "title": "Repair subscription mutation payloads",
+      "dependsOn": ["BR-001"],
+      "acceptanceCriteria": [
+        "Custom fields use the Beehiiv array wire shape",
+        "Reactivation, welcome email, and supported UTM fields are forwarded",
+        "Form, hook, Query mutation, generated route, and client contract tests pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generated subscribe route validates and maps custom-field objects to Beehiiv name/value arrays",
+        "Form, useSubscribe, Query mutation, route, and Server Action forward the complete attribution and signup-control fields",
+        "Legacy reactivate input remains compatible while reactivateExisting is the explicit contract",
+        "Executed generated-route tests assert the exact Beehiiv client payload",
+        "Full gate passed: lint, typecheck, 816 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-007",
+      "priority": 2,
+      "title": "Repair posts detail and pagination routes",
+      "dependsOn": ["BR-002"],
+      "acceptanceCriteria": [
+        "Post detail hooks resolve against generated dynamic routes",
+        "Offset pagination metadata is preserved",
+        "Generated post handlers pass strict TypeScript"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generator now emits /posts/[id] matching usePost and usePostAccess",
+        "Dynamic handler rejects publication overrides and denies restricted content by default",
+        "List handler reads the nested Beehiiv offset-pagination envelope",
+        "Generated handlers transpile and execute in security/contract regressions",
+        "Full gate passed: lint, typecheck, 819 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-008",
+      "priority": 2,
+      "title": "Repair authors, tiers, and bulk routes",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Detail paths match exported hooks",
+        "Offset and cursor pagination contracts are preserved",
+        "Bulk route naming is consistent across hooks and templates"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generator emits /authors/[id] and /tiers/[id] routes matching the exported detail hooks",
+        "Author offset pagination and tier cursor pagination are forwarded from response.pagination",
+        "Tier list filters and cursor parameters are passed to the Beehiiv client",
+        "Bulk Query mutation uses the generated /bulk-subscriptions route name",
+        "Generated routes transpile and execute in behavioral contract regressions",
+        "Full gate passed: lint, typecheck, 822 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-009",
+      "priority": 2,
+      "title": "Repair OAuth credential handling",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "OAuth-generated projects resolve the stored access token",
+        "Credential selection is shared by generated server code",
+        "OAuth-mode scaffold smoke tests pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "createBeehiivClient resolves BEEHIIV_ACCESS_TOKEN when no API key is configured",
+        "OAuth access tokens are verified as the actual Beehiiv Bearer header",
+        "All generated routes, actions, and blog files use the shared credential-aware server factory",
+        "OAuth init smoke generates every selected feature and persists BEEHIIV_ACCESS_TOKEN",
+        "OAuth scaffold smoke exposed and fixed invalid Handlebars parsing in the blog index template",
+        "Full gate passed: lint, typecheck, 826 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-010",
+      "priority": 2,
+      "title": "Repair CLI feature combinations",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "API-routes-only, Server-Actions-only, both, and neither configurations compile",
+        "No generated file imports an unselected feature"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "API-routes-only scaffolds use a fetch-backed CTA and do not import Server Actions",
+        "Server-Actions-only and combined scaffolds generate action-backed CTA and step-two enrichment",
+        "Neither-mode scaffolds omit all transport-dependent subscribe components",
+        "All four feature combinations generate TypeScript and TSX without compiler diagnostics",
+        "Dependency scans prove generated files do not reference unselected transports",
+        "Full gate passed: lint, typecheck, 831 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-011",
+      "priority": 3,
+      "title": "Isolate TanStack Query caches by publication",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Every publication-scoped query key includes the resolved publication ID",
+        "Cross-publication cache tests pass",
+        "Mutation invalidation remains correct"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "All publication-scoped Query hooks include the resolved provider or option publication ID in their cache key",
+        "Scoped key coverage includes posts, subscribers, subscriptions, fields, webhooks, segments, automations, referrals, tiers, authors, bulk jobs, and engagements",
+        "A shared QueryClient fetches and retains separate results for the same post ID under two publication providers",
+        "Entity-root mutation invalidation still invalidates scoped caches for every publication",
+        "Post and engagement expansion filters are also represented in keys",
+        "Full gate passed: lint, typecheck, 839 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-012",
+      "priority": 3,
+      "title": "Cancel stale hook requests",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Disable, identifier removal, unmount, and rapid identity changes cannot commit stale state",
+        "Deferred-response regression tests pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "All fetchIdRef-backed hooks invalidate their active request generation during effect cleanup, covering disabled state, missing identifiers, dependency changes, and unmount.",
+        "Deferred useSubscription regressions prove stale responses cannot win after disablement, identifier removal, rapid identity changes, or unmount.",
+        "Full gate passed: lint, strict typecheck, 843 tests, dual ESM/CJS build, package dry-run, zero production vulnerabilities, and clean diff check."
+      ]
+    },
+    {
+      "id": "BR-013",
+      "priority": 3,
+      "title": "Validate rate limiter configuration",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Invalid request and concurrency limits fail synchronously",
+        "Valid rate and concurrency behavior remains covered"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "RateLimiter construction rejects zero, negative, fractional, non-finite, and unsafe-integer request and concurrency limits with synchronous RangeError failures.",
+        "Existing immediate dispatch, concurrency, spacing, rolling-window, error propagation, and FIFO tests remain green.",
+        "Full gate passed: lint, strict typecheck, 855 tests, dual ESM/CJS build, package dry-run, zero production vulnerabilities, and clean diff check."
+      ]
+    },
+    {
+      "id": "BR-014",
+      "priority": 3,
+      "title": "Add generated project CI fixtures",
+      "dependsOn": ["BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010"],
+      "acceptanceCriteria": [
+        "Packed CJS and ESM artifacts install into generated Next.js fixtures",
+        "Every supported scaffold configuration typechecks and builds",
+        "CI runs the generated fixture gate"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "CLI init and CI fixtures share one non-interactive scaffold orchestrator, preventing test-only generation drift.",
+        "The packed package resolves under CJS and ESM, then all four API-route and Server-Action combinations pass strict TypeScript and optimized Next.js 15.5.24 builds.",
+        "The GitHub Actions CI workflow runs npm run test:generated after the standard package smoke gate.",
+        "Full gate passed: lint, strict typecheck, 855 tests, dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
+    },
+    {
+      "id": "BR-015",
+      "priority": 4,
+      "title": "Upgrade vulnerable development tooling",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "No known high or critical dependency audit findings remain",
+        "The complete test and build gate still passes"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Vitest and its V8 coverage provider were upgraded together from 1.6.1 to 4.1.11, removing all 2 critical, 1 high, and 2 moderate development audit findings.",
+        "The complete audit now reports only one low-severity transitive esbuild development-server finding; npm reports no dependency-compatible automatic resolution, while production dependencies remain at zero findings.",
+        "Full gate passed: lint, strict typecheck, 857 tests, dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
+    },
+    {
+      "id": "BR-016",
+      "priority": 4,
+      "title": "Remove test warnings and stale documentation",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "The test suite emits no unexpected React act warnings",
+        "Documented hooks, components, test baseline, routes, and supported features match the code"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "React interactions and manual refetches are wrapped in act, while the expected provider-boundary exception is locally suppressed and still asserted.",
+        "Vitest uses its native ESM config loader and the Query adapter imports the JSX-free context module, eliminating the test-runner and bundle warnings.",
+        "Current documentation matches 23 hooks, 9 components, 14 endpoint namespaces, 22 templates, 859 tests, and 62 test files; older counts remain only in explicitly versioned release notes.",
+        "Full gate passed: lint, strict typecheck, 859 tests with no unexpected warnings, warning-free dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
+    },
+    {
+      "id": "BR-017",
+      "priority": 5,
+      "title": "Complete residual defect discovery and production audit",
+      "dependsOn": ["BR-001", "BR-002", "BR-003", "BR-004", "BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010", "BR-011", "BR-012", "BR-013", "BR-014", "BR-015", "BR-016", "BR-018", "BR-019", "BR-020", "BR-021", "BR-022", "BR-023", "BR-024", "BR-025", "BR-026", "BR-027"],
+      "acceptanceCriteria": [
+        "Full release, generated project, security, contract, race, packaging, and audit gates pass",
+        "Independent adversarial review finds no unresolved defect",
+        "Every newly discovered defect is appended as a failing story before completion"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "A fresh adversarial audit covered every changed production file and every CLI-generated route, including authorization ordering, server-owned publication scope, HTML sinks, request races, cache keys, endpoint signatures, package exports, and documentation contracts.",
+        "All six residual defects discovered during the final loop were appended as BR-022 through BR-027 before implementation and now pass their acceptance criteria.",
+        "Final release gate passed: lint, strict typecheck, 872 tests across 65 files, warning-free dual ESM/CJS build, packed CJS/ESM smoke, four strict generated Next.js production builds, zero production vulnerabilities, and clean diff check.",
+        "The complete development audit has one low-severity transitive esbuild dev-server advisory with no dependency-compatible automatic resolution; there are no moderate, high, or critical findings and no production findings."
+      ]
+    },
+    {
+      "id": "BR-018",
+      "priority": 1,
+      "title": "Secure generated bulk subscription creation and public signup abuse boundaries",
+      "dependsOn": ["BR-001"],
+      "acceptanceCriteria": [
+        "The scaffold does not expose unauthenticated bulk subscription creation",
+        "Public single-subscribe input is bounded and supports an explicit application abuse-control hook",
+        "Regression tests cover bulk abuse, oversized inputs, and bypass attempts"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generated bulk subscription creation denies by default before reading the request body",
+        "Public signup caps request bodies, validates bounded email input, and limits attempts per client",
+        "The in-memory limiter has a bounded client tracker and an explicit server-side replacement hook",
+        "Behavioral generated-route tests cover anonymous bulk input, oversized bodies, repeated attempts, and Beehiiv call suppression",
+        "Full gate passed: lint, typecheck, 813 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-019",
+      "priority": 3,
+      "title": "Enforce dual-signature endpoint contracts",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Missing explicit-publication payloads fail at compile time",
+        "Malformed JavaScript calls fail with clear runtime validation errors",
+        "Compile-fail and runtime tests cover every affected endpoint"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Explicit overload declarations reject missing payloads at compile time across all 19 payload-bearing dual-signature methods.",
+        "Shared runtime guards reject malformed JavaScript object and tag payloads with operation-specific TypeError messages before HTTP dispatch.",
+        "Compile-fail and untyped runtime matrices cover subscriptions, posts, webhooks, custom fields, automations and journeys, segments, tiers, bulk operations, and engagements.",
+        "Full gate passed: lint, strict typecheck, 857 tests, dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
+    },
+    {
+      "id": "BR-020",
+      "priority": 2,
+      "title": "Make post access resolution fail closed when post data is unavailable",
+      "dependsOn": ["BR-004"],
+      "acceptanceCriteria": [
+        "Missing, failed, disabled, or stale post fetches never produce an access grant",
+        "Post access error and empty-state regression tests pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Access grants are tied to the currently requested post ID",
+        "Post data and grants clear immediately on ID changes, failures, disablement, and empty IDs",
+        "Effect cleanup invalidates in-flight requests before stale responses can update state",
+        "Regressions cover successful grants, empty responses, failures after grants, disabled and empty IDs, and stale success races",
+        "Full gate passed: lint, typecheck, 836 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-021",
+      "priority": 2,
+      "title": "Align slug lookup with the secured posts route",
+      "dependsOn": ["BR-002", "BR-007"],
+      "acceptanceCriteria": [
+        "usePostBySlug uses the provider-scoped posts route and never forwards a caller-controlled publication override",
+        "The public generated route and hook contract agree for slug lookups",
+        "Regression tests cover slug lookup success and publication override suppression"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "usePostBySlug now constructs only the provider-scoped posts URL with an encoded slug and never forwards publicationId.",
+        "The publicationId option remains deprecated for source compatibility and documents the server-owned publication boundary.",
+        "Hook regressions cover a successful encoded slug lookup and suppression of an attacker-controlled override; the generated route security suite confirms matching slug and override behavior.",
+        "Full gate passed: lint, strict typecheck, 859 tests, warning-free dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
+    },
+    {
+      "id": "BR-022",
+      "priority": 1,
+      "title": "Secure generated engagement analytics",
+      "dependsOn": ["BR-001", "BR-008"],
+      "acceptanceCriteria": [
+        "Generated engagement metrics deny anonymous requests before validation or Beehiiv access",
+        "Caller-controlled publication overrides are not forwarded and supported expansion parameters remain aligned",
+        "Executable generated-route and hook contract regressions cover the protected boundary"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generated engagement analytics deny by default before reading query input or calling Beehiiv.",
+        "Authorized behavior rejects publication overrides and unsupported expansions while forwarding the supported stats expansion.",
+        "Core and TanStack Query adapters retain deprecated overrides for source compatibility but neither forwards nor caches under them.",
+        "Executable generated-route, core-hook, and Query regressions pass within the complete 872-test production gate."
+      ]
+    },
+    {
+      "id": "BR-023",
+      "priority": 4,
+      "title": "Retire the misleading SubscriptionForm publication override",
+      "dependsOn": ["BR-006", "BR-016"],
+      "acceptanceCriteria": [
+        "SubscriptionForm no longer documents its ignored publicationId prop as a functional override",
+        "The source-compatible deprecated property points consumers to BeehiivProvider and the server-owned publication boundary",
+        "Documentation, typecheck, and component regressions pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "SubscriptionForm.publicationId is explicitly deprecated and documented as source-compatibility-only.",
+        "The component example now places publicationId on BeehiivProvider, matching actual runtime behavior and the server-owned publication boundary.",
+        "Strict typecheck, component regressions, documentation checks, and the full release gate pass."
+      ]
+    },
+    {
+      "id": "BR-024",
+      "priority": 2,
+      "title": "Align post-list adapters with the secured public route",
+      "dependsOn": ["BR-002", "BR-007", "BR-011"],
+      "acceptanceCriteria": [
+        "React and Query post-list adapters never forward restricted publication, visibility, or expansion parameters",
+        "Deprecated options remain source-compatible and Query exposes the generated route's offset pagination shape",
+        "Hook, Query, cache-scope, and generated-route regressions cover the aligned public contract"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "usePosts and usePostsQuery forward only public-route-supported pagination input and suppress publication, status, audience, and expansion overrides.",
+        "Deprecated options remain type-compatible and direct consumers to authenticated detail routes for expanded content.",
+        "The Query response now exposes offset pagination matching the generated handler; hook, Query, cache, and generated-route tests pass."
+      ]
+    },
+    {
+      "id": "BR-025",
+      "priority": 2,
+      "title": "Align Query post detail with the secured route",
+      "dependsOn": ["BR-007", "BR-011"],
+      "acceptanceCriteria": [
+        "usePostQuery never forwards a caller-controlled publication override",
+        "Post detail cache scope follows BeehiivProvider rather than the deprecated override option",
+        "Query and generated-route regressions cover override suppression and cross-provider isolation"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "usePostQuery constructs only the encoded provider-scoped detail URL and never forwards publicationId.",
+        "Its cache key uses BeehiivProvider publication scope rather than the deprecated override option.",
+        "Override suppression, cross-provider isolation, and generated detail-route regressions pass."
+      ]
+    },
+    {
+      "id": "BR-026",
+      "priority": 3,
+      "title": "Align generated author and tier adapter scope",
+      "dependsOn": ["BR-008", "BR-011"],
+      "acceptanceCriteria": [
+        "Author and tier React and Query reads never forward caller-controlled publication overrides to generated routes",
+        "Deprecated override options remain source-compatible while Query caches use BeehiivProvider scope",
+        "List and detail regressions cover both resources and both adapter families"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Author and tier list/detail React hooks no longer forward caller-controlled publication overrides.",
+        "Equivalent TanStack Query adapters use BeehiivProvider cache scope and server-scoped URLs while retaining deprecated properties for source compatibility.",
+        "Eight focused list/detail regressions cover both resources and adapter families; generated route contracts and the full gate pass."
+      ]
+    },
+    {
+      "id": "BR-027",
+      "priority": 3,
+      "title": "Stabilize the compile-contract gate",
+      "dependsOn": ["BR-019"],
+      "acceptanceCriteria": [
+        "The real strict TypeScript compile-fail fixture remains enforced",
+        "The heavyweight compiler subprocess has an explicit bounded timeout suitable for full-suite contention",
+        "Repeated focused and full-suite executions pass"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "The test still launches real strict TypeScript against the complete compile-fail fixture.",
+        "Only the heavyweight compiler test receives an explicit 15-second upper bound, avoiding full-suite contention against Vitest's unrelated 5-second default.",
+        "Two consecutive focused executions and the complete 872-test suite pass."
+      ]
+    }
+  ]
+}

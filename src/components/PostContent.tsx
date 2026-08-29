@@ -1,9 +1,8 @@
 /**
  * PostContent - renders the body content of a beehiiv post.
  * Reads from the `free.web` (or `free.rss`) field of the API response.
- * Users should provide their own `sanitizeHtml` implementation (e.g.,
- * `DOMPurify.sanitize`) to prevent XSS. The component does not bundle a
- * sanitizer to keep the package lightweight.
+ * Raw HTML is never rendered unless a sanitizer is provided or the caller
+ * explicitly asserts that the content was sanitized on the server.
  * @module components/PostContent
  */
 
@@ -13,11 +12,8 @@ import type { PostContent as PostContentType } from '../types/post.js';
 /**
  * Props for the {@link PostContent} component.
  *
- * **Security note:** When rendering HTML content the component uses
- * `dangerouslySetInnerHTML`. You should always provide a `sanitizeHtml`
- * callback (e.g. wrapping `DOMPurify.sanitize`) to prevent XSS attacks.
- * The component intentionally does not bundle a sanitizer to keep the
- * package dependency-free and lightweight.
+ * **Security note:** Unsanitized HTML fails closed. Provide `sanitizeHtml`,
+ * or sanitize on the server and set `htmlIsSanitized` explicitly.
  */
 export interface PostContentProps {
   /** The post content object, or `null` when content is unavailable */
@@ -54,6 +50,9 @@ export interface PostContentProps {
    */
   sanitizeHtml?: (html: string) => string;
 
+  /** Explicit assertion that `content` was sanitized before rendering. */
+  htmlIsSanitized?: boolean;
+
   /**
    * Fallback UI rendered when `content` is `null` or the requested
    * tier/variant is unavailable.
@@ -89,6 +88,7 @@ export function PostContent(props: PostContentProps): React.JSX.Element {
     variant = 'web',
     tier = 'free',
     sanitizeHtml,
+    htmlIsSanitized = false,
     fallback,
   } = props;
 
@@ -105,6 +105,7 @@ export function PostContent(props: PostContentProps): React.JSX.Element {
 
   // Get the raw HTML from the selected variant
   const rawHtml = tierData[variant] ?? '';
+  if (!sanitizeHtml && !htmlIsSanitized) return <>{fallback ?? null}</>;
   const html = sanitizeHtml ? sanitizeHtml(rawHtml) : rawHtml;
 
   return (

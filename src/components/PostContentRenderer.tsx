@@ -1,26 +1,19 @@
 /**
  * PostContentRenderer - renders the body content of a beehiiv post.
  * Reads from the `free.web` (or `free.rss`) field of the API response.
- * Users should provide their own `sanitizeHtml` implementation (e.g.,
- * `DOMPurify.sanitize`) to prevent XSS. The component does not bundle a
- * sanitizer to keep the package lightweight.
+ * Raw HTML is never rendered unless a sanitizer is provided or the caller
+ * explicitly asserts that the content was sanitized on the server.
  * @module components/PostContentRenderer
  */
 
 import React from 'react';
 import type { PostContent } from '../types/post.js';
 
-/** Module-level guard so the dev-only sanitization warning fires once per session. */
-let warnedAboutSanitization = false;
-
 /**
  * Props for the {@link PostContentRenderer} component.
  *
- * **Security note:** When rendering HTML content the component uses
- * `dangerouslySetInnerHTML`. You should always provide a `sanitizeHtml`
- * callback (e.g. wrapping `DOMPurify.sanitize`) to prevent XSS attacks.
- * The component intentionally does not bundle a sanitizer to keep the
- * package dependency-free and lightweight.
+ * **Security note:** Unsanitized HTML fails closed. Provide `sanitizeHtml`,
+ * or sanitize on the server and set `htmlIsSanitized` explicitly.
  */
 export interface PostContentRendererProps {
   /** The post content object, or `null` when content is unavailable */
@@ -57,6 +50,9 @@ export interface PostContentRendererProps {
    */
   sanitizeHtml?: (html: string) => string;
 
+  /** Explicit assertion that `content` was sanitized before rendering. */
+  htmlIsSanitized?: boolean;
+
   /**
    * Fallback UI rendered when `content` is `null` or the requested
    * tier/variant is unavailable.
@@ -92,6 +88,7 @@ export function PostContentRenderer(props: PostContentRendererProps): React.JSX.
     variant = 'web',
     tier = 'free',
     sanitizeHtml,
+    htmlIsSanitized = false,
     fallback,
   } = props;
 
@@ -108,16 +105,8 @@ export function PostContentRenderer(props: PostContentRendererProps): React.JSX.
 
   // Get the raw HTML from the selected variant
   const rawHtml = tierData[variant] ?? '';
+  if (!sanitizeHtml && !htmlIsSanitized) return <>{fallback ?? null}</>;
   const html = sanitizeHtml ? sanitizeHtml(rawHtml) : rawHtml;
-
-  if (process.env.NODE_ENV !== 'production' && !sanitizeHtml && rawHtml && !warnedAboutSanitization) {
-    warnedAboutSanitization = true;
-    // eslint-disable-next-line no-console
-    console.warn(
-      '[beehiiv-react] PostContentRenderer is rendering API HTML without sanitization. ' +
-        'Pass a `sanitizeHtml` callback (e.g. DOMPurify.sanitize) to protect against XSS.',
-    );
-  }
 
   return (
     <div

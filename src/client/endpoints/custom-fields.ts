@@ -9,6 +9,7 @@ import type {
   CustomFieldIndexResponse,
   CustomFieldResponse,
 } from '../../types/custom-field.js';
+import { requireObjectPayload } from './signature-validation.js';
 import type { BeehiivHttpClient } from '../index.js';
 
 /**
@@ -139,6 +140,8 @@ export class CustomFieldsEndpoint {
    * @param data - The custom field definition to create (when publicationId is passed explicitly)
    * @returns The newly created custom field
    */
+  create(publicationId: string, data: { kind: CustomFieldKind; display: string }): Promise<CustomFieldResponse>;
+  create(data: { kind: CustomFieldKind; display: string }): Promise<CustomFieldResponse>;
   async create(
     publicationIdOrData: string | { kind: CustomFieldKind; display: string },
     data?: { kind: CustomFieldKind; display: string }
@@ -148,10 +151,13 @@ export class CustomFieldsEndpoint {
 
     if (typeof publicationIdOrData === 'string') {
       publicationId = publicationIdOrData;
-      requestData = data!;
+      requestData = requireObjectPayload('CustomFieldsEndpoint.create', data);
     } else {
       publicationId = this._resolvePublicationId();
-      requestData = publicationIdOrData;
+      requestData = requireObjectPayload(
+        'CustomFieldsEndpoint.create',
+        publicationIdOrData,
+      );
     }
 
     return this._http.post<CustomFieldResponse>(
@@ -170,6 +176,8 @@ export class CustomFieldsEndpoint {
    * @param data - The fields to update (when publicationId is passed explicitly)
    * @returns The updated custom field
    */
+  update(publicationId: string, id: string, data: { display: string }): Promise<CustomFieldResponse>;
+  update(id: string, data: { display: string }): Promise<CustomFieldResponse>;
   async update(
     publicationIdOrId: string,
     idOrData: string | { display: string },
@@ -182,11 +190,14 @@ export class CustomFieldsEndpoint {
     if (typeof idOrData === 'string') {
       publicationId = publicationIdOrId;
       fieldId = idOrData;
-      updateData = data!;
+      updateData = requireObjectPayload('CustomFieldsEndpoint.update', data);
     } else {
       publicationId = this._resolvePublicationId();
       fieldId = publicationIdOrId;
-      updateData = idOrData;
+      updateData = requireObjectPayload(
+        'CustomFieldsEndpoint.update',
+        idOrData,
+      );
     }
 
     return this._http.put<CustomFieldResponse>(

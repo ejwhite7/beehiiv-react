@@ -185,6 +185,30 @@ describe('useSubscriberAccess', () => {
     expect(result.current.status).toBeNull();
   });
 
+  it('allows ungated free-reader content without a subscriber', () => {
+    const { result } = renderHook(
+      () =>
+        useSubscriberAccess({
+          audience: 'free',
+          enforceGatedContent: false,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.canView).toBe(true);
+  });
+
+  it('fails closed for free-reader content when gate metadata is omitted', () => {
+    const { result } = renderHook(
+      () => useSubscriberAccess({ audience: 'free' }),
+      { wrapper: createWrapper() },
+    );
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.canView).toBe(false);
+  });
+
   it('isLoading=true initially, false after resolution', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: true,

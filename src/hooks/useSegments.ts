@@ -193,6 +193,9 @@ export function useSegments(
       pageRef.current = 1;
       void fetchSegments(1, false);
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchSegments]);
 
   /**
@@ -336,6 +339,9 @@ export function useSegment(
     if (enabled && segmentId) {
       void fetchSegment();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchSegment, segmentId]);
 
   /**

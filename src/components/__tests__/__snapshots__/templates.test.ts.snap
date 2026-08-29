@@ -7,85 +7,183 @@ exports[`api-route.ts.hbs > generates a valid Next.js API route 1`] = `
  * Located at: app/api/beehiiv/subscribe/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react/server';
+import { createBeehiivClient } from 'beehiiv-react/server';
+import type { CreateSubscriptionRequest } from 'beehiiv-react/server';
 
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? 'pub_route456',
 });
+
+const MAX_SIGNUP_BODY_BYTES = 16_384;
+const MAX_SIGNUPS_PER_MINUTE = 5;
+const MAX_TRACKED_CLIENTS = 10_000;
+const signupAttempts = new Map<string, number[]>();
+
+function toCustomFieldValues(
+  input: unknown,
+): CreateSubscriptionRequest['custom_fields'] | null | undefined {
+  if (input === undefined) return undefined;
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    return null;
+  }
+
+  const fields: NonNullable<CreateSubscriptionRequest['custom_fields']> = [];
+  for (const [name, value] of Object.entries(input)) {
+    const validValue =
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      (Array.isArray(value) &&
+        value.every((item) => typeof item === 'string'));
+    if (!validValue) return null;
+    fields.push({
+      name,
+      value: value as string | number | boolean | string[],
+    });
+  }
+  return fields;
+}
+
+/**
+ * Basic per-instance abuse control for the intentionally public signup route.
+ * Replace this with a durable distributed rate limiter and/or CAPTCHA check in
+ * production. Keep this hook server-side and never trust a client assertion.
+ */
+async function isPublicSubscriptionAllowed(
+  req: NextRequest,
+  _email: string,
+): Promise<boolean> {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  const key =
+    forwardedFor?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
+  const now = Date.now();
+  const windowStart = now - 60_000;
+  const recentAttempts = (signupAttempts.get(key) ?? []).filter(
+    (timestamp) => timestamp > windowStart,
+  );
+
+  if (!signupAttempts.has(key) && signupAttempts.size >= MAX_TRACKED_CLIENTS) {
+    for (const [trackedKey, timestamps] of signupAttempts) {
+      if (!timestamps.some((timestamp) => timestamp > windowStart)) {
+        signupAttempts.delete(trackedKey);
+      }
+    }
+    if (signupAttempts.size >= MAX_TRACKED_CLIENTS) return false;
+  }
+
+  if (recentAttempts.length >= MAX_SIGNUPS_PER_MINUTE) return false;
+  recentAttempts.push(now);
+  signupAttempts.set(key, recentAttempts);
+  return true;
+}
 
 /** POST /api/beehiiv/subscribe — Create a new subscription */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const declaredLength = Number(req.headers.get('content-length') ?? '0');
+    if (
+      Number.isFinite(declaredLength) &&
+      declaredLength > MAX_SIGNUP_BODY_BYTES
+    ) {
+      return NextResponse.json(
+        { error: 'Subscription request is too large.' },
+        { status: 413 },
+      );
+    }
 
-    if (!body.email || typeof body.email !== 'string') {
+    const rawBody = await req.text();
+    if (rawBody.length > MAX_SIGNUP_BODY_BYTES) {
+      return NextResponse.json(
+        { error: 'Subscription request is too large.' },
+        { status: 413 },
+      );
+    }
+
+    let parsedBody: unknown;
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json(
+        { error: 'A valid JSON request body is required.' },
+        { status: 400 },
+      );
+    }
+
+    if (
+      typeof parsedBody !== 'object' ||
+      parsedBody === null ||
+      Array.isArray(parsedBody)
+    ) {
+      return NextResponse.json(
+        { error: 'A JSON object is required.' },
+        { status: 400 },
+      );
+    }
+    const body = parsedBody as Record<string, unknown>;
+
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+    if (
+      email.length === 0 ||
+      email.length > 254 ||
+      !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)
+    ) {
       return NextResponse.json(
         { error: 'A valid email address is required.' },
         { status: 400 },
       );
     }
 
-    const subscription = await client.subscriptions.create({
-      email: body.email,
-      custom_fields: body.customFields,
-      utm_source: body.utmSource,
-      utm_medium: body.utmMedium,
-      utm_campaign: body.utmCampaign,
-      send_welcome_email: body.sendWelcomeEmail ?? true,
-      reactivate_existing: body.reactivateExisting ?? false,
-    });
+    if (!(await isPublicSubscriptionAllowed(req, email))) {
+      return NextResponse.json(
+        { error: 'Too many subscription attempts.' },
+        { status: 429, headers: { 'Retry-After': '60' } },
+      );
+    }
+
+    const customFields = toCustomFieldValues(body.customFields);
+    if (customFields === null) {
+      return NextResponse.json(
+        { error: 'Custom fields must contain supported scalar or string-list values.' },
+        { status: 400 },
+      );
+    }
+
+    const subscriptionInput: CreateSubscriptionRequest = {
+      email,
+      custom_fields: customFields,
+      utm_source:
+        typeof body.utmSource === 'string' ? body.utmSource : undefined,
+      utm_medium:
+        typeof body.utmMedium === 'string' ? body.utmMedium : undefined,
+      utm_channel:
+        typeof body.utmChannel === 'string' ? body.utmChannel : undefined,
+      utm_campaign:
+        typeof body.utmCampaign === 'string' ? body.utmCampaign : undefined,
+      utm_term:
+        typeof body.utmTerm === 'string' ? body.utmTerm : undefined,
+      utm_content:
+        typeof body.utmContent === 'string' ? body.utmContent : undefined,
+      referring_site:
+        typeof body.referringSite === 'string' ? body.referringSite : undefined,
+      send_welcome_email:
+        typeof body.sendWelcomeEmail === 'boolean'
+          ? body.sendWelcomeEmail
+          : true,
+      reactivate_existing:
+        typeof body.reactivateExisting === 'boolean'
+          ? body.reactivateExisting
+          : typeof body.reactivate === 'boolean'
+            ? body.reactivate
+            : false,
+    };
+    const subscription = await client.subscriptions.create(subscriptionInput);
 
     return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : 'Subscription failed';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
-
-/**
- * GET /api/beehiiv/subscribe?email=... — Look up a subscription by email
- *
- * ⚠️ SECURITY WARNING — READ BEFORE DEPLOYING TO PRODUCTION ⚠️
- *
- * As generated, this handler lets ANY visitor look up ANY email address
- * and receive the full subscription record (status, tier, custom fields —
- * potentially PII). That allows subscriber enumeration: an attacker can
- * probe email addresses to learn who subscribes to your publication.
- *
- * Before production, protect this endpoint by at least one of:
- *   - Restricting lookups to the authenticated user's own email via your
- *     auth/session provider (see the TODO below)
- *   - Adding rate limiting (e.g. Vercel WAF, upstash/ratelimit, middleware)
- *   - Removing this GET handler if your app does not need client-side
- *     subscription lookup
- */
-export async function GET(req: NextRequest) {
-  try {
-    const email = req.nextUrl.searchParams.get('email');
-
-    if (!email) {
-      return NextResponse.json(
-        { error: 'The "email" query parameter is required.' },
-        { status: 400 },
-      );
-    }
-
-    // TODO: add your auth check here so visitors can only look up their
-    // own subscription. Example with a session helper:
-    //
-    // const session = await getSession(req);
-    // if (!session || session.user.email !== email) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
-
-    const subscription = await client.subscriptions.list({ email });
-
-    return NextResponse.json(subscription, { status: 200 });
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to fetch subscription';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -148,13 +246,26 @@ exports[`server-action.ts.hbs > generates a valid server actions file 1`] = `
  */
 'use server';
 
-import { BeehiivClient } from 'beehiiv-react/server';
+import { createBeehiivClient } from 'beehiiv-react/server';
 import type { BeehiivCustomFields } from './beehiiv-custom-fields';
 
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? 'pub_sa789',
 });
+
+/**
+ * Authorize a mutation of an existing subscriber.
+ *
+ * This deliberately throws for every call. Replace the body with a server-side
+ * session and ownership check before enabling either privileged action. Never
+ * trust the supplied subscription ID as proof of identity.
+ */
+async function assertSubscriberMutationAuthorized(
+  _subscriptionId: string,
+  _operation: 'update' | 'delete',
+): Promise<void> {
+  throw new Error('Unauthorized subscriber operation');
+}
 
 /** Payload accepted by the subscribeAction server action */
 interface SubscribePayload {
@@ -164,8 +275,11 @@ interface SubscribePayload {
   utmMedium?: string;
   utmChannel?: string;
   utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
   referringSite?: string;
   reactivateExisting?: boolean;
+  sendWelcomeEmail?: boolean;
 }
 
 /**
@@ -188,9 +302,11 @@ export async function subscribeAction(data: SubscribePayload) {
     utm_medium: data.utmMedium,
     utm_channel: data.utmChannel,
     utm_campaign: data.utmCampaign,
+    utm_term: data.utmTerm,
+    utm_content: data.utmContent,
     referring_site: data.referringSite,
     reactivate_existing: data.reactivateExisting,
-    send_welcome_email: true,
+    send_welcome_email: data.sendWelcomeEmail ?? true,
   });
 
   return response.data;
@@ -209,6 +325,8 @@ export async function enrichSubscriptionAction(
   id: string,
   customFields: Partial<BeehiivCustomFields>,
 ) {
+  await assertSubscriberMutationAuthorized(id, 'update');
+
   const response = await client.subscriptions.updateById(id, {
     custom_fields: Object.entries(customFields).map(([name, value]) => ({
       name,
@@ -225,6 +343,8 @@ export async function enrichSubscriptionAction(
  * @param id - The subscription ID to delete (starts with "sub_")
  */
 export async function unsubscribeAction(id: string) {
+  await assertSubscriberMutationAuthorized(id, 'delete');
+
   await client.subscriptions.delete(id);
 }
 "

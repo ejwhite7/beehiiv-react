@@ -14,12 +14,20 @@ import { writeFileWithConfirm } from './utils.js';
 export interface SubscribeComponentsGeneratorData {
   /** The output directory to write the component files to */
   outputDir: string;
+  /** Use generated Server Actions for subscription mutations */
+  useServerActions: boolean;
+  /** Use generated API routes when Server Actions are not selected */
+  useApiRoutes: boolean;
 }
 
 /**
  * Generate the subscribe component files from Handlebars templates.
  *
- * Creates three files:
+ * Creates the CTA and wrapper for either supported mutation transport. The
+ * step-two enrichment component is generated only with Server Actions because
+ * it requires the protected existing-subscriber mutation boundary.
+ *
+ * Possible files:
  * 1. `{outputDir}/components/beehiiv/SubscribeCTA.tsx`
  * 2. `{outputDir}/components/beehiiv/SubscribeStepTwo.tsx`
  * 3. `{outputDir}/components/beehiiv/SubscribeWrapper.tsx`
@@ -30,6 +38,7 @@ export interface SubscribeComponentsGeneratorData {
 export async function generateSubscribeComponents(
   data: SubscribeComponentsGeneratorData,
 ): Promise<void> {
+  if (!data.useServerActions && !data.useApiRoutes) return;
 
   const templates = [
     {
@@ -41,15 +50,19 @@ export async function generateSubscribeComponents(
         'SubscribeCTA.tsx',
       ),
     },
-    {
-      template: 'subscribe-step-two.tsx.hbs',
-      output: path.join(
-        data.outputDir,
-        'components',
-        'beehiiv',
-        'SubscribeStepTwo.tsx',
-      ),
-    },
+    ...(data.useServerActions
+      ? [
+          {
+            template: 'subscribe-step-two.tsx.hbs',
+            output: path.join(
+              data.outputDir,
+              'components',
+              'beehiiv',
+              'SubscribeStepTwo.tsx',
+            ),
+          },
+        ]
+      : []),
     {
       template: 'subscribe-wrapper.tsx.hbs',
       output: path.join(
@@ -72,7 +85,10 @@ export async function generateSubscribeComponents(
 
     const templateSource = fs.readFileSync(templatePath, 'utf-8');
     const template = Handlebars.compile(templateSource);
-    const output = template({});
+    const output = template({
+      useServerActions: data.useServerActions,
+      useApiRoutes: data.useApiRoutes,
+    });
 
     await writeFileWithConfirm(outputPath, output);
   }

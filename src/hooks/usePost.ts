@@ -20,8 +20,8 @@ export interface UsePostOptions {
   /** The post ID to fetch (starts with "post_") */
   id: string;
   /**
-   * Override the publication ID from the provider context.
-   * When omitted the value from the nearest `<BeehiivProvider>` is used.
+   * @deprecated Generated routes always use their server-configured publication.
+   * This value is ignored to prevent caller-controlled publication access.
    */
   publicationId?: string;
   /**
@@ -71,7 +71,7 @@ export interface UsePostReturn {
  */
 export function usePost(options: UsePostOptions): UsePostReturn {
   const { apiUrl } = useBeehiiv();
-  const { id, publicationId, enabled = true } = options;
+  const { id, enabled = true } = options;
 
   const [post, setPost] = useState<PostInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -84,13 +84,8 @@ export function usePost(options: UsePostOptions): UsePostReturn {
    * Build the endpoint URL for a single post.
    */
   const buildUrl = useCallback((): string => {
-    const params = new URLSearchParams();
-    if (publicationId) {
-      params.set('publicationId', publicationId);
-    }
-    const query = params.toString();
-    return `${apiUrl}/posts/${encodeURIComponent(id)}${query ? `?${query}` : ''}`;
-  }, [apiUrl, id, publicationId]);
+    return `${apiUrl}/posts/${encodeURIComponent(id)}`;
+  }, [apiUrl, id]);
 
   /**
    * Execute the fetch request.
@@ -135,6 +130,9 @@ export function usePost(options: UsePostOptions): UsePostReturn {
     if (enabled && id) {
       void fetchPost();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, id, fetchPost]);
 
   /**

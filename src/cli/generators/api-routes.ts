@@ -1,7 +1,7 @@
 /**
  * API route generator for the beehiiv CLI.
  * Generates Next.js App Router API routes for subscription management
- * including a subscribe endpoint and a subscription lookup/delete endpoint.
+ * including a subscribe endpoint and fail-closed subscriber management.
  * @module cli/generators/api-routes
  */
 
@@ -19,9 +19,9 @@ export interface ApiRouteGeneratorData {
 }
 
 /**
- * Inline Handlebars template for the subscription lookup/delete route.
- * This generates `app/api/beehiiv/subscription/[id]/route.ts` for
- * GET (get subscription by ID) and DELETE (unsubscribe).
+ * Inline template for the fail-closed subscription lookup/delete route.
+ * Applications must replace the authorization stub with their own server-side
+ * session and ownership check before either operation can reach beehiiv.
  */
 const SUBSCRIPTION_ID_ROUTE_TEMPLATE = `/**
  * Next.js App Router API route for beehiiv subscription lookup and management
@@ -29,17 +29,30 @@ const SUBSCRIPTION_ID_ROUTE_TEMPLATE = `/**
  * Located at: app/api/beehiiv/subscription/[id]/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react/server';
+import { createBeehiivClient } from 'beehiiv-react/server';
 import beehiivConfig from '@/beehiiv.config';
 
 /**
- * Initialize the beehiiv client using the server-side API key.
- * BEEHIIV_API_KEY must never be exposed to the client.
+ * Initialize the beehiiv client using a server-side API key or OAuth token.
+ * Credentials must never be exposed to the client.
  */
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: beehiivConfig.publicationId,
 });
+
+/**
+ * Authorize access to a subscriber record.
+ *
+ * This deliberately denies every request. Replace the body with a server-side
+ * session and ownership check. Never trust the route ID as proof of identity.
+ */
+async function isSubscriberOperationAuthorized(
+  _req: NextRequest,
+  _subscriptionId: string,
+  _operation: 'lookup' | 'delete',
+): Promise<boolean> {
+  return false;
+}
 
 /** GET /api/beehiiv/subscription/[id] -- Get a subscription by ID */
 export async function GET(
@@ -48,6 +61,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    if (!(await isSubscriberOperationAuthorized(_req, id, 'lookup'))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const subscription = await client.subscriptions.get(id);
     return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
@@ -63,6 +81,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    if (!(await isSubscriberOperationAuthorized(_req, id, 'delete'))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await client.subscriptions.delete(id);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: unknown) {
@@ -77,9 +100,13 @@ export async function DELETE(
  * Each entry maps a template file name to its output directory path segment(s).
  */
 const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
+  { template: 'subscription-route.ts.hbs', outputPath: ['subscription'] },
   { template: 'posts-route.ts.hbs', outputPath: ['posts'] },
+  { template: 'post-route.ts.hbs', outputPath: ['posts', '[id]'] },
   { template: 'authors-route.ts.hbs', outputPath: ['authors'] },
+  { template: 'author-route.ts.hbs', outputPath: ['authors', '[id]'] },
   { template: 'tiers-route.ts.hbs', outputPath: ['tiers'] },
+  { template: 'tier-route.ts.hbs', outputPath: ['tiers', '[id]'] },
   { template: 'engagements-route.ts.hbs', outputPath: ['engagements'] },
   { template: 'bulk-subscriptions-route.ts.hbs', outputPath: ['bulk-subscriptions'] },
 ];
@@ -90,13 +117,17 @@ const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
  * Creates route files for:
  * 1. `{outputDir}/app/api/beehiiv/subscribe/route.ts` - POST endpoint for
  *    creating new subscriptions (from the `api-route.ts.hbs` template)
- * 2. `{outputDir}/app/api/beehiiv/subscription/[id]/route.ts` - GET and DELETE
- *    endpoints for subscription lookup and unsubscribe (from inline template)
- * 3. `{outputDir}/app/api/beehiiv/posts/route.ts` - Posts list + detail
- * 4. `{outputDir}/app/api/beehiiv/authors/route.ts` - Authors list + detail
- * 5. `{outputDir}/app/api/beehiiv/tiers/route.ts` - Tiers list + detail
- * 6. `{outputDir}/app/api/beehiiv/engagements/route.ts` - Engagement metrics
- * 7. `{outputDir}/app/api/beehiiv/bulk-subscriptions/route.ts` - Bulk subscription creation
+ * 2. `{outputDir}/app/api/beehiiv/subscription/route.ts` - fail-closed email lookup
+ * 3. `{outputDir}/app/api/beehiiv/subscription/[id]/route.ts` - fail-closed ID
+ *    lookup and DELETE endpoints
+ * 4. `{outputDir}/app/api/beehiiv/posts/route.ts` - Posts list
+ * 5. `{outputDir}/app/api/beehiiv/posts/[id]/route.ts` - Post detail
+ * 6. `{outputDir}/app/api/beehiiv/authors/route.ts` - Authors list
+ * 7. `{outputDir}/app/api/beehiiv/authors/[id]/route.ts` - Author detail
+ * 8. `{outputDir}/app/api/beehiiv/tiers/route.ts` - Tiers list
+ * 9. `{outputDir}/app/api/beehiiv/tiers/[id]/route.ts` - Tier detail
+ * 10. `{outputDir}/app/api/beehiiv/engagements/route.ts` - Engagement metrics
+ * 11. `{outputDir}/app/api/beehiiv/bulk-subscriptions/route.ts` - Bulk subscription creation
  *
  * All necessary directories are created automatically.
  *

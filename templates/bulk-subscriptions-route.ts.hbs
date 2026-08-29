@@ -4,21 +4,39 @@
  * Located at: app/api/beehiiv/bulk-subscriptions/route.ts
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { BeehiivClient } from 'beehiiv-react/server';
+import { createBeehiivClient } from 'beehiiv-react/server';
 
-const client = new BeehiivClient({
-  apiKey: process.env.BEEHIIV_API_KEY!,
+const client = createBeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? '{{publicationId}}',
 });
+
+/**
+ * Bulk creation is privileged and denies by default. Replace this with a
+ * server-side administrator/session check before enabling the endpoint.
+ */
+async function isBulkSubscriptionCreationAuthorized(
+  _req: NextRequest,
+): Promise<boolean> {
+  return false;
+}
 
 /** POST /api/beehiiv/bulk-subscriptions — Create multiple subscriptions in bulk */
 export async function POST(req: NextRequest) {
   try {
+    if (!(await isBulkSubscriptionCreationAuthorized(req))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
 
-    if (!body.subscriptions || !Array.isArray(body.subscriptions)) {
+    if (
+      !body.subscriptions ||
+      !Array.isArray(body.subscriptions) ||
+      body.subscriptions.length === 0 ||
+      body.subscriptions.length > 100
+    ) {
       return NextResponse.json(
-        { error: 'A "subscriptions" array is required in the request body.' },
+        { error: 'A "subscriptions" array with 1 to 100 entries is required.' },
         { status: 400 },
       );
     }

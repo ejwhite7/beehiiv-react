@@ -192,20 +192,30 @@ describe('useSubscribe', () => {
       await result.current.subscribe({
         email: 'user@example.com',
         customFields: { company: 'Acme' },
-        reactivate: true,
+        reactivateExisting: true,
+        sendWelcomeEmail: false,
         utmSource: 'website',
         utmMedium: 'cta',
+        utmChannel: 'web',
         utmCampaign: 'launch',
+        utmTerm: 'newsletter',
+        utmContent: 'hero',
+        referringSite: 'https://example.com',
       });
     });
 
     const callArgs = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
     const body = JSON.parse(callArgs[1].body as string);
     expect(body.customFields).toEqual({ company: 'Acme' });
-    expect(body.reactivate).toBe(true);
+    expect(body.reactivateExisting).toBe(true);
+    expect(body.sendWelcomeEmail).toBe(false);
     expect(body.utmSource).toBe('website');
     expect(body.utmMedium).toBe('cta');
+    expect(body.utmChannel).toBe('web');
     expect(body.utmCampaign).toBe('launch');
+    expect(body.utmTerm).toBe('newsletter');
+    expect(body.utmContent).toBe('hero');
+    expect(body.referringSite).toBe('https://example.com');
   });
 
   it('resets state back to initial values', async () => {

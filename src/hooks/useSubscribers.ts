@@ -188,6 +188,9 @@ export function useSubscribers(
       cursorRef.current = null;
       void fetchSubscribers(null, false);
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchSubscribers]);
 
   /**

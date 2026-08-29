@@ -53,8 +53,8 @@ describe('posts-route.ts.hbs', () => {
     expect(output).not.toContain('cursor');
     expect(output).toContain('client.posts.list');
     expect(output).toContain('pagination');
-    expect(output).toContain('BeehiivClient');
-    expect(output).toContain('BEEHIIV_API_KEY');
+    expect(output).toContain('createBeehiivClient');
+    expect(output).not.toContain('BEEHIIV_API_KEY');
   });
 
   it('embeds the publication ID', () => {
@@ -64,7 +64,7 @@ describe('posts-route.ts.hbs', () => {
     expect(output).toContain('pub_loadmore');
   });
 
-  it('imports BeehiivClient from beehiiv-react/server', () => {
+  it('imports the shared server client factory', () => {
     const template = compileTemplate('posts-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
@@ -72,21 +72,36 @@ describe('posts-route.ts.hbs', () => {
     expect(output).not.toMatch(/from 'beehiiv-react'[^/]/);
   });
 
-  it('honours a publicationId query param on the slug branch', () => {
+  it('rejects caller-controlled publication and visibility parameters', () => {
     const template = compileTemplate('posts-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
-    // The slug lookup must read the per-request publicationId override, not
-    // only the build-time default.
-    expect(output).toContain("searchParams.get('publicationId')");
+    expect(output).toContain("'publicationId'");
+    expect(output).toContain("'status'");
+    expect(output).toContain("'audience'");
+    expect(output).toContain("'expand[]'");
+    expect(output).toContain("{ error: 'Unsupported public posts query' }");
+    expect(output).not.toContain("searchParams.get('publicationId')");
+    expect(output).not.toContain("searchParams.getAll('expand[]')");
   });
 
-  it('caches slug lookups to avoid rescanning on repeated/missed slugs', () => {
+  it('hard-codes confirmed free post filters', () => {
     const template = compileTemplate('posts-route.ts.hbs');
     const output = template({ publicationId: 'pub_xyz' });
 
-    expect(output).toContain("from 'next/cache'");
-    expect(output).toContain('unstable_cache');
+    expect(output).toContain("status: 'confirmed'");
+    expect(output).toContain('canViewContent');
+    expect(output).toContain('post.enforce_gated_content ?? true');
+  });
+
+  it('does not cache authorization-sensitive slug results', () => {
+    const template = compileTemplate('posts-route.ts.hbs');
+    const output = template({ publicationId: 'pub_xyz' });
+
+    expect(output).not.toContain("from 'next/cache'");
+    expect(output).not.toContain('unstable_cache');
+    expect(output).toContain("post?.status === 'confirmed'");
+    expect(output).toContain('canViewContent');
   });
 });
 
@@ -119,11 +134,12 @@ describe('blog-post-page.tsx.hbs', () => {
     expect(output).not.toMatch(/subscription=\{subscription\}/);
   });
 
-  it('gates only premium posts server-side and consumes the subscription', () => {
+  it('uses the shared server-side access policy and consumes the subscription', () => {
     const template = compileTemplate('blog-post-page.tsx.hbs');
     const output = template(view);
 
-    expect(output).toContain("post.audience !== 'premium'");
+    expect(output).toContain('canViewContent(');
+    expect(output).toContain('post.enforce_gated_content ?? true');
     expect(output).toContain('getViewerSubscription');
     expect(output).toContain('subscription?.tier');
   });
@@ -142,6 +158,18 @@ describe('blog-post-page.tsx.hbs', () => {
 
     expect(output).toContain("from 'beehiiv-react/server'");
     expect(output).toContain('fetchPostBySlug');
+  });
+
+  it('sanitizes generated blog HTML before explicitly trusting it', () => {
+    const template = compileTemplate('blog-post-page.tsx.hbs');
+    const output = template(view);
+
+    expect(output).toContain('sanitizeBeehiivPostContent');
+    expect(output).toContain('content={sanitizedContent}');
+    expect(output).toContain('htmlIsSanitized');
+    expect(output).not.toContain(
+      '<PostContentRenderer content={post.content ?? null}',
+    );
   });
 });
 
@@ -261,23 +289,25 @@ describe('analytics.ts.hbs', () => {
 // ---------------------------------------------------------------------------
 
 describe('subscribe-cta.tsx.hbs', () => {
+  const actionView = { useServerActions: true, useApiRoutes: true };
+
   it('generates the SubscribeCTA component', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toMatchSnapshot();
   });
 
   it('includes use client directive', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain("'use client'");
   });
 
   it('uses useSubscriberStatus hook', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain('useSubscriberStatus');
     expect(output).toContain('isSubscribed');
@@ -286,14 +316,14 @@ describe('subscribe-cta.tsx.hbs', () => {
 
   it('returns null when subscribed', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain('return null');
   });
 
   it('fires all required dataLayer events', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain('beehiiv_subscribe_cta_viewed');
     expect(output).toContain('beehiiv_subscribe_form_submitted');
@@ -303,10 +333,18 @@ describe('subscribe-cta.tsx.hbs', () => {
 
   it('tracks email domain not full email', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain('email_domain');
     expect(output).toContain("split('@')");
+  });
+
+  it('uses the generated API route without importing Server Actions', () => {
+    const template = compileTemplate('subscribe-cta.tsx.hbs');
+    const output = template({ useServerActions: false, useApiRoutes: true });
+
+    expect(output).toContain("fetch('/api/beehiiv/subscribe'");
+    expect(output).not.toContain("from '@/lib/beehiiv/actions'");
   });
 });
 

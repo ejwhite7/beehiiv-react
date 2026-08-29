@@ -14,7 +14,7 @@
  * @module __tests__/hooks/useSubscriberProfile
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -210,7 +210,9 @@ describe('useSubscriberProfile', () => {
     expect(result.current.tier).toBe('free');
 
     // Trigger refetch
-    await result.current.refetch();
+    await act(async () => {
+      await result.current.refetch();
+    });
 
     await waitFor(() => {
       expect(result.current.tier).toBe('premium');

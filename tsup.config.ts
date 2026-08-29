@@ -90,4 +90,13 @@ export default defineConfig([
       __PACKAGE_VERSION__: JSON.stringify(pkg.version),
     },
   },
+  // Non-interactive scaffold entry used by the generated-project CI gate.
+  {
+    entry: { 'cli/scaffold': 'src/cli/scaffold.ts' },
+    format: ['cjs'],
+    dts: false,
+    sourcemap: true,
+    external: [],
+    platform: 'node',
+  },
 ]);

@@ -46,6 +46,7 @@ import {
   fetchPostBySlug,
   fetchAllPostSlugs,
   generatePostMetadata,
+  sanitizeBeehiivPostContent,
 } from 'beehiiv-react/server';
 import { PostContentRenderer } from 'beehiiv-react';
 
@@ -117,6 +118,7 @@ export default async function BlogPostPage({
   const canView =
     post.audience !== 'premium' ||
     (subscription?.tier === 'premium' && subscription?.status === 'active');
+  const sanitizedContent = sanitizeBeehiivPostContent(post.content ?? null);
 
   return (
     <article className="beehiiv-blog-post">
@@ -135,7 +137,10 @@ export default async function BlogPostPage({
       </header>
 
       {canView ? (
-        <PostContentRenderer content={post.content ?? null} />
+        <PostContentRenderer
+          content={sanitizedContent}
+          htmlIsSanitized
+        />
       ) : (
         <div className="beehiiv-paywall">
           <h2>This post is for paid subscribers</h2>

@@ -157,6 +157,18 @@ describe('blog-post-page.tsx.hbs', () => {
     expect(output).toContain("from 'beehiiv-react/server'");
     expect(output).toContain('fetchPostBySlug');
   });
+
+  it('sanitizes generated blog HTML before explicitly trusting it', () => {
+    const template = compileTemplate('blog-post-page.tsx.hbs');
+    const output = template(view);
+
+    expect(output).toContain('sanitizeBeehiivPostContent');
+    expect(output).toContain('content={sanitizedContent}');
+    expect(output).toContain('htmlIsSanitized');
+    expect(output).not.toContain(
+      '<PostContentRenderer content={post.content ?? null}',
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

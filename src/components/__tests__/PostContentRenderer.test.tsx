@@ -20,7 +20,7 @@ import type { PostContent } from '../../types/post';
 describe('PostContentRenderer', () => {
   // ---- HTML Content (free.web) ----
   describe('HTML content', () => {
-    it('renders free.web content via dangerouslySetInnerHTML', () => {
+    it('fails closed when HTML has not been sanitized', () => {
       const content: PostContent = {
         free: {
           web: '<p>Hello <strong>world</strong></p>',
@@ -30,9 +30,21 @@ describe('PostContentRenderer', () => {
 
       const { container } = render(<PostContentRenderer content={content} />);
 
-      const wrapper = container.querySelector('.beehiiv-post-content');
-      expect(wrapper).not.toBeNull();
-      expect(wrapper?.innerHTML).toBe('<p>Hello <strong>world</strong></p>');
+      expect(container.innerHTML).toBe('');
+    });
+
+    it('renders content after an explicit sanitized assertion', () => {
+      const content: PostContent = {
+        free: { web: '<p>Sanitized</p>', rss: '' },
+      };
+
+      const { container } = render(
+        <PostContentRenderer content={content} htmlIsSanitized />,
+      );
+
+      expect(container.querySelector('.beehiiv-post-content')?.innerHTML).toBe(
+        '<p>Sanitized</p>',
+      );
     });
 
     it('calls sanitizeHtml when provided', () => {
@@ -61,7 +73,9 @@ describe('PostContentRenderer', () => {
         free: { web: '<p>Test</p>', rss: '' },
       };
 
-      const { container } = render(<PostContentRenderer content={content} />);
+      const { container } = render(
+        <PostContentRenderer content={content} htmlIsSanitized />,
+      );
 
       const wrapper = container.querySelector('.beehiiv-post-content');
       expect(wrapper?.getAttribute('data-variant')).toBe('web');
@@ -77,7 +91,7 @@ describe('PostContentRenderer', () => {
       };
 
       const { container } = render(
-        <PostContentRenderer content={content} variant="rss" />,
+        <PostContentRenderer content={content} variant="rss" htmlIsSanitized />,
       );
 
       const wrapper = container.querySelector('.beehiiv-post-content');
@@ -95,7 +109,7 @@ describe('PostContentRenderer', () => {
       };
 
       const { container } = render(
-        <PostContentRenderer content={content} tier="premium" />,
+        <PostContentRenderer content={content} tier="premium" htmlIsSanitized />,
       );
 
       const wrapper = container.querySelector('.beehiiv-post-content');
@@ -145,7 +159,7 @@ describe('PostContentRenderer', () => {
       };
 
       const { container } = render(
-        <PostContentRenderer content={content} className="prose" />,
+        <PostContentRenderer content={content} className="prose" htmlIsSanitized />,
       );
 
       const wrapper = container.querySelector('.beehiiv-post-content');

@@ -62,6 +62,12 @@ export {
 export { generatePostMetadata } from './metadata.js';
 export type { PostMetadata } from './metadata.js';
 
+// --- HTML sanitization ---
+export {
+  sanitizeBeehiivHtml,
+  sanitizeBeehiivPostContent,
+} from './sanitize.js';
+
 // --- New Endpoint Classes ---
 export { TiersEndpoint } from '../client/endpoints/tiers.js';
 export { AuthorsEndpoint } from '../client/endpoints/authors.js';

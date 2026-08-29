@@ -50,3 +50,15 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: revert the posts route template, scanner audience option, and associated tests/snapshot. No migration or persistent data change is involved.
 - BR-002 marked `passes: true`.
+
+## BR-003 iteration 1 - passed
+
+- `PostContent` and `PostContentRenderer` now fail closed when raw HTML is supplied without either a sanitizer callback or the explicit `htmlIsSanitized` assertion.
+- Added server-only `sanitizeBeehiivHtml` and `sanitizeBeehiivPostContent` helpers backed by `sanitize-html` 2.17.7 with a conservative rich-text allowlist.
+- Generated blog pages sanitize free and premium web/RSS content on the server, then pass only sanitized content across the client-component boundary.
+- Regression fixtures cover scripts, event handlers, JavaScript URLs, SVG payloads, malformed markup, inline styles, and external-link rel protection.
+- The initial sanitizer install exposed vulnerable compatible transitive versions of PostCSS and nanoid. Compatible audit fixes updated them to PostCSS 8.5.26 and nanoid 3.3.18; the production audit is again clean.
+- Final evidence: lint passed, strict typecheck passed, 638 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: revert the renderer trust-boundary changes, server sanitizer/export, generated blog template, tests/snapshot, and sanitizer dependencies. No migration or persistent data change is involved.
+- BR-003 marked `passes: true`.

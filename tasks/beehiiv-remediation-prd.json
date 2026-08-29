@@ -61,9 +61,15 @@
         "Generated blog output is sanitized",
         "XSS regression fixtures cover scripts, event handlers, dangerous URLs, SVG, and malformed markup"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "PostContent and PostContentRenderer fail closed unless given a sanitizer or an explicit sanitized-content assertion",
+        "Generated blog pages sanitize all free and premium web and RSS HTML on the server before rendering",
+        "Server sanitizer strips scripts, handlers, unsafe URLs, SVG, inline styles, and malformed payloads",
+        "sanitize-html 2.17.7 and its compatible transitive updates pass the production dependency audit",
+        "Full gate passed: lint, typecheck, 638 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-004",

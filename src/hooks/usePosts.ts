@@ -223,6 +223,9 @@ export function usePosts(options: UsePostsOptions = {}): UsePostsReturn {
       pageRef.current = 1;
       void fetchPosts(1, false);
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchPosts]);
 
   /**

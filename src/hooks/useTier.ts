@@ -137,6 +137,9 @@ export function useTier(options: UseTierOptions): UseTierReturn {
     if (enabled && id) {
       void fetchTier();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, id, fetchTier]);
 
   /**

@@ -190,6 +190,9 @@ export function useAutomations(
       cursorRef.current = null;
       void fetchAutomations(null, false);
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchAutomations]);
 
   /**
@@ -333,6 +336,9 @@ export function useAutomation(
     if (enabled && automationId) {
       void fetchAutomation();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchAutomation, automationId]);
 
   /**

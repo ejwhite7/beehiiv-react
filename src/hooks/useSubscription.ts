@@ -145,6 +145,9 @@ export function useSubscription(
     if (enabled && (id || email)) {
       void fetchSubscription();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, id, email, fetchSubscription]);
 
   /**

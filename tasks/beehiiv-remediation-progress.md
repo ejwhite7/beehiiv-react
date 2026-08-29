@@ -188,3 +188,13 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: remove publication scope from key options and hook call sites, restore unscoped detail/list factories, remove cross-publication tests, and revert Ralph state. No migration or persistent data change is involved.
 - BR-011 marked `passes: true`.
+
+## BR-012 iteration 1 - passed
+
+- Added effect cleanup to every fetch-generation-backed hook so disablement, identifier removal, dependency changes, and unmount invalidate any request already in flight.
+- Preserved existing manual refetch and pagination behavior while preventing an older success or failure from committing after the hook identity changes.
+- Added deferred-response regressions for disablement, identifier removal, rapid identity changes, and unmount using the subscription detail hook as the representative contract.
+- Final evidence: lint passed, strict typecheck passed, 843 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: remove the request-generation effect cleanups and deferred-response tests, then revert Ralph state. No migration or persistent data change is involved.
+- BR-012 marked `passes: true`.

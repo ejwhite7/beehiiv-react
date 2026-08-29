@@ -35,6 +35,26 @@ const MOCK_SUBSCRIPTION = {
   created_at: 1700000000,
 };
 
+interface Deferred<T> {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+}
+
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
+function successfulResponse(data: typeof MOCK_SUBSCRIPTION) {
+  return {
+    ok: true,
+    json: async () => ({ data }),
+  };
+}
+
 describe('useSubscription', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn() as ReturnType<typeof vi.fn>);
@@ -173,5 +193,108 @@ describe('useSubscription', () => {
     });
 
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores a deferred response after fetching is disabled', async () => {
+    const pending = deferred<ReturnType<typeof successfulResponse>>();
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      pending.promise,
+    );
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useSubscription({ email: 'user@example.com', enabled }),
+      {
+        initialProps: { enabled: true },
+        wrapper: createWrapper(),
+      },
+    );
+
+    rerender({ enabled: false });
+    await act(async () => {
+      pending.resolve(successfulResponse(MOCK_SUBSCRIPTION));
+      await pending.promise;
+    });
+
+    expect(result.current.subscription).toBeNull();
+  });
+
+  it('ignores a deferred response after the identifier is removed', async () => {
+    const pending = deferred<ReturnType<typeof successfulResponse>>();
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      pending.promise,
+    );
+
+    const { result, rerender } = renderHook(
+      ({ email }) => useSubscription({ email }),
+      {
+        initialProps: { email: 'user@example.com' as string | undefined },
+        wrapper: createWrapper(),
+      },
+    );
+
+    rerender({ email: undefined });
+    await act(async () => {
+      pending.resolve(successfulResponse(MOCK_SUBSCRIPTION));
+      await pending.promise;
+    });
+
+    expect(result.current.subscription).toBeNull();
+  });
+
+  it('keeps the newest result when identifiers change rapidly', async () => {
+    const first = deferred<ReturnType<typeof successfulResponse>>();
+    const second = deferred<ReturnType<typeof successfulResponse>>();
+    (globalThis.fetch as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+
+    const { result, rerender } = renderHook(
+      ({ email }) => useSubscription({ email }),
+      {
+        initialProps: { email: 'first@example.com' },
+        wrapper: createWrapper(),
+      },
+    );
+
+    rerender({ email: 'second@example.com' });
+    await act(async () => {
+      second.resolve(
+        successfulResponse({ ...MOCK_SUBSCRIPTION, email: 'second@example.com' }),
+      );
+      await second.promise;
+    });
+    expect(result.current.subscription?.email).toBe('second@example.com');
+
+    await act(async () => {
+      first.resolve(
+        successfulResponse({ ...MOCK_SUBSCRIPTION, email: 'first@example.com' }),
+      );
+      await first.promise;
+    });
+    expect(result.current.subscription?.email).toBe('second@example.com');
+  });
+
+  it('invalidates a deferred response on unmount', async () => {
+    const pending = deferred<ReturnType<typeof successfulResponse>>();
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockReturnValueOnce(
+      pending.promise,
+    );
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+
+    const { unmount } = renderHook(
+      () => useSubscription({ email: 'user@example.com' }),
+      { wrapper: createWrapper() },
+    );
+
+    unmount();
+    await act(async () => {
+      pending.resolve(successfulResponse(MOCK_SUBSCRIPTION));
+      await pending.promise;
+    });
+
+    expect(consoleError).not.toHaveBeenCalled();
   });
 });

@@ -242,9 +242,13 @@
         "Disable, identifier removal, unmount, and rapid identity changes cannot commit stale state",
         "Deferred-response regression tests pass"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "All fetchIdRef-backed hooks invalidate their active request generation during effect cleanup, covering disabled state, missing identifiers, dependency changes, and unmount.",
+        "Deferred useSubscription regressions prove stale responses cannot win after disablement, identifier removal, rapid identity changes, or unmount.",
+        "Full gate passed: lint, strict typecheck, 843 tests, dual ESM/CJS build, package dry-run, zero production vulnerabilities, and clean diff check."
+      ]
     },
     {
       "id": "BR-013",

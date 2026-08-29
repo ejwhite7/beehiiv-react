@@ -142,6 +142,9 @@ export function useAuthor(options: UseAuthorOptions): UseAuthorReturn {
     if (enabled && id) {
       void fetchAuthor();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, id, fetchAuthor]);
 
   /**

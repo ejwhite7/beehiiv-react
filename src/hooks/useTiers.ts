@@ -205,6 +205,9 @@ export function useTiers(options: UseTiersOptions = {}): UseTiersReturn {
       cursorRef.current = null;
       void fetchTiers(null, false);
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchTiers]);
 
   /**

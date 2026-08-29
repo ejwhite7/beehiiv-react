@@ -112,6 +112,9 @@ export function usePostBySlug(
 
   useEffect(() => {
     if (enabled && slug) void run();
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, slug, run]);
 
   const refetch = useCallback(async (): Promise<void> => {

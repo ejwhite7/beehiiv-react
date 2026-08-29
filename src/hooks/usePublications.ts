@@ -145,6 +145,9 @@ export function usePublications(
     if (enabled) {
       void fetchPublications();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchPublications]);
 
   /**

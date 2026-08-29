@@ -171,6 +171,9 @@ export function useEngagements(options: UseEngagementsOptions): UseEngagementsRe
     if (enabled) {
       void fetchEngagements();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchEngagements]);
 
   /**

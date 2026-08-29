@@ -130,6 +130,9 @@ export function usePost(options: UsePostOptions): UsePostReturn {
     if (enabled && id) {
       void fetchPost();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, id, fetchPost]);
 
   /**

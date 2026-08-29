@@ -102,6 +102,9 @@ export function useCustomFields(): UseCustomFieldsReturn {
   // Auto-fetch on mount
   useEffect(() => {
     void fetchCustomFields();
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [fetchCustomFields]);
 
   /**

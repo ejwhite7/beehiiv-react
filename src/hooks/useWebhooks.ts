@@ -137,6 +137,9 @@ export function useWebhooks(
     if (enabled) {
       void fetchWebhooks();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchWebhooks]);
 
   /**
@@ -270,6 +273,9 @@ export function useWebhook(
     if (enabled && webhookId) {
       void fetchWebhook();
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchWebhook, webhookId]);
 
   /**

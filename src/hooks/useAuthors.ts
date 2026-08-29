@@ -194,6 +194,9 @@ export function useAuthors(options: UseAuthorsOptions = {}): UseAuthorsReturn {
       pageRef.current = 1;
       void fetchAuthors(1, false);
     }
+    return () => {
+      fetchIdRef.current += 1;
+    };
   }, [enabled, fetchAuthors]);
 
   /**

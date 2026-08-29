@@ -105,7 +105,9 @@ const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
   { template: 'posts-route.ts.hbs', outputPath: ['posts'] },
   { template: 'post-route.ts.hbs', outputPath: ['posts', '[id]'] },
   { template: 'authors-route.ts.hbs', outputPath: ['authors'] },
+  { template: 'author-route.ts.hbs', outputPath: ['authors', '[id]'] },
   { template: 'tiers-route.ts.hbs', outputPath: ['tiers'] },
+  { template: 'tier-route.ts.hbs', outputPath: ['tiers', '[id]'] },
   { template: 'engagements-route.ts.hbs', outputPath: ['engagements'] },
   { template: 'bulk-subscriptions-route.ts.hbs', outputPath: ['bulk-subscriptions'] },
 ];
@@ -119,11 +121,14 @@ const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
  * 2. `{outputDir}/app/api/beehiiv/subscription/route.ts` - fail-closed email lookup
  * 3. `{outputDir}/app/api/beehiiv/subscription/[id]/route.ts` - fail-closed ID
  *    lookup and DELETE endpoints
- * 4. `{outputDir}/app/api/beehiiv/posts/route.ts` - Posts list + detail
- * 4. `{outputDir}/app/api/beehiiv/authors/route.ts` - Authors list + detail
- * 5. `{outputDir}/app/api/beehiiv/tiers/route.ts` - Tiers list + detail
- * 6. `{outputDir}/app/api/beehiiv/engagements/route.ts` - Engagement metrics
- * 7. `{outputDir}/app/api/beehiiv/bulk-subscriptions/route.ts` - Bulk subscription creation
+ * 4. `{outputDir}/app/api/beehiiv/posts/route.ts` - Posts list
+ * 5. `{outputDir}/app/api/beehiiv/posts/[id]/route.ts` - Post detail
+ * 6. `{outputDir}/app/api/beehiiv/authors/route.ts` - Authors list
+ * 7. `{outputDir}/app/api/beehiiv/authors/[id]/route.ts` - Author detail
+ * 8. `{outputDir}/app/api/beehiiv/tiers/route.ts` - Tiers list
+ * 9. `{outputDir}/app/api/beehiiv/tiers/[id]/route.ts` - Tier detail
+ * 10. `{outputDir}/app/api/beehiiv/engagements/route.ts` - Engagement metrics
+ * 11. `{outputDir}/app/api/beehiiv/bulk-subscriptions/route.ts` - Bulk subscription creation
  *
  * All necessary directories are created automatically.
  *

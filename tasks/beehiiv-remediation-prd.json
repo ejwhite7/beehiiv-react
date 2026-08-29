@@ -160,9 +160,16 @@
         "Offset and cursor pagination contracts are preserved",
         "Bulk route naming is consistent across hooks and templates"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "Generator emits /authors/[id] and /tiers/[id] routes matching the exported detail hooks",
+        "Author offset pagination and tier cursor pagination are forwarded from response.pagination",
+        "Tier list filters and cursor parameters are passed to the Beehiiv client",
+        "Bulk Query mutation uses the generated /bulk-subscriptions route name",
+        "Generated routes transpile and execute in behavioral contract regressions",
+        "Full gate passed: lint, typecheck, 822 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-009",

@@ -123,3 +123,16 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: remove the post detail template/generator entry, restore the hook override behavior and old pagination mapping, and revert tests/snapshot/Ralph state. No migration or persistent data change is involved.
 - BR-007 marked `passes: true`.
+
+## BR-008 iteration 1 - passed
+
+- Added generated `/authors/[id]` and `/tiers/[id]` handlers matching the URLs used by the exported detail hooks.
+- Split list and detail responsibilities so list query parameters cannot silently select a different handler contract.
+- Corrected author list responses to forward nested offset pagination and tier list responses to forward nested cursor pagination.
+- Tier list routes now preserve cursor, type, active, and limit parameters when calling the client.
+- Standardized bulk creation on the generated `/bulk-subscriptions` route across the CLI template and TanStack Query mutation.
+- Executable generated-route tests cover both detail paths, exact client calls, both pagination styles, and the bulk mutation URL.
+- Final evidence: lint passed, strict typecheck passed, 822 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: remove the author/tier detail templates and generator entries, restore list/detail query multiplexing and top-level pagination reads, restore the underscore bulk URL, and revert tests/Ralph state. No migration or persistent data change is involved.
+- BR-008 marked `passes: true`.

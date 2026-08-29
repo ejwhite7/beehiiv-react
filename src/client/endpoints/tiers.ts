@@ -15,6 +15,7 @@ import type {
   UpdateTierResponse,
 } from '../../types/tier.js';
 import type { BeehiivHttpClient } from '../index.js';
+import { requireObjectPayload } from './signature-validation.js';
 
 /** Options for listing tiers with cursor-based pagination and optional filters */
 export interface ListTiersOptions {
@@ -203,6 +204,8 @@ export class TiersEndpoint {
    * });
    * ```
    */
+  create(publicationId: string, data: CreateTierRequest): Promise<CreateTierResponse>;
+  create(data: CreateTierRequest): Promise<CreateTierResponse>;
   async create(
     publicationIdOrData: string | CreateTierRequest,
     data?: CreateTierRequest,
@@ -212,10 +215,13 @@ export class TiersEndpoint {
 
     if (typeof publicationIdOrData === 'string') {
       publicationId = publicationIdOrData;
-      requestData = data!;
+      requestData = requireObjectPayload('TiersEndpoint.create', data);
     } else {
       publicationId = this._resolvePublicationId();
-      requestData = publicationIdOrData;
+      requestData = requireObjectPayload(
+        'TiersEndpoint.create',
+        publicationIdOrData,
+      );
     }
 
     return this._http.post<CreateTierResponse>(
@@ -243,6 +249,8 @@ export class TiersEndpoint {
    * const updated2 = await tiers.update('pub_abc', 'tier_123', { active: false });
    * ```
    */
+  update(publicationId: string, tierId: string, data: UpdateTierRequest): Promise<UpdateTierResponse>;
+  update(tierId: string, data: UpdateTierRequest): Promise<UpdateTierResponse>;
   async update(
     publicationIdOrTierId: string,
     tierIdOrData: string | UpdateTierRequest,
@@ -255,11 +263,11 @@ export class TiersEndpoint {
     if (typeof tierIdOrData === 'string') {
       publicationId = publicationIdOrTierId;
       resolvedTierId = tierIdOrData;
-      updateData = data!;
+      updateData = requireObjectPayload('TiersEndpoint.update', data);
     } else {
       publicationId = this._resolvePublicationId();
       resolvedTierId = publicationIdOrTierId;
-      updateData = tierIdOrData;
+      updateData = requireObjectPayload('TiersEndpoint.update', tierIdOrData);
     }
 
     return this._http.patch<UpdateTierResponse>(

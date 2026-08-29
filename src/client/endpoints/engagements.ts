@@ -7,6 +7,7 @@
 
 import type { GetEngagementsResponse } from '../../types/engagement.js';
 import type { BeehiivHttpClient } from '../index.js';
+import { requireObjectPayload } from './signature-validation.js';
 
 /**
  * Parameters for fetching engagement metrics.
@@ -90,6 +91,8 @@ export class EngagementsEndpoint {
    * @param params - Query parameters including date range and optional expand fields (when publicationId is passed explicitly)
    * @returns Engagement metrics for the requested date range
    */
+  get(publicationId: string, params: GetEngagementsParams): Promise<GetEngagementsResponse>;
+  get(params: GetEngagementsParams): Promise<GetEngagementsResponse>;
   async get(
     publicationIdOrParams: string | GetEngagementsParams,
     params?: GetEngagementsParams
@@ -99,10 +102,13 @@ export class EngagementsEndpoint {
 
     if (typeof publicationIdOrParams === 'string') {
       publicationId = publicationIdOrParams;
-      queryParams = params!;
+      queryParams = requireObjectPayload('EngagementsEndpoint.get', params);
     } else {
       publicationId = this._resolvePublicationId();
-      queryParams = publicationIdOrParams;
+      queryParams = requireObjectPayload(
+        'EngagementsEndpoint.get',
+        publicationIdOrParams,
+      );
     }
 
     const urlParams = new URLSearchParams();

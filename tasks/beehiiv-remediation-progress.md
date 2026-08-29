@@ -220,3 +220,15 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and query-bundle unused-import warnings remain assigned to BR-016.
 - Rollback: restore inline `init` orchestration, remove the scaffold entry and generated fixture script/CI step, then revert Ralph state. No migration or persistent data change is involved.
 - BR-014 marked `passes: true`.
+
+## BR-019 iteration 1 - passed
+
+- Added explicit overload declarations to all 19 payload-bearing dual-signature endpoint methods, so an explicit publication ID cannot typecheck without the required create, update, tag, bulk, or query payload.
+- Added shared runtime object and string-array guards with operation-specific `TypeError` messages for untyped JavaScript callers.
+- Runtime validation occurs before every HTTP dispatch; the malformed-call matrix confirms all mocked HTTP methods remain untouched.
+- Added a real TypeScript compile-fail fixture covering subscriptions, posts, webhooks, custom fields, automations and journeys, segments, tiers, bulk operations, and engagements.
+- Preserved all existing valid default-publication and explicit-publication signatures and behavior.
+- Final evidence: lint passed, strict typecheck passed, 857 tests passed, build passed, package smoke passed, all four generated fixture builds passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and query-bundle unused-import warnings remain assigned to BR-016.
+- Rollback: remove overload declarations, runtime guards, contract matrices, and Ralph state. No migration or persistent data change is involved.
+- BR-019 marked `passes: true`.

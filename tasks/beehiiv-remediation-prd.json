@@ -356,9 +356,14 @@
         "Malformed JavaScript calls fail with clear runtime validation errors",
         "Compile-fail and runtime tests cover every affected endpoint"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "Explicit overload declarations reject missing payloads at compile time across all 19 payload-bearing dual-signature methods.",
+        "Shared runtime guards reject malformed JavaScript object and tag payloads with operation-specific TypeError messages before HTTP dispatch.",
+        "Compile-fail and untyped runtime matrices cover subscriptions, posts, webhooks, custom fields, automations and journeys, segments, tiers, bulk operations, and engagements.",
+        "Full gate passed: lint, strict typecheck, 857 tests, dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
     },
     {
       "id": "BR-020",

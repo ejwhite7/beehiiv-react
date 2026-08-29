@@ -14,6 +14,7 @@ import type {
   UpdatePostRequest,
   PostAggregateStatsResponse,
 } from '../../types/post.js';
+import { requireObjectPayload } from './signature-validation.js';
 import type { BeehiivHttpClient } from '../index.js';
 
 /** Options for listing posts with page-based pagination */
@@ -215,6 +216,8 @@ export class PostsEndpoint {
    * @param data - The post data to create (when publicationId is passed explicitly)
    * @returns The newly created post
    */
+  create(publicationId: string, data: CreatePostRequest): Promise<PostResponse>;
+  create(data: CreatePostRequest): Promise<PostResponse>;
   async create(
     publicationIdOrData: string | CreatePostRequest,
     data?: CreatePostRequest
@@ -224,10 +227,13 @@ export class PostsEndpoint {
 
     if (typeof publicationIdOrData === 'string') {
       publicationId = publicationIdOrData;
-      requestData = data!;
+      requestData = requireObjectPayload('PostsEndpoint.create', data);
     } else {
       publicationId = this._resolvePublicationId();
-      requestData = publicationIdOrData;
+      requestData = requireObjectPayload(
+        'PostsEndpoint.create',
+        publicationIdOrData,
+      );
     }
 
     return this._http.post<PostResponse>(
@@ -246,6 +252,8 @@ export class PostsEndpoint {
    * @param data - The fields to update (when publicationId is passed explicitly)
    * @returns The updated post record
    */
+  update(publicationId: string, id: string, data: UpdatePostRequest): Promise<PostResponse>;
+  update(id: string, data: UpdatePostRequest): Promise<PostResponse>;
   async update(
     publicationIdOrId: string,
     idOrData: string | UpdatePostRequest,
@@ -258,11 +266,11 @@ export class PostsEndpoint {
     if (typeof idOrData === 'string') {
       publicationId = publicationIdOrId;
       postId = idOrData;
-      updateData = data!;
+      updateData = requireObjectPayload('PostsEndpoint.update', data);
     } else {
       publicationId = this._resolvePublicationId();
       postId = publicationIdOrId;
-      updateData = idOrData;
+      updateData = requireObjectPayload('PostsEndpoint.update', idOrData);
     }
 
     return this._http.patch<PostResponse>(

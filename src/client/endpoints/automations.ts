@@ -15,6 +15,7 @@ import type {
   AutomationEmailListResponse,
 } from '../../types/automation.js';
 import type { BeehiivHttpClient } from '../index.js';
+import { requireObjectPayload } from './signature-validation.js';
 
 /** Options for listing automations with cursor-based pagination */
 export interface ListAutomationsOptions {
@@ -179,6 +180,8 @@ export class AutomationsEndpoint {
    * @param data - Automation data including name, trigger, and optional steps (when publicationId is passed explicitly)
    * @returns The newly created automation
    */
+  create(publicationId: string, data: CreateAutomationRequest): Promise<AutomationResponse>;
+  create(data: CreateAutomationRequest): Promise<AutomationResponse>;
   async create(
     publicationIdOrData: string | CreateAutomationRequest,
     data?: CreateAutomationRequest
@@ -188,10 +191,13 @@ export class AutomationsEndpoint {
 
     if (typeof publicationIdOrData === 'string') {
       publicationId = publicationIdOrData;
-      requestData = data!;
+      requestData = requireObjectPayload('AutomationsEndpoint.create', data);
     } else {
       publicationId = this._resolvePublicationId();
-      requestData = publicationIdOrData;
+      requestData = requireObjectPayload(
+        'AutomationsEndpoint.create',
+        publicationIdOrData,
+      );
     }
 
     return this._http.post<AutomationResponse>(

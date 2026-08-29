@@ -13,6 +13,7 @@ import type {
   BulkUpdateStatusRequest,
 } from '../../types/bulk-subscriptions.js';
 import type { BeehiivHttpClient } from '../index.js';
+import { requireObjectPayload } from './signature-validation.js';
 
 /** Options for listing bulk subscription update jobs */
 export interface ListBulkUpdateJobsOptions {
@@ -167,6 +168,8 @@ export class BulkSubscriptionUpdatesEndpoint {
    * @param body - The bulk update fields request body (when publicationId is passed explicitly)
    * @returns A response containing the subscription update job reference
    */
+  bulkUpdateFields(publicationId: string, body: BulkUpdateFieldsRequest): Promise<BulkUpdateFieldsResponse>;
+  bulkUpdateFields(body: BulkUpdateFieldsRequest): Promise<BulkUpdateFieldsResponse>;
   async bulkUpdateFields(
     publicationIdOrBody: string | BulkUpdateFieldsRequest,
     body?: BulkUpdateFieldsRequest
@@ -176,10 +179,16 @@ export class BulkSubscriptionUpdatesEndpoint {
 
     if (typeof publicationIdOrBody === 'string') {
       publicationId = publicationIdOrBody;
-      requestBody = body!;
+      requestBody = requireObjectPayload(
+        'BulkSubscriptionUpdatesEndpoint.bulkUpdateFields',
+        body,
+      );
     } else {
       publicationId = this._resolvePublicationId();
-      requestBody = publicationIdOrBody;
+      requestBody = requireObjectPayload(
+        'BulkSubscriptionUpdatesEndpoint.bulkUpdateFields',
+        publicationIdOrBody,
+      );
     }
 
     return this._http.put<BulkUpdateFieldsResponse>(
@@ -197,6 +206,8 @@ export class BulkSubscriptionUpdatesEndpoint {
    * @param body - The bulk update status request body (when publicationId is passed explicitly)
    * @returns A promise that resolves with no value — the API returns 204 No Content
    */
+  bulkUpdateStatus(publicationId: string, body: BulkUpdateStatusRequest): Promise<void>;
+  bulkUpdateStatus(body: BulkUpdateStatusRequest): Promise<void>;
   async bulkUpdateStatus(
     publicationIdOrBody: string | BulkUpdateStatusRequest,
     body?: BulkUpdateStatusRequest
@@ -206,10 +217,16 @@ export class BulkSubscriptionUpdatesEndpoint {
 
     if (typeof publicationIdOrBody === 'string') {
       publicationId = publicationIdOrBody;
-      requestBody = body!;
+      requestBody = requireObjectPayload(
+        'BulkSubscriptionUpdatesEndpoint.bulkUpdateStatus',
+        body,
+      );
     } else {
       publicationId = this._resolvePublicationId();
-      requestBody = publicationIdOrBody;
+      requestBody = requireObjectPayload(
+        'BulkSubscriptionUpdatesEndpoint.bulkUpdateStatus',
+        publicationIdOrBody,
+      );
     }
 
     await this._http.put<void>(

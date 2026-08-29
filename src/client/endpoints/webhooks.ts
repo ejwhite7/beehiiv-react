@@ -11,6 +11,7 @@ import type {
   WebhookResponse,
   WebhookListResponse,
 } from '../../types/webhook.js';
+import { requireObjectPayload } from './signature-validation.js';
 import type { BeehiivHttpClient } from '../index.js';
 
 /**
@@ -120,6 +121,8 @@ export class WebhooksEndpoint {
    * @param data - The webhook configuration including URL and event types (when publicationId is passed explicitly)
    * @returns The newly created webhook
    */
+  create(publicationId: string, data: CreateWebhookRequest): Promise<WebhookResponse>;
+  create(data: CreateWebhookRequest): Promise<WebhookResponse>;
   async create(
     publicationIdOrData: string | CreateWebhookRequest,
     data?: CreateWebhookRequest
@@ -129,10 +132,13 @@ export class WebhooksEndpoint {
 
     if (typeof publicationIdOrData === 'string') {
       publicationId = publicationIdOrData;
-      requestData = data!;
+      requestData = requireObjectPayload('WebhooksEndpoint.create', data);
     } else {
       publicationId = this._resolvePublicationId();
-      requestData = publicationIdOrData;
+      requestData = requireObjectPayload(
+        'WebhooksEndpoint.create',
+        publicationIdOrData,
+      );
     }
 
     return this._http.post<WebhookResponse>(
@@ -151,6 +157,8 @@ export class WebhooksEndpoint {
    * @param data - The fields to update (when publicationId is passed explicitly)
    * @returns The updated webhook record
    */
+  update(publicationId: string, id: string, data: UpdateWebhookRequest): Promise<WebhookResponse>;
+  update(id: string, data: UpdateWebhookRequest): Promise<WebhookResponse>;
   async update(
     publicationIdOrId: string,
     idOrData: string | UpdateWebhookRequest,
@@ -163,11 +171,11 @@ export class WebhooksEndpoint {
     if (typeof idOrData === 'string') {
       publicationId = publicationIdOrId;
       webhookId = idOrData;
-      updateData = data!;
+      updateData = requireObjectPayload('WebhooksEndpoint.update', data);
     } else {
       publicationId = this._resolvePublicationId();
       webhookId = publicationIdOrId;
-      updateData = idOrData;
+      updateData = requireObjectPayload('WebhooksEndpoint.update', idOrData);
     }
 
     return this._http.patch<WebhookResponse>(

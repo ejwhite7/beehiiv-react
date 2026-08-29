@@ -16,6 +16,7 @@ import type {
   CreateSegmentRequest,
 } from '../../types/segment.js';
 import type { BeehiivHttpClient } from '../index.js';
+import { requireObjectPayload } from './signature-validation.js';
 
 /** Options for listing segment results (subscriber IDs only) with offset-based pagination */
 export interface ListSegmentResultsOptions {
@@ -189,6 +190,8 @@ export class SegmentsEndpoint {
    * @param data - Segment data including name and input definition (when publicationId is passed explicitly)
    * @returns The newly created segment
    */
+  create(publicationId: string, data: CreateSegmentRequest): Promise<SegmentResponse>;
+  create(data: CreateSegmentRequest): Promise<SegmentResponse>;
   async create(
     publicationIdOrData: string | CreateSegmentRequest,
     data?: CreateSegmentRequest
@@ -198,10 +201,13 @@ export class SegmentsEndpoint {
 
     if (typeof publicationIdOrData === 'string') {
       publicationId = publicationIdOrData;
-      requestData = data!;
+      requestData = requireObjectPayload('SegmentsEndpoint.create', data);
     } else {
       publicationId = this._resolvePublicationId();
-      requestData = publicationIdOrData;
+      requestData = requireObjectPayload(
+        'SegmentsEndpoint.create',
+        publicationIdOrData,
+      );
     }
 
     return this._http.post<SegmentResponse>(

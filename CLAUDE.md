@@ -7,7 +7,7 @@
 `beehiiv-react` is a hybrid npm package that provides:
 
 1. **A typed API client** (`BeehiivClient`) for the beehiiv API v2 (server-side only) with 14 endpoint namespaces: `subscriptions`, `customFields`, `publications`, `posts`, `webhooks`, `segments`, `automations`, `referrals`, `automationJourneys`, `tiers`, `authors`, `bulkSubscriptions`, `bulkSubscriptionUpdates`, `engagements`
-2. **React hooks** (`useSubscribe`, `useSubscription`, `useCustomFields`, `usePosts`, `usePost`, `useSubscriberAccess`, `usePostAccess`, `useSubscriberProfile`, `useSubscriberTier`, `useSubscribers`, `usePublications`) for client-side state management -- 22 hooks total (including `useBeehiiv`)
+2. **React hooks** for subscriptions, posts, access, publications, tiers, authors, bulk jobs, engagements, automations, webhooks, segments, and referrals -- 23 hooks total (including `useBeehiiv` and `usePostBySlug`)
 3. **Drop-in React components** (`SubscriptionForm`, `BeehiivProvider`, `PostCard`, `PostList`, `PostContentRenderer`, `GatedContent`, `PremiumContent`, `SubscriberBadge`, `TierBadge`) for common UI patterns
 4. **Utility functions** (`canViewContent`, `getAudienceLabel`, `getTierLabel`) for subscriber access resolution
 5. **A CLI tool** (`npx beehiiv-react init/sync`) that scaffolds config, types, and API routes into a Next.js project
@@ -49,7 +49,12 @@ beehiiv-react/
 │   │       ├── segments.ts          # Segment list/get/delete/recalculate/listMembers
 │   │       ├── automations.ts       # Automation list/get/create + journey listing
 │   │       ├── referrals.ts         # Referral program, milestones, subscriber stats
-│       └── automation-journeys.ts # Automation journey create/get
+│   │       ├── automation-journeys.ts # Automation journey create/get
+│   │       ├── tiers.ts             # Tier list/get/create/update
+│   │       ├── authors.ts           # Author list/get
+│   │       ├── bulkSubscriptions.ts # Bulk subscription creation
+│   │       ├── bulkSubscriptionUpdates.ts # Bulk update jobs and mutations
+│   │       └── engagements.ts       # Engagement metrics
 │   ├── hooks/                       # React hooks (client-side)
 │   │   ├── index.ts                 # Re-exports all hooks
 │   │   ├── useBeehiiv.ts            # Context access hook
@@ -58,12 +63,21 @@ beehiiv-react/
 │   │   ├── useCustomFields.ts       # Custom fields fetching hook
 │   │   ├── usePosts.ts              # Paginated post list with filters
 │   │   ├── usePost.ts               # Single post by ID
+│   │   ├── usePostBySlug.ts         # Single post by slug
 │   │   ├── useSubscriberAccess.ts   # Subscriber tier/status -> access result
 │   │   ├── usePostAccess.ts         # Combined post + subscriber access check
 │   │   ├── useSubscriberProfile.ts  # Full subscriber profile with isPremium/isActive flags
 │   │   ├── useSubscriberTier.ts     # Lightweight tier-only hook
 │   │   ├── useSubscribers.ts        # Paginated subscriber list
-│   │   └── usePublications.ts       # All accessible publications
+│   │   ├── usePublications.ts       # All accessible publications
+│   │   ├── useTiers.ts / useTier.ts # Tier list/detail
+│   │   ├── useAuthors.ts / useAuthor.ts # Author list/detail
+│   │   ├── useBulkUpdateJob.ts      # Bulk job polling
+│   │   ├── useEngagements.ts        # Engagement metrics
+│   │   ├── useAutomations.ts        # Automation list/detail
+│   │   ├── useWebhooks.ts           # Webhook list/detail
+│   │   ├── useSegments.ts           # Segment list/detail
+│   │   └── useReferrals.ts          # Referral data
 │   ├── components/                  # React components
 │   │   ├── index.ts                 # Re-exports all components
 │   │   ├── BeehiivProvider.tsx      # React context provider
@@ -73,7 +87,8 @@ beehiiv-react/
 │   │   ├── PostContentRenderer.tsx  # HTML/JSON content renderer
 │   │   ├── GatedContent.tsx         # Declarative subscriber-gated content wrapper
 │   │   ├── PremiumContent.tsx       # Premium content gate with upgrade prompt
-│   │   └── SubscriberBadge.tsx      # Subscriber tier badge with headless renderBadge prop
+│   │   ├── SubscriberBadge.tsx      # Subscriber tier badge with headless renderBadge prop
+│   │   └── TierBadge.tsx            # Tier badge with headless rendering
 │   ├── utils/                       # Pure utility functions
 │   │   ├── index.ts                 # Re-exports all utilities
 │   │   └── access.ts               # canViewContent, getAudienceLabel, getTierLabel
@@ -81,7 +96,8 @@ beehiiv-react/
 │   │   ├── index.ts                 # Re-exports keys, query hooks, mutation hooks
 │   │   ├── keys.ts                  # Query key factory (beehiivKeys)
 │   │   ├── hooks.ts                 # useQuery-based hooks (usePostsQuery, useSubscribersQuery, etc.)
-│   │   └── mutations.ts             # useMutation-based hooks (useSubscribeMutation, etc.)
+│   │   ├── mutations.ts             # Subscription mutations
+│   │   └── resource modules         # Tiers, authors, bulk, engagements, automations, webhooks, segments, referrals
 │   ├── server/                      # RSC utilities (sub-path: beehiiv-react/server)
 │   │   ├── index.ts                 # Re-exports client factory + fetchers
 │   │   ├── client.ts                # createBeehiivClient() factory (reads env vars)
@@ -95,7 +111,9 @@ beehiiv-react/
 │       │   └── api-key.ts           # API key prompt + validation
 │       ├── commands/
 │       │   ├── init.ts              # `beehiiv-react init` command
-│       │   └── sync.ts              # `beehiiv-react sync` command
+│       │   ├── sync.ts              # `beehiiv-react sync` command
+│       │   └── add-blog.ts           # Optional blog scaffold command
+│       ├── scaffold.ts              # Shared non-interactive scaffold orchestration
 │       ├── generators/
 │       │   ├── config.ts            # Renders beehiiv.config.ts
 │       │   ├── custom-fields.ts     # Renders typed custom fields
@@ -120,7 +138,7 @@ beehiiv-react/
 ├── package.json
 ├── tsconfig.json
 ├── tsup.config.ts                   # Multi-entry build: library + query + server + CLI
-├── vitest.config.ts                 # Test config with jsdom environment
+├── vitest.config.mts                # ESM test config with jsdom environment
 ├── .eslintrc.json
 ├── .github/workflows/ci.yml         # GitHub Actions CI
 ├── CHANGELOG.md                     # Version history
@@ -151,11 +169,12 @@ The `BeehiivClient` requires an API key and must only run server-side. It should
 The `sync` command fetches custom field definitions from the beehiiv API and generates a TypeScript file with strongly-typed field names and value types. This means IDE autocomplete works for custom fields specific to each publication.
 
 ### Multi-Entry Build Output
-tsup produces four separate builds:
+tsup produces five build entries:
 - **Library** (`dist/index.js` + `dist/index.mjs` + `dist/index.d.ts`): ESM and CJS for the SDK, with React as an external dependency
 - **Query adapter** (`dist/query/index.js` + `dist/query/index.mjs` + `dist/query/index.d.ts`): ESM and CJS, with React and @tanstack/react-query as external dependencies
 - **Server utilities** (`dist/server/index.js` + `dist/server/index.mjs` + `dist/server/index.d.ts`): ESM and CJS, with React as an external dependency
 - **CLI** (`dist/cli/index.js`): CJS only, bundles all dependencies, includes `#!/usr/bin/env node` shebang
+- **CI scaffold helper** (`dist/cli/scaffold.js`): CJS-only non-interactive generator used by the real Next.js fixture gate
 
 ### Rate Limiting
 The client includes a built-in rate limiter (token-bucket algorithm) to stay within beehiiv's 180 requests/minute limit. This is configurable via `rateLimitPerMinute` in the client config.
@@ -183,7 +202,7 @@ The client includes a built-in rate limiter (token-bucket algorithm) to stay wit
 
 ---
 
-## React Hooks (22 total)
+## React Hooks (23 total)
 
 | Hook | Description |
 |---|---|
@@ -193,6 +212,7 @@ The client includes a built-in rate limiter (token-bucket algorithm) to stay wit
 | `useCustomFields` | Fetch custom field definitions |
 | `usePosts` | Paginated post list with filters |
 | `usePost` | Single post by ID |
+| `usePostBySlug` | Single post by slug |
 | `useSubscriberAccess` | Subscriber tier/status to access result |
 | `usePostAccess` | Combined post + subscriber access check |
 | `useSubscriberProfile` | Full subscriber profile with isPremium/isActive |
@@ -251,16 +271,19 @@ When `beehiiv-react init --oauth` is used:
 | `npm run dev` | Watch mode build |
 | `npm run typecheck` | Run `tsc --noEmit` (type checking only) |
 | `npm run lint` | ESLint on `src/` |
-| `npm run test` | Run vitest |
+| `npm run test` | Run Vitest |
+| `npm run test:pack` | Install the tarball and verify CJS/ESM exports |
+| `npm run test:generated` | Typecheck and build all four generated Next.js configurations |
 | `npm run test:watch` | Run vitest in watch mode |
 | `npm run test:coverage` | Run vitest with V8 coverage |
 
 ### How tsup Works
-The `tsup.config.ts` defines four build entries (tsup's default extensions: `.js` = CJS, `.mjs` = ESM):
+The `tsup.config.ts` defines five build entries (tsup's default extensions: `.js` = CJS, `.mjs` = ESM):
 1. `src/index.ts` -> `dist/index.js` (CJS) + `dist/index.mjs` (ESM) + `dist/index.d.ts`/`.d.mts` (types)
 2. `src/query/index.ts` -> `dist/query/index.js` (CJS) + `dist/query/index.mjs` (ESM) + `dist/query/index.d.ts`/`.d.mts` (types)
 3. `src/server/index.ts` -> `dist/server/index.js` (CJS) + `dist/server/index.mjs` (ESM) + `dist/server/index.d.ts`/`.d.mts` (types)
 4. `src/cli/index.ts` -> `dist/cli/index.js` (CJS with shebang)
+5. `src/cli/scaffold.ts` -> `dist/cli/scaffold.js` (CJS fixture helper)
 
 The `exports` map in `package.json` must match these extensions exactly: the `require` condition points at `.js` (CJS) and the `import` condition at `.mjs` (ESM), each with its matching `.d.ts`/`.d.mts` types entry. A mismatch here ships a broken package even though build and tests pass — verify with a `npm install <tarball>` + `require()`/`import()` smoke test when touching either file.
 
@@ -490,7 +513,7 @@ npm run test:watch
 npm run test:coverage
 ```
 
-Tests use vitest with jsdom for component/hook testing. The test environment is configured in `vitest.config.ts`.
+Tests use Vitest with jsdom for component/hook testing. The test environment is configured in `vitest.config.mts`.
 
 ### Test file conventions:
 - Unit tests: `src/**/__tests__/*.test.ts`
@@ -509,14 +532,18 @@ The GitHub Actions CI workflow (`.github/workflows/ci.yml`) runs on every push a
 3. `npm run typecheck` - TypeScript type checking
 4. `npm run test` - Vitest tests
 5. `npm run build` - tsup build
+6. `npm run test:pack` - packed CJS/ESM export smoke
+7. `npm run test:generated` - four generated Next.js typecheck/build fixtures
 
 All steps must pass for the CI to be green. The `prepublishOnly` script also runs build, typecheck, and test before any `npm publish`.
 
 ---
 
-## v0.4.0 Test Summary
+## Current Test Summary
 
-**497 tests passing** across 44 test files. Key new test files:
+**859 tests passing** across 62 test files, including endpoint, hook, component,
+query-cache, generated-route security, scaffold, packaging, and compile-fail
+contract coverage. Representative suites include:
 
 - `src/client/__tests__/endpoints/webhooks.test.ts` -- 10 tests
 - `src/client/__tests__/endpoints/segments.test.ts` -- 11 tests

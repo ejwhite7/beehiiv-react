@@ -242,3 +242,29 @@ Append-only execution ledger for the Ralph remediation loop.
 - Final evidence: lint passed, strict typecheck passed, 857 tests passed, build passed, package smoke passed, all four generated fixture builds passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
 - Rollback: restore the prior Vitest and coverage versions plus lockfile, then revert Ralph state. No migration or persistent data change is involved.
 - BR-015 marked `passes: true`.
+
+## BR-016 iteration 1 - discovery
+
+- Removed React `act()` warnings from the affected component and hook tests and eliminated the Vitest native-loader warning by using the ESM config extension.
+- Split the provider context into a JSX-free module so the Query build no longer retains unused React/JSX imports or emits bundle warnings.
+- Reconciled current documentation with the implemented 23 hooks, 9 components, 14 endpoint namespaces, and 22 templates. The final test baseline will be recorded after BR-021.
+- During documentation reconciliation, found that `usePostBySlug` still forwards a caller-controlled publication override that the secured generated posts route rejects.
+- Appended BR-021 as failing and added it to the final audit dependency list before implementation, per the Ralph discovery loop.
+
+## BR-016 iteration 2 - passed
+
+- The complete 859-test suite passes without React `act()`, Vitest config-loader, or other unexpected warnings. Its only stderr is five expected custom-field CLI progress messages.
+- The dual ESM/CJS build completes with zero stderr and no unused React/JSX imports in the Query adapter.
+- Current documentation now matches 23 hooks, 9 components, 14 endpoint namespaces, 22 templates, 859 tests, and 62 test files; version-specific historical release notes remain unchanged.
+- Full evidence: lint passed, strict typecheck passed, 859 tests passed, warning-free build passed, package smoke passed, all four generated fixture builds passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Rollback: restore the prior context import, Vitest config filename, warning-producing test interactions, and documentation. No migration or persistent data change is involved.
+- BR-016 marked `passes: true`.
+
+## BR-021 iteration 1 - passed
+
+- Retained the optional `publicationId` property as deprecated for source compatibility but removed it from slug URL construction and dependencies.
+- The hook now agrees with the secured generated posts route: callers supply only an encoded slug, while the server owns publication scope.
+- New hook regressions cover successful encoded slug resolution and suppression of a caller-controlled publication override; the generated posts security suite also remains green.
+- Full evidence: lint passed, strict typecheck passed, 859 tests passed, warning-free build passed, package smoke passed, all four generated fixture builds passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Rollback: restore publication override forwarding, remove the hook regression suite, and revert Ralph state. No migration or persistent data change is involved.
+- BR-021 marked `passes: true`.

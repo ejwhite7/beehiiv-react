@@ -17,12 +17,19 @@ describe('useBeehiiv', () => {
   it('throws when used outside a BeehiivProvider', () => {
     // Suppress console.error for the expected error
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const suppressExpectedWindowError = (event: ErrorEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('error', suppressExpectedWindowError);
 
-    expect(() => {
-      renderHook(() => useBeehiiv());
-    }).toThrow('useBeehiiv must be used within a <BeehiivProvider>');
-
-    spy.mockRestore();
+    try {
+      expect(() => {
+        renderHook(() => useBeehiiv());
+      }).toThrow('useBeehiiv must be used within a <BeehiivProvider>');
+    } finally {
+      window.removeEventListener('error', suppressExpectedWindowError);
+      spy.mockRestore();
+    }
   });
 
   it('returns context value when inside a BeehiivProvider', () => {

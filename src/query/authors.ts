@@ -17,7 +17,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import {
   BeehiivContext,
   type BeehiivContextValue,
-} from '../components/BeehiivProvider.js';
+} from '../components/beehiiv-context.js';
 import type { Author } from '../types/author.js';
 import { beehiivKeys } from './keys.js';
 

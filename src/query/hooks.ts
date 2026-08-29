@@ -17,7 +17,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import {
   BeehiivContext,
   type BeehiivContextValue,
-} from '../components/BeehiivProvider.js';
+} from '../components/beehiiv-context.js';
 import type { PostInfo, PostAudience, PostStatus } from '../types/post.js';
 import type { SubscriptionInfo } from '../types/subscription.js';
 import type { CustomFieldInfo } from '../types/custom-field.js';

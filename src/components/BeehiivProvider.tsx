@@ -2,29 +2,19 @@
  * BeehiivProvider - React context provider for beehiiv configuration.
  *
  * Wrap your application (or a subtree) with this provider to enable
- * all beehiiv React hooks (`useBeehiiv`, `useSubscribe`, `useSubscription`,
- * `useCustomFields`).
+ * all beehiiv React hooks.
  *
  * @module components/BeehiivProvider
  */
 
-import React, { createContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import {
+  BeehiivContext,
+  type BeehiivContextValue,
+} from './beehiiv-context.js';
 
-/**
- * The shape of the value exposed by the BeehiivProvider context.
- *
- * Consumers can read this via the `useBeehiiv()` hook.
- */
-export interface BeehiivContextValue {
-  /** Base URL for client-side API calls (e.g. '/api/beehiiv') */
-  apiUrl: string;
-  /** The beehiiv publication ID (starts with "pub_") */
-  publicationId: string;
-  /** Whether a global operation is in progress */
-  isLoading: boolean;
-  /** The most recent global error, if any */
-  error: Error | null;
-}
+export { BeehiivContext } from './beehiiv-context.js';
+export type { BeehiivContextValue } from './beehiiv-context.js';
 
 /**
  * Props accepted by the {@link BeehiivProvider} component.
@@ -40,14 +30,6 @@ export interface BeehiivProviderProps {
   /** The beehiiv publication ID (starts with "pub_") */
   publicationId: string;
 }
-
-/**
- * React context that holds the current {@link BeehiivContextValue}.
- *
- * Use the `useBeehiiv()` hook instead of consuming this context directly.
- */
-export const BeehiivContext = createContext<BeehiivContextValue | null>(null);
-BeehiivContext.displayName = 'BeehiivContext';
 
 /**
  * Provides beehiiv configuration to all descendant hooks and components.

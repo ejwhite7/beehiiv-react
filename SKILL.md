@@ -91,7 +91,7 @@ A Commander.js CLI exposed as the `beehiiv-react` binary. Two commands:
 
 - `init` — Interactive scaffolding: auth (API key or OAuth2 PKCE), publication selection,
   feature selection, file generation, `.env.local` update
-- `sync` — Re-fetches custom fields and regenerates `types/beehiiv.generated.ts`
+- `sync` — Re-fetches custom fields and regenerates `lib/beehiiv/beehiiv-custom-fields.ts`
 
 Code generation uses Handlebars templates in `templates/*.hbs`. The CLI uses dynamic imports
 for ESM-only packages (chalk, ora, open).

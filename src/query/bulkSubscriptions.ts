@@ -16,7 +16,7 @@ import type { UseMutationResult } from '@tanstack/react-query';
 import {
   BeehiivContext,
   type BeehiivContextValue,
-} from '../components/BeehiivProvider.js';
+} from '../components/beehiiv-context.js';
 import type {
   BulkCreateSubscriptionsRequest,
   BulkCreateSubscriptionsResponse,

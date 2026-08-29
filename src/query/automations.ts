@@ -14,7 +14,7 @@ import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import {
   BeehiivContext,
   type BeehiivContextValue,
-} from '../components/BeehiivProvider.js';
+} from '../components/beehiiv-context.js';
 import type { AutomationInfo } from '../types/automation.js';
 import type { AutomationJourneyInfo, CreateAutomationJourneyRequest } from '../types/automation-journey.js';
 import { beehiivKeys } from './keys.js';

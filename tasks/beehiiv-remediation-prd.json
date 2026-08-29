@@ -312,15 +312,20 @@
         "The test suite emits no unexpected React act warnings",
         "Documented hooks, components, test baseline, routes, and supported features match the code"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "React interactions and manual refetches are wrapped in act, while the expected provider-boundary exception is locally suppressed and still asserted.",
+        "Vitest uses its native ESM config loader and the Query adapter imports the JSX-free context module, eliminating the test-runner and bundle warnings.",
+        "Current documentation matches 23 hooks, 9 components, 14 endpoint namespaces, 22 templates, 859 tests, and 62 test files; older counts remain only in explicitly versioned release notes.",
+        "Full gate passed: lint, strict typecheck, 859 tests with no unexpected warnings, warning-free dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
+      ]
     },
     {
       "id": "BR-017",
       "priority": 5,
       "title": "Complete residual defect discovery and production audit",
-      "dependsOn": ["BR-001", "BR-002", "BR-003", "BR-004", "BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010", "BR-011", "BR-012", "BR-013", "BR-014", "BR-015", "BR-016", "BR-018", "BR-019", "BR-020"],
+      "dependsOn": ["BR-001", "BR-002", "BR-003", "BR-004", "BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010", "BR-011", "BR-012", "BR-013", "BR-014", "BR-015", "BR-016", "BR-018", "BR-019", "BR-020", "BR-021"],
       "acceptanceCriteria": [
         "Full release, generated project, security, contract, race, packaging, and audit gates pass",
         "Independent adversarial review finds no unresolved defect",
@@ -386,6 +391,25 @@
         "Effect cleanup invalidates in-flight requests before stale responses can update state",
         "Regressions cover successful grants, empty responses, failures after grants, disabled and empty IDs, and stale success races",
         "Full gate passed: lint, typecheck, 836 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-021",
+      "priority": 2,
+      "title": "Align slug lookup with the secured posts route",
+      "dependsOn": ["BR-002", "BR-007"],
+      "acceptanceCriteria": [
+        "usePostBySlug uses the provider-scoped posts route and never forwards a caller-controlled publication override",
+        "The public generated route and hook contract agree for slug lookups",
+        "Regression tests cover slug lookup success and publication override suppression"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "usePostBySlug now constructs only the provider-scoped posts URL with an encoded slug and never forwards publicationId.",
+        "The publicationId option remains deprecated for source compatibility and documents the server-owned publication boundary.",
+        "Hook regressions cover a successful encoded slug lookup and suppression of an attacker-controlled override; the generated route security suite confirms matching slug and override behavior.",
+        "Full gate passed: lint, strict typecheck, 859 tests, warning-free dual ESM/CJS build, package smoke, four generated fixture builds, zero production vulnerabilities, and clean diff check."
       ]
     }
   ]

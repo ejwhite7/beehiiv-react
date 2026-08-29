@@ -1,0 +1,294 @@
+{
+  "project": "beehiiv-react production remediation",
+  "branchName": "tidebreak/ember-inlet",
+  "completionSignal": "<promise>COMPLETE</promise>",
+  "qualityGates": [
+    "npm run lint",
+    "npm run typecheck",
+    "npm test",
+    "npm run build",
+    "npm run test:pack",
+    "npm audit --omit=dev"
+  ],
+  "userStories": [
+    {
+      "id": "BR-001",
+      "priority": 1,
+      "title": "Secure generated subscriber operations",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Generated code does not expose unauthenticated subscriber lookup, update, or deletion",
+        "Privileged subscriber operations fail closed until an application supplies authorization",
+        "Regression tests cover anonymous lookup, update, deletion, and enumeration"
+      ],
+      "passes": true,
+      "blocked": false,
+      "evidence": [
+        "Generated email and ID lookup/delete handlers deny by default before Beehiiv calls",
+        "Generated existing-subscriber Server Actions throw before update/delete calls",
+        "Behavioral VM tests execute generated modules and prove protected Beehiiv spies remain untouched",
+        "Public subscribe POST behavior remains reachable and tested",
+        "Full gate passed: lint, typecheck, 614 tests, build, package smoke, and production audit"
+      ]
+    },
+    {
+      "id": "BR-002",
+      "priority": 1,
+      "title": "Restrict the public posts proxy",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Only confirmed authorized posts can be returned publicly",
+        "Draft, premium expansion, arbitrary expansion, and publication override probes fail",
+        "Security regression tests cover the public route"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-003",
+      "priority": 1,
+      "title": "Eliminate unsanitized HTML rendering",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Raw API HTML cannot be injected without an explicit trusted sanitizer decision",
+        "Generated blog output is sanitized",
+        "XSS regression fixtures cover scripts, event handlers, dangerous URLs, SVG, and malformed markup"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-004",
+      "priority": 1,
+      "title": "Establish one audience access matrix",
+      "dependsOn": ["BR-002"],
+      "acceptanceCriteria": [
+        "Server templates, hooks, components, and utilities share one access decision",
+        "Every audience, tier, and subscription status combination is tested"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-005",
+      "priority": 2,
+      "title": "Repair subscription route contracts",
+      "dependsOn": ["BR-001"],
+      "acceptanceCriteria": [
+        "Email and ID lookup URLs match generated handlers",
+        "List and detail response envelopes match hook expectations",
+        "Hook-to-generated-handler contract tests pass"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-006",
+      "priority": 2,
+      "title": "Repair subscription mutation payloads",
+      "dependsOn": ["BR-001"],
+      "acceptanceCriteria": [
+        "Custom fields use the Beehiiv array wire shape",
+        "Reactivation, welcome email, and supported UTM fields are forwarded",
+        "Form, hook, Query mutation, generated route, and client contract tests pass"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-007",
+      "priority": 2,
+      "title": "Repair posts detail and pagination routes",
+      "dependsOn": ["BR-002"],
+      "acceptanceCriteria": [
+        "Post detail hooks resolve against generated dynamic routes",
+        "Offset pagination metadata is preserved",
+        "Generated post handlers pass strict TypeScript"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-008",
+      "priority": 2,
+      "title": "Repair authors, tiers, and bulk routes",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Detail paths match exported hooks",
+        "Offset and cursor pagination contracts are preserved",
+        "Bulk route naming is consistent across hooks and templates"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-009",
+      "priority": 2,
+      "title": "Repair OAuth credential handling",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "OAuth-generated projects resolve the stored access token",
+        "Credential selection is shared by generated server code",
+        "OAuth-mode scaffold smoke tests pass"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-010",
+      "priority": 2,
+      "title": "Repair CLI feature combinations",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "API-routes-only, Server-Actions-only, both, and neither configurations compile",
+        "No generated file imports an unselected feature"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-011",
+      "priority": 3,
+      "title": "Isolate TanStack Query caches by publication",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Every publication-scoped query key includes the resolved publication ID",
+        "Cross-publication cache tests pass",
+        "Mutation invalidation remains correct"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-012",
+      "priority": 3,
+      "title": "Cancel stale hook requests",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Disable, identifier removal, unmount, and rapid identity changes cannot commit stale state",
+        "Deferred-response regression tests pass"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-013",
+      "priority": 3,
+      "title": "Validate rate limiter configuration",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Invalid request and concurrency limits fail synchronously",
+        "Valid rate and concurrency behavior remains covered"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-014",
+      "priority": 3,
+      "title": "Add generated project CI fixtures",
+      "dependsOn": ["BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010"],
+      "acceptanceCriteria": [
+        "Packed CJS and ESM artifacts install into generated Next.js fixtures",
+        "Every supported scaffold configuration typechecks and builds",
+        "CI runs the generated fixture gate"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-015",
+      "priority": 4,
+      "title": "Upgrade vulnerable development tooling",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "No known high or critical dependency audit findings remain",
+        "The complete test and build gate still passes"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-016",
+      "priority": 4,
+      "title": "Remove test warnings and stale documentation",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "The test suite emits no unexpected React act warnings",
+        "Documented hooks, components, test baseline, routes, and supported features match the code"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-017",
+      "priority": 5,
+      "title": "Complete residual defect discovery and production audit",
+      "dependsOn": ["BR-001", "BR-002", "BR-003", "BR-004", "BR-005", "BR-006", "BR-007", "BR-008", "BR-009", "BR-010", "BR-011", "BR-012", "BR-013", "BR-014", "BR-015", "BR-016", "BR-018", "BR-019", "BR-020"],
+      "acceptanceCriteria": [
+        "Full release, generated project, security, contract, race, packaging, and audit gates pass",
+        "Independent adversarial review finds no unresolved defect",
+        "Every newly discovered defect is appended as a failing story before completion"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-018",
+      "priority": 1,
+      "title": "Secure generated bulk subscription creation and public signup abuse boundaries",
+      "dependsOn": ["BR-001"],
+      "acceptanceCriteria": [
+        "The scaffold does not expose unauthenticated bulk subscription creation",
+        "Public single-subscribe input is bounded and supports an explicit application abuse-control hook",
+        "Regression tests cover bulk abuse, oversized inputs, and bypass attempts"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-019",
+      "priority": 3,
+      "title": "Enforce dual-signature endpoint contracts",
+      "dependsOn": [],
+      "acceptanceCriteria": [
+        "Missing explicit-publication payloads fail at compile time",
+        "Malformed JavaScript calls fail with clear runtime validation errors",
+        "Compile-fail and runtime tests cover every affected endpoint"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    },
+    {
+      "id": "BR-020",
+      "priority": 2,
+      "title": "Make post access resolution fail closed when post data is unavailable",
+      "dependsOn": ["BR-004"],
+      "acceptanceCriteria": [
+        "Missing, failed, disabled, or stale post fetches never produce an access grant",
+        "Post access error and empty-state regression tests pass"
+      ],
+      "passes": false,
+      "blocked": false,
+      "evidence": []
+    }
+  ]
+}

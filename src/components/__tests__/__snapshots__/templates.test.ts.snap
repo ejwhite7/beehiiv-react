@@ -14,6 +14,20 @@ const client = new BeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? 'pub_route456',
 });
 
+/**
+ * Authorize access to subscriber data.
+ *
+ * This deliberately denies every request. Replace the body with a server-side
+ * session and ownership check before enabling subscriber lookup. Never trust
+ * the requested email address as proof of identity.
+ */
+async function isSubscriberLookupAuthorized(
+  _req: NextRequest,
+  _email: string | null,
+): Promise<boolean> {
+  return false;
+}
+
 /** POST /api/beehiiv/subscribe — Create a new subscription */
 export async function POST(req: NextRequest) {
   try {
@@ -45,25 +59,16 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET /api/beehiiv/subscribe?email=... — Look up a subscription by email
- *
- * ⚠️ SECURITY WARNING — READ BEFORE DEPLOYING TO PRODUCTION ⚠️
- *
- * As generated, this handler lets ANY visitor look up ANY email address
- * and receive the full subscription record (status, tier, custom fields —
- * potentially PII). That allows subscriber enumeration: an attacker can
- * probe email addresses to learn who subscribes to your publication.
- *
- * Before production, protect this endpoint by at least one of:
- *   - Restricting lookups to the authenticated user's own email via your
- *     auth/session provider (see the TODO below)
- *   - Adding rate limiting (e.g. Vercel WAF, upstash/ratelimit, middleware)
- *   - Removing this GET handler if your app does not need client-side
- *     subscription lookup
+ * GET /api/beehiiv/subscribe?email=... — Look up a subscription by email.
+ * Fails closed until isSubscriberLookupAuthorized is implemented above.
  */
 export async function GET(req: NextRequest) {
   try {
     const email = req.nextUrl.searchParams.get('email');
+
+    if (!(await isSubscriberLookupAuthorized(req, email))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     if (!email) {
       return NextResponse.json(
@@ -71,14 +76,6 @@ export async function GET(req: NextRequest) {
         { status: 400 },
       );
     }
-
-    // TODO: add your auth check here so visitors can only look up their
-    // own subscription. Example with a session helper:
-    //
-    // const session = await getSession(req);
-    // if (!session || session.user.email !== email) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
 
     const subscription = await client.subscriptions.list({ email });
 
@@ -156,6 +153,20 @@ const client = new BeehiivClient({
   publicationId: process.env.BEEHIIV_PUBLICATION_ID ?? 'pub_sa789',
 });
 
+/**
+ * Authorize a mutation of an existing subscriber.
+ *
+ * This deliberately throws for every call. Replace the body with a server-side
+ * session and ownership check before enabling either privileged action. Never
+ * trust the supplied subscription ID as proof of identity.
+ */
+async function assertSubscriberMutationAuthorized(
+  _subscriptionId: string,
+  _operation: 'update' | 'delete',
+): Promise<void> {
+  throw new Error('Unauthorized subscriber operation');
+}
+
 /** Payload accepted by the subscribeAction server action */
 interface SubscribePayload {
   email: string;
@@ -209,6 +220,8 @@ export async function enrichSubscriptionAction(
   id: string,
   customFields: Partial<BeehiivCustomFields>,
 ) {
+  await assertSubscriberMutationAuthorized(id, 'update');
+
   const response = await client.subscriptions.updateById(id, {
     custom_fields: Object.entries(customFields).map(([name, value]) => ({
       name,
@@ -225,6 +238,8 @@ export async function enrichSubscriptionAction(
  * @param id - The subscription ID to delete (starts with "sub_")
  */
 export async function unsubscribeAction(id: string) {
+  await assertSubscriberMutationAuthorized(id, 'delete');
+
   await client.subscriptions.delete(id);
 }
 "

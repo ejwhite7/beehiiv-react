@@ -1,7 +1,7 @@
 /**
  * API route generator for the beehiiv CLI.
  * Generates Next.js App Router API routes for subscription management
- * including a subscribe endpoint and a subscription lookup/delete endpoint.
+ * including a subscribe endpoint and fail-closed subscriber management.
  * @module cli/generators/api-routes
  */
 
@@ -19,9 +19,9 @@ export interface ApiRouteGeneratorData {
 }
 
 /**
- * Inline Handlebars template for the subscription lookup/delete route.
- * This generates `app/api/beehiiv/subscription/[id]/route.ts` for
- * GET (get subscription by ID) and DELETE (unsubscribe).
+ * Inline template for the fail-closed subscription lookup/delete route.
+ * Applications must replace the authorization stub with their own server-side
+ * session and ownership check before either operation can reach beehiiv.
  */
 const SUBSCRIPTION_ID_ROUTE_TEMPLATE = `/**
  * Next.js App Router API route for beehiiv subscription lookup and management
@@ -41,6 +41,20 @@ const client = new BeehiivClient({
   publicationId: beehiivConfig.publicationId,
 });
 
+/**
+ * Authorize access to a subscriber record.
+ *
+ * This deliberately denies every request. Replace the body with a server-side
+ * session and ownership check. Never trust the route ID as proof of identity.
+ */
+async function isSubscriberOperationAuthorized(
+  _req: NextRequest,
+  _subscriptionId: string,
+  _operation: 'lookup' | 'delete',
+): Promise<boolean> {
+  return false;
+}
+
 /** GET /api/beehiiv/subscription/[id] -- Get a subscription by ID */
 export async function GET(
   _req: NextRequest,
@@ -48,6 +62,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    if (!(await isSubscriberOperationAuthorized(_req, id, 'lookup'))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const subscription = await client.subscriptions.get(id);
     return NextResponse.json(subscription, { status: 200 });
   } catch (error: unknown) {
@@ -63,6 +82,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    if (!(await isSubscriberOperationAuthorized(_req, id, 'delete'))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await client.subscriptions.delete(id);
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: unknown) {
@@ -90,8 +114,8 @@ const TEMPLATE_ROUTES: Array<{ template: string; outputPath: string[] }> = [
  * Creates route files for:
  * 1. `{outputDir}/app/api/beehiiv/subscribe/route.ts` - POST endpoint for
  *    creating new subscriptions (from the `api-route.ts.hbs` template)
- * 2. `{outputDir}/app/api/beehiiv/subscription/[id]/route.ts` - GET and DELETE
- *    endpoints for subscription lookup and unsubscribe (from inline template)
+ * 2. `{outputDir}/app/api/beehiiv/subscription/[id]/route.ts` - fail-closed GET
+ *    and DELETE endpoints (from inline template)
  * 3. `{outputDir}/app/api/beehiiv/posts/route.ts` - Posts list + detail
  * 4. `{outputDir}/app/api/beehiiv/authors/route.ts` - Authors list + detail
  * 5. `{outputDir}/app/api/beehiiv/tiers/route.ts` - Tiers list + detail

@@ -201,9 +201,16 @@
         "API-routes-only, Server-Actions-only, both, and neither configurations compile",
         "No generated file imports an unselected feature"
       ],
-      "passes": false,
+      "passes": true,
       "blocked": false,
-      "evidence": []
+      "evidence": [
+        "API-routes-only scaffolds use a fetch-backed CTA and do not import Server Actions",
+        "Server-Actions-only and combined scaffolds generate action-backed CTA and step-two enrichment",
+        "Neither-mode scaffolds omit all transport-dependent subscribe components",
+        "All four feature combinations generate TypeScript and TSX without compiler diagnostics",
+        "Dependency scans prove generated files do not reference unselected transports",
+        "Full gate passed: lint, typecheck, 831 tests, build, package smoke, and production audit"
+      ]
     },
     {
       "id": "BR-011",

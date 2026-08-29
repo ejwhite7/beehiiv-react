@@ -289,23 +289,25 @@ describe('analytics.ts.hbs', () => {
 // ---------------------------------------------------------------------------
 
 describe('subscribe-cta.tsx.hbs', () => {
+  const actionView = { useServerActions: true, useApiRoutes: true };
+
   it('generates the SubscribeCTA component', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toMatchSnapshot();
   });
 
   it('includes use client directive', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain("'use client'");
   });
 
   it('uses useSubscriberStatus hook', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain('useSubscriberStatus');
     expect(output).toContain('isSubscribed');
@@ -314,14 +316,14 @@ describe('subscribe-cta.tsx.hbs', () => {
 
   it('returns null when subscribed', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain('return null');
   });
 
   it('fires all required dataLayer events', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain('beehiiv_subscribe_cta_viewed');
     expect(output).toContain('beehiiv_subscribe_form_submitted');
@@ -331,10 +333,18 @@ describe('subscribe-cta.tsx.hbs', () => {
 
   it('tracks email domain not full email', () => {
     const template = compileTemplate('subscribe-cta.tsx.hbs');
-    const output = template({});
+    const output = template(actionView);
 
     expect(output).toContain('email_domain');
     expect(output).toContain("split('@')");
+  });
+
+  it('uses the generated API route without importing Server Actions', () => {
+    const template = compileTemplate('subscribe-cta.tsx.hbs');
+    const output = template({ useServerActions: false, useApiRoutes: true });
+
+    expect(output).toContain("fetch('/api/beehiiv/subscribe'");
+    expect(output).not.toContain("from '@/lib/beehiiv/actions'");
   });
 });
 

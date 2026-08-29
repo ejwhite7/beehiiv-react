@@ -349,16 +349,24 @@ export async function runInit(options: InitOptions): Promise<void> {
     path.join(outputDir, 'lib', 'beehiiv', 'analytics.ts'),
   );
 
-  await generateSubscribeComponents({ outputDir });
-  generatedFiles.push(
-    path.join(outputDir, 'components', 'beehiiv', 'SubscribeCTA.tsx'),
-  );
-  generatedFiles.push(
-    path.join(outputDir, 'components', 'beehiiv', 'SubscribeStepTwo.tsx'),
-  );
-  generatedFiles.push(
-    path.join(outputDir, 'components', 'beehiiv', 'SubscribeWrapper.tsx'),
-  );
+  if (features.apiRoutes || features.serverActions) {
+    await generateSubscribeComponents({
+      outputDir,
+      useServerActions: features.serverActions,
+      useApiRoutes: features.apiRoutes,
+    });
+    generatedFiles.push(
+      path.join(outputDir, 'components', 'beehiiv', 'SubscribeCTA.tsx'),
+    );
+    if (features.serverActions) {
+      generatedFiles.push(
+        path.join(outputDir, 'components', 'beehiiv', 'SubscribeStepTwo.tsx'),
+      );
+    }
+    generatedFiles.push(
+      path.join(outputDir, 'components', 'beehiiv', 'SubscribeWrapper.tsx'),
+    );
+  }
 
   // --- Step 6: Update .env.local ---
   if (isOAuth) {

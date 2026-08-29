@@ -149,3 +149,16 @@ Append-only execution ledger for the Ralph remediation loop.
 - Existing React `act()` and build unused-import warnings remain assigned to BR-016.
 - Rollback: restore direct `BeehiivClient` construction in generated templates, remove OAuth fallback/resolver and the scaffold smoke, restore prior snapshots/mocks, and revert Ralph state. No migration or persistent data change is involved.
 - BR-009 marked `passes: true`.
+
+## BR-010 iteration 1 - passed
+
+- Subscribe component generation now receives the selected transport capabilities instead of assuming Server Actions always exist.
+- API-routes-only projects receive a CTA that posts to `/api/beehiiv/subscribe` and a wrapper, with no Server Action import.
+- Server-Actions-only and combined projects receive the action-backed CTA, protected step-two enrichment component, and wrapper.
+- Projects selecting neither transport no longer receive components that depend on missing generated infrastructure; the independent subscriber-status hook and analytics helper remain available.
+- Added a four-way init matrix that generates complete projects, checks exact file presence/absence, compiles every generated TypeScript/TSX source, and scans for references to unselected transports.
+- Updated the CTA template regression to cover both action-backed and route-backed output.
+- Final evidence: lint passed, strict typecheck passed, 831 tests passed, build passed, package smoke passed, production audit reported zero vulnerabilities, and `git diff --check` passed.
+- Existing React `act()` and build unused-import warnings remain assigned to BR-016.
+- Rollback: restore unconditional subscribe component generation and the action-only CTA template, remove the feature matrix, restore snapshots, and revert Ralph state. No migration or persistent data change is involved.
+- BR-010 marked `passes: true`.
